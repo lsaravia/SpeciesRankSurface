@@ -1,0 +1,744 @@
+# Multifractal patterns for spatial neutral simulacions based on BCI
+
+I add the BCI 1995 Coccoli & Sherman plot data. One option is to standarize the abundaces using total no. of individuals, but I finally used the raw data added as metacommunity.
+
+I also fit a logseries and compare different metacomunities generated with different parameters.
+
+"Because common local species are likely to be
+widespread metacommunity species, a better estimate can
+often be obtained from fitting only the common species in
+the local community." Hubell pag 300
+
+
+```{r addCoccoliShermanBCI}
+# BCI folder data
+#
+BCIwd <- "~/Dropbox/BCI"
+
+getwd(oldcd)
+# "~/Dropbox/Multifractals/NaturalCommunities"
+
+
+setwd(BCIwd)
+source('Fun_logseries.r')
+library(vegan)
+
+load('bci.full4.rdata')
+
+bci4 <- get.AbundVec_BCI(bci.full4)
+N <- sum(bci4$Freq)
+
+rm(bci.full4)
+
+load('cocoli.full1.rdata')
+tcoc <- get.AbundVec_BCI(cocoli.full1)
+
+rm(cocoli.full1)
+tot <- rbind(tcoc,bci4[,1:3])
+
+load('sherman.full1.rdata')
+tshe <- get.AbundVec_BCI(sherman.full1)
+tot <- rbind(tot,tshe)
+rm(sherman.full1)
+rm(tcoc,tshe)
+
+require(plyr)
+
+tot1 <-ddply(tot,.(sp),summarise,FreqT=sum(Freq))
+tot <- tot[order(tot$sp),]
+tot1$prob <- tot1$FreqT/sum(tot1$FreqT)
+tot1 <- tot1[rev(order(tot1$prob)),]
+#plot(log(tot1$prob))
+
+setwd(oldcd)
+
+
+N <- sum(tot1$FreqT)
+lsf <- fit.logser(tot1$FreqT)
+a <-  data.frame(t(unlist(lsf$summary)))$alfa
+require(vegan)
+require(untb)
+fisherfit(tot1$FreqT)
+# el alpha obtenido por fisherfit es diferente
+tot1$Type <-"BCI"
+tot1$Ord <- 1:nrow(tot1)
+
+rm(lsf)
+
+# generate some communities using untb to graph comparisons
+#
+lsf <- rand.neutral(N,a)
+ff <- data.frame(sp="",FreqT=as.numeric(lsf),prob=0,Ord=1:length(lsf),Type="Neutral")
+tot1 <-rbind(tot1,ff)
+S=nrow(tot1[tot1$Type=="BCI",])
+
+ff<-fisher.ecosystem(N=N,S=S,alpha=a,nmax=N)
+ff <- data.frame(sp="",FreqT=as.numeric(ff),prob=0,Ord=1:length(ff),Type="Fisher fit 1")
+tot1 <-rbind(tot1[tot1$Type!="Fisher",],ff)
+
+ff <-fisherfit(tot1[tot1$Type=="BCI",]$Freq)
+ff$estimate
+ff<-fisher.ecosystem(N=N,S=S,alpha=ff$estimate,nmax=N)
+ff <- data.frame(sp="",FreqT=as.numeric(ff),prob=0,Ord=1:length(ff),Type="Fisher fit 2")
+tot1 <-rbind(tot1,ff)
+
+# Parametro theta de Etienne 2007 
+N=500*500
+a=260
+lsf <- rand.neutral(N,a)
+ff <- data.frame(sp="",FreqT=as.numeric(lsf),prob=0,Ord=1:length(lsf),Type="Etienne")
+tot1 <-rbind(tot1,ff)
+
+require(ggplot2)
+g <- ggplot(data=tot1,aes(x=Ord,y=log(FreqT),col=Type)) + geom_line()
+
+g
+#lsf <- function(x) log(rad.logserf(tot1[tot1$Type=="BCI",]$Freq,a)(x))
+#g + stat_function(fun=lsf)
+#g
+
+# Select only the raw data
+#
+tot1 <-tot1[tot1$Type=="BCI",]
+
+rm(lsf,ff,tot)
+```
+
+Now generate parameter files to simulate neutral models.
+
+```{r genParms, echo=F}
+# Parameters from Etienne 2007
+eti <- read.table("Etienne2007_I.dat", header=T)
+# calculate m (migration from metacommunity) with the number of individuals for the simulation
+N=500*500
+mean(eti$I)/(mean(eti$I)+N-1)
+# m =  0.0001596079
+max(eti$I)/(max(eti$I)+N-1)
+# m = 0.0001769294
+min(eti$I)/(min(eti$I)+N-1)
+# m = 0.0001452595
+
+ana <- read.table("Anand2010_DD.dat", header=T)
+m_DD <-mean(ana$DD)
+mean_power <-function(alfa,x=1) abs(((alfa-1)/(alfa-2)*x)-m_DD)
+mean_exp <- function(beta) abs(1/beta -m_DD)
+
+optimize(mean_power,c(2,4))
+# alfa=2.038974
+mean_power(2.038974)+m_DD
+
+# Range for exponential kernel 
+optimize(mean_exp,c(0,1))
+# beta=0.037495
+mean_exp(0.037495)+m_DD
+
+m_DD <- 34.89 # 3rd quartil
+optimize(mean_exp,c(0,1))
+# beta=0.02868046
+mean_exp(0.02868046)+m_DD
+
+optimize(mean_power,c(2,4),tol=0.00001)
+mean_power(2.029508)+m_DD
+# alfa=2.029508
+
+m_DD <- 12.33 # 1st quartil
+optimize(mean_exp,c(0,1))
+# beta=0.08111446
+mean_exp(0.08111446)+m_DD
+
+# Generate parameters file for simulation with metacommunity using
+# the frequencies of the summed BCI+Cocoli+Sherman plots
+
+parm <- data.frame( n=c(rep(0,3),1:nrow(tot1)) ,prob=c(rep(0,3),prob=tot1$prob))
+parm$text <- "" 
+parm$z <- 0
+parm$text[1] <- paste(500,500,sep="\t")
+parm$text[2] <- nrow(tot1)
+parm$text[3] <- paste(0,1,0.2,0.037495,0.0017,sep="\t")
+parm$text[4:455] <-   with(parm[4:455,], paste(n,z,z,z,format(sort(prob),scientific=F),sep="\t"))                    
+write.table(parm$text,"bci452.inp",sep="\t",row.names=F,col.names=F,quote=F)
+
+# Generate parameter's file with metacommunity from a logseries fitted with 
+# BCI+Cocoli+Sherman
+
+ff <-fisherfit(tot1[tot1$Type=="BCI",]$Freq)
+ff$estimate
+ff<-fisher.ecosystem(N=N,S=S,alpha=ff$estimate,nmax=N)
+ff <- data.frame(sp="",FreqT=as.numeric(ff),prob=0,Ord=1:length(ff))
+ff$prob <- ff$FreqT/sum(ff$FreqT)
+
+parm <- data.frame( n=c(rep(0,3),1:nrow(ff)) ,prob=c(rep(0,3),prob=ff$prob))
+parm$text <- "" 
+parm$z <- 0
+parm$text[1] <- paste(500,500,sep="\t")
+parm$text[2] <- nrow(ff)
+parm$text[3] <- paste(0,1,0.2,0.037495,0.003,sep="\t")
+nff <- nrow(ff)+3
+parm$text[4:nff] <-   with(parm[4:nff,], paste(n,z,z,z,format(sort(prob),scientific=F),sep="\t"))                    
+write.table(parm$text,"bci445.inp",sep="\t",row.names=F,col.names=F,quote=F)
+
+# Generar archivo de parametros con metacomunidad a partir de
+# con theta a partir de Etienne 2007 de BCI+Cocoli+Sherman
+
+N=500*500
+a=260
+lsf <- rand.neutral(N,a)
+ff <- data.frame(sp="",FreqT=as.numeric(lsf),prob=0,Ord=1:length(lsf),Type="Etienne")
+ff$prob <- ff$FreqT/sum(ff$FreqT)
+
+parm <- data.frame( n=c(rep(0,3),1:nrow(ff)) ,prob=c(rep(0,3),prob=ff$prob))
+parm$text <- "" 
+parm$z <- 0
+parm$text[1] <- paste(500,500,sep="\t")
+parm$text[2] <- nrow(ff)
+parm$text[3] <- paste(0,1,0.2,0.037495,0.003,sep="\t")
+nff <- nrow(ff)+3
+parm$text[4:nff] <-   with(parm[4:nff,], paste(n,z,z,z,format(sort(prob),scientific=F),sep="\t"))                    
+write.table(parm$text,"bci1826.inp",sep="\t",row.names=F,col.names=F,quote=F)
+
+rm(ff,parm,nff,eti,ana)
+rm(tot1) 
+
+
+```
+
+First I do some exploratory simulations to adjust the parameters the key file for multiple simulations is pomac.lin there each line is a different run that I can set with different parameters
+
+    BirthRate=1
+    MortalityRate=0.2 0.3
+    DispersalDistance=0.0375 0.0287 0.0811 
+    ColonizationRate=0.001 0.003 0.005
+
+I run the simulations for each parameter combination
+I copy pomacExplo.lin to pomac.lin and change the "basename" 
+parameter in bci452.par
+
+```{r explo_simul}
+
+source('Fun_Multi_patt.r')
+
+setwd("Simul")
+# copy the simulation file parameter file
+system("cp pomacExp_Explo.lin pomac.lin")
+
+# change the output file
+system("sed -i 's/bciExpEtienne/bciExpZ/g' bci452Z.par")
+
+# Perform the simulations
+system("./ipsNeutralExp bci452Z.par bci452.inp")
+
+setwd("..")
+
+# reads the output of multifractal spectra of neutral model
+md1 <- readNeutral_calcDq("Simul/bciExpZmfOrd.txt")
+md0 <-with(md1, md1[q==1,])
+
+with(md0, md0[Dq>= 1.83 & Dq<=1.85,])
+with(md0, md0[Dq>= 1.83 & Dq<=1.85 & Time>50,])
+# En ningun caso da la misma dimension fractal
+# Esto puede ser porque no tiene la misma resolucion o cobertura habria que 
+# ver que densidad de puntos tienen las estimaciones de BCI = 0.36
+
+
+# Tambien probe con las metacomunidades bci445 y bci1826 pero dan riquezas menores
+# y fuera del intervalo
+
+md0 <- read.table("Simul/bciExpZDensity.txt",header=T)
+md0 <- md0[order(-md0$Richness),]
+with(md0, md0[Richness>= 299 & Richness<=306 & Time>10, ])
+# 0.2  0.0375  0.005
+# 0.2  0.0287  0.005 da menor H 
+
+with(md0, md0[H>=3.91 & H<=4 & Time>50, ])
+# 0.2  0.0375  0.001 da mayor S
+
+# I Use parameters that result in approximately the same richness than BCI
+names(md0)[2:4]<-c("MortalityRate","DispersalDistance","ColonizationRate")
+md0  <- with(md0, md0[Time %in% c(1,5,10,15,seq(20,100,by=10)),])
+md0  <- with(md0, md0[MortalityRate==0.2 & DispersalDistance==0.0287 & ColonizationRate==0.005,])
+md0 <- md0[,c(6,7,9,10)]
+require(pander)
+options(scipen=3,digits=5)
+panderOptions('table.style','grid')
+pander(md0)
+
+
+compMdl <- with(md1, md1[MortalityRate==0.2 & DispersalDistance==0.0287 & ColonizationRate==0.005,])
+  
+compMdl <- with(compMdl, compMdl[Time %in% c(5,6,7,8,9,seq(10,100,by=5)),])
+
+rm(md1,md0)
+
+require(lattice)
+require(Hmisc)
+
+qci<- with(compMdl, sapply(SD.Dq,calcCI,7,0.05))
+compMdl$LowCI <- compMdl$Dq-qci
+compMdl$HighCI <- compMdl$Dq+qci
+
+md1 <- with(compMdl, compMdl[Time>=5 &Time<11,])
+
+png("Fig9_DqComp_Neut452_5.png", width=6,height=6,units="in",res=600)
+with(md1,
+    xYplot(Cbind(Dq,LowCI,HighCI) ~ q, data=md1, nx=FALSE, groups=Time, type="l",
+           scales=list(tck=-1),
+           cap=.01,
+           ylim=c(min(LowCI)-.01,max(HighCI)+.01),
+           panel=function(...){
+           panel.abline(h=2, col="grey", lty=2)
+    	     panel.xYplot(...)},
+  		     ylab=expression(italic(D[q])),
+  		     xlab=expression(italic(q)),
+           label.curves=F,
+           auto.key=list(x=.65,y=.9,title="Year",cex.title=.9, lines=T,points=F,cex=.7),
+           )
+       )
+dev.off()
+
+md1 <- with(compMdl, compMdl[Time>=30 &Time<60,])
+png("Fig9_DqComp_Neut452_30.png", width=6,height=6,units="in",res=600)
+with(md1,
+    xYplot(Cbind(Dq,LowCI,HighCI) ~ q, data=md1, nx=FALSE, groups=Time, type="l",
+           scales=list(tck=-1),
+           cap=.01,
+           ylim=c(min(LowCI)-.01,max(HighCI)+.01),
+           panel=function(...){
+           panel.abline(h=2, col="grey", lty=2)
+           panel.xYplot(...)},
+  		     ylab=expression(italic(D[q])),
+  		     xlab=expression(italic(q)),
+           label.curves=F,
+           auto.key=list(x=.65,y=.9,title="Year",cex.title=.9, lines=T,points=F,cex=.7),
+           )
+       )
+dev.off()
+
+
+md0 <- compMdl[compMdl$q!=0,]
+range(md0$R.Dq)
+# 0.947 0.999
+png("FigS5_RDq_Neut452.png", width=6,height=6,units="in",res=600)
+histogram(~R.Dq,data=md0,xlab=expression(italic(R^2)))
+dev.off()
+
+# Leo archivo con las simulaciones de ese set de parametros para ver si hay o no hay 
+# diferencias en los intervalos de confianza.
+
+# Dejo solo dos tiempos para comparar los SD
+
+compMdl <- with(compMdl, compMdl[Time %in% c(5,60),])
+compMdl$Type <- "regr" 
+compMdl <-  compMdl[,c(4:7,9:11)]
+
+```
+
+
+Ten repeated simulations with chosen parameters
+
+    BirthRate=1
+    MortalityRate=0.2 
+    DispersalDistance=0.0287 
+    ColonizationRate=0.005
+
+```{r simul10}
+
+source('Fun_Multi_patt.r')
+
+setwd("Simul")
+# copy the simulation file parameter file
+system("cp pomacExp_10.lin pomac.lin")
+
+# change the output file
+system("sed -i 's/bciExpZ/bciExpZ005/g' bci452Z.par")
+
+# Perform the simulations
+system("./ipsNeutralExp bci452Z.par bci452.inp")
+
+setwd("..")
+
+# Read the simulations with same parameters
+#
+md1 <- readNeutral_calcDq("Simul/bciExpZ005mfOrd.txt")
+
+md1 <- with(md1, md1[Time %in% c(5,6,7,8,9,seq(10,100,by=5)),])
+md0 <- with(md1,by(md1,Time,calcDq_bootCI,0,"boot"))
+md0 <-ldply(md0)
+names(md0)[1] <- "Time"
+
+md0$Time <- as.numeric(md0$Time)
+md0$Dq <- as.numeric(md0$Dq)
+md0$LowCI <- as.numeric(md0$LowCI)
+md0$HighCI <- as.numeric(md0$HighCI)
+
+
+md1 <- with(md0, md0[Time>=5 &Time<11,])
+png("Fig9_DqComp_Neut452_B5.png", width=6,height=6,units="in",res=600)
+with(md1,
+    xYplot(Cbind(Dq,LowCI,HighCI) ~ q, data=md1, nx=FALSE, groups=Time, type="l",
+           scales=list(tck=-1),
+           cap=.01,
+           ylim=c(min(LowCI)-.01,max(HighCI)+.01),
+           panel=function(...){
+           panel.abline(h=2, col="grey", lty=2)
+           panel.xYplot(...)},
+    	     ylab=expression(italic(D[q])),
+  		     xlab=expression(italic(q)),
+           label.curves=F,
+           auto.key=list(x=.65,y=.9,title="Year",cex.title=.9, lines=T,points=F,cex=.7),
+           )
+       )
+dev.off()
+
+md1 <- with(md0, md0[Time>=30 &Time<60,])
+png("Fig9_DqComp_Neut452_B30.png", width=6,height=6,units="in",res=600)
+with(md1,
+    xYplot(Cbind(Dq,LowCI,HighCI) ~ q, data=md1, nx=FALSE, groups=Time, type="l",
+           scales=list(tck=-1),
+           cap=.01,
+           ylim=c(min(LowCI)-.01,max(HighCI)+.01),
+           panel=function(...){
+           panel.abline(h=2, col="grey", lty=2)
+           panel.xYplot(...)},
+           ylab=expression(italic(D[q])),
+  		     xlab=expression(italic(q)),
+           label.curves=F,
+           auto.key=list(x=.65,y=.9,title="Year",cex.title=.9, lines=T,points=F,cex=.7),
+           )
+       )
+dev.off()
+
+
+# Los SD son menores que las estimadas por mfSBA
+md1 <- with(md0, md0[Time==5 | Time==60,])
+
+common_cols <- intersect(colnames(compMdl), colnames(md1))
+compMdl <- rbind(  md1[common_cols], compMdl[common_cols])
+
+#Calculate D1 and DeltaDq(-5,5)
+require(plyr)
+
+d1_delta <- ddply(compMdl, .(Time,Type),summarize, 
+                  DeltaDq = Dq[q==-5]-Dq[q==5], 
+                  SD.DeltaDq=sqrt(SD.Dq[q==-5]^2+SD.Dq[q==5]^2),
+                  D1=Dq[q==1],
+                  SD.D1=SD.Dq[q==1]   )
+
+# A pandoc table could be generated with pander
+
+require(pander)
+options(scipen=3,digits=5)
+panderOptions('table.style','grid')
+pander(d1_delta)
+
+# Table S2 
+
+# Plot with SRS at 5 and 30 years
+
+# the neutral model has to be run again changing the .par file
+# to save the image files and the output name to not overrite the previous 
+# simulations 
+#
+# sa N
+# baseName bciExpZa
+# 
+# Then the program multiSpeciesSBA do the SRS ordering 
+# I run cpp/SpatialAnalysis/mfsba/multiSpeciesSBA to show the SRS 
+# 
+
+require(RColorBrewer)
+col.l = c("white",brewer.pal(8,"Dark2"))
+
+png("Fig9_Neut452_5.png", width=6,height=6,units="in",res=600)
+plot_image("Simul/bciExpZa-5Reord.sed","5 Years",1:500,col.l)
+#plot_image("Simul/bciExpZa-5.sed","5 Years")
+dev.off()
+
+#plot_image("Simul/bciExpZa-30.sed","30 Years")
+png("Fig9_Neut452_30.png", width=6,height=6,units="in",res=600)
+plot_image("Simul/bciExpZa-30Reord.sed", "30 Years",1:500,col.l)
+dev.off()
+
+  
+rm(common_cols)
+rm(md0,md1,bci4,rq1,qci)
+
+```
+
+Compare Dq from different times using ten simulations 
+
+```{r compareDq}
+
+require(statmod)
+require(reshape2)
+md1 <- readNeutral_calcDq("Simul/bciExpZ005mfOrd.txt")
+
+md1 <- with(md1, md1[Time %in% c(5,6,7,8,9,seq(10,100,by=5)),])
+md1 <- with(md1, md1[q!=0,])
+md1$rep <- rep( 1:10,each=480)
+
+compMd1 <- melt(md1, id.vars=c("Time","rep","q"),measure.var="Dq")
+names(compMd1)
+
+c1 <-dcast(compMd1, Time+rep ~ q)
+names(c1[,13:22])
+c1 <- with(c1, c1[Time<11,])
+
+# Positive q
+compareGrowthCurves(c1$Time,c1[,13:22],nsim=1000)
+
+# Negative q 
+names(c1[,3:12])
+compareGrowthCurves(c1$Time,c1[,3:12],nsim=1000)
+# the output is table S3
+
+c1 <-dcast(compMd1, Time+rep ~ q)
+c1 <- with(c1, c1[Time>=30 & Time<60,])
+
+# Positive q
+compareGrowthCurves(c1$Time,c1[,13:22],nsim=1000)
+
+# Negative q 
+compareGrowthCurves(c1$Time,c1[,3:12],nsim=1000)
+# The output is in TABLE S4 
+
+rm(md1,compMd1,c1)
+```
+
+Perform simulations using power law kernel
+
+```{r simulPower}
+setwd("Simul")
+# copy the simulation file parameter file
+system("cp pomacPow_10.lin pomac.lin")
+
+# change the output file
+system("sed -i 's/bciExpZ005/bciPowZ005/g' bci452Z.par")
+
+# Perform the simulations
+system("./ipsNeutralExp bci452Z.par bci452.inp")
+
+setwd("..")
+
+
+```
+
+
+Dq Comparison between exponential and power dispersal
+
+```{r compareExpPow}
+
+
+require(statmod)
+require(reshape2)
+
+md1 <- readNeutral_calcDq("Simul/bciExpZ005mfOrd.txt")
+
+#md1 <- with(md1, md1[Time %in% c(5,6,7,8,9,seq(10,100,by=20)),])
+md0 <- with(md1,by(md1,Time,calcDq_bootCI,0,"boot"))
+md0 <-ldply(md0)
+names(md0)[1] <- "Time"
+
+md0$Time <- as.numeric(md0$Time)
+md0$Dq <- as.numeric(md0$Dq)
+md0$LowCI <- as.numeric(md0$LowCI)
+md0$HighCI <- as.numeric(md0$HighCI)
+md0$Type <- "Exp"
+
+md1 <- readNeutral_calcDq("Simul/bciPowZ005mfOrd.txt")
+#md1 <- with(md1, md1[Time %in% c(5,6,7,8,9,seq(10,100,by=20)),])
+md00 <- with(md1,by(md1,Time,calcDq_bootCI,0,"boot"))
+md00 <-ldply(md00)
+names(md00)[1] <- "Time"
+
+
+md00$Time <- as.numeric(md00$Time)
+md00$Dq <- as.numeric(md00$Dq)
+md00$LowCI <- as.numeric(md00$LowCI)
+md00$HighCI <- as.numeric(md00$HighCI)
+md00$Type <- "Pow"
+
+compMdlExpPow <- rbind(md0,md00)
+md1 <- with(compMdlExpPow, compMdlExpPow[Time %in% c(5,6,7,8,9,10,15,20,25,seq(30,100,by=20)),])
+require(Hmisc)
+with(md1,
+    xYplot(Cbind(Dq,LowCI,HighCI) ~ q|Type, data=md1, nx=FALSE, groups=Time, type="l",
+           scales=list(tck=-1),
+           cap=.01,
+           ylim=c(min(LowCI)-.01,max(HighCI)+.01),
+           panel=function(...){
+           panel.abline(h=2, col="grey", lty=2)
+           panel.xYplot(...)},
+           ylab=expression(italic(D[q])),
+           xlab=expression(italic(q)),
+           label.curves=F,
+           auto.key=list(x=.65,y=.9,title="Dispersal",cex.title=.9, lines=T,points=F,cex=.7),
+           )
+       )
+
+
+# Compare different dispersals and BCI
+#
+md1 <- with(compMdlExpPow, compMdlExpPow[Time == 90,])
+
+require(plyr)
+
+md2 <- ddply(compBCI, .(q), summarize, 
+                  SD.Dq=sd(Dq),
+                  Dq=mean(Dq))
+            
+qci<- with(md2, sapply(SD.Dq,calcCI,7,0.05))
+md2$LowCI <- md2$Dq - qci
+md2$HighCI <- md2$Dq + qci
+md2$Type <- "BCI"
+
+names(md1)
+names(md2)
+names(md1[,c(2:5,7:8)])
+
+md1 <- rbind(md2,md1[,c(2:5,7:8)])
+
+
+png("Fig10_DqComp_NeutExpPow.png", width=6,height=6,units="in",res=600)
+with(md1,
+    xYplot(Cbind(Dq,LowCI,HighCI) ~ q, data=md1, nx=FALSE, groups=Type, type="l",
+           scales=list(tck=-1),
+           cap=.01,
+           ylim=c(min(LowCI)-.01,max(HighCI)+.01),
+           panel=function(...){
+           panel.abline(h=2, col="grey", lty=2)
+           panel.xYplot(...)},
+           ylab=expression(italic(D[q])),
+           xlab=expression(italic(q)),
+           label.curves=F,
+           auto.key=list(x=.65,y=.9,title="Dispersal",cex.title=.9, lines=T,points=F,cex=.7),
+           )
+       )
+dev.off()
+rm(md1,md2)
+
+# Compare the different dispersals
+
+require(statmod)
+require(reshape2)
+md1 <- readNeutral_calcDq("Simul/bciExpZ005mfOrd.txt")
+md1 <- with(md1, md1[Time == 90 & q!=0,])
+md1$rep <- rep( 1:10,each=nrow(md1)/10)
+md1$Type <- "Exp"
+
+md2 <- readNeutral_calcDq("Simul/bciPowZ005mfOrd.txt")
+md2 <- with(md2, md2[Time == 90 & q!=0,])
+md2$rep <- rep( 1:10,each=nrow(md2)/10)
+md2$Type <- "Pow"
+
+# Get BCI Dq
+
+
+md3 <- with(compBCI, compBCI[q!=0,])
+md3$Type <- "BCI"
+names(md3)[5]="rep"
+md3$rep <- rep( 1:7,each=20)
+names(md3[,c(1:5,8)])
+names(md2[,c(5:10)])
+md1 <- rbind(md1[,c(5:10)],md2[,c(5:10)])
+
+compMd1 <- melt(rbind(md1,md3[,c(1:5,8)]), id.vars=c("Type","rep","q"),measure.var="Dq")
+names(compMd1)
+
+c1 <-dcast(compMd1, Type+rep ~ q)
+# Positive q
+names(c1[,13:22])
+compareGrowthCurves(c1$Type,c1[,13:22],nsim=1000)
+
+#   Group1 Group2      Stat P.Value adj.P.Value
+#1    BCI    Exp -49.19708       0           0
+#2    BCI    Pow -12.16894       0           0
+#3    Exp    Pow  81.79017       0           0
+
+# Negative q 
+names(c1[,3:12])
+compareGrowthCurves(c1$Type,c1[,3:12],nsim=1000)
+
+#  Group1 Group2      Stat P.Value adj.P.Value
+#1    BCI    Exp 110.70741       0           0
+#2    BCI    Pow  16.72702       0           0
+#3    Exp    Pow -90.12642       0           0
+
+
+rm(c1,md1,md2,md3,md00)
+
+# Plot spatial distribution of the models
+
+require(RColorBrewer)
+col.l = c("white",brewer.pal(8,"Dark2"))
+#col.l = colorRampPalette(c(brewer.pal(8,"Paired")))(64)
+
+png("Fig10_Neut452_Exp90.png", width=6,height=6,units="in",res=600)
+plot_image("Simul/bciExpZa-90Reord.sed","",1:500,col.l,5)
+dev.off()
+
+png("Fig10_Neut452_Pow90.png", width=6,height=6,units="in",res=600)
+plot_image("Simul/bciPowZa-90Reord.sed","",1:500,col.l,5)
+dev.off()
+```
+
+DeltaDq Comparison between BCI, exponential and power dispersal
+
+```{r DeltaD5_BCI_vs_mdl, echo=FALSE}
+
+require(plyr)
+
+# Calculate DeltaD5 for BCI, compBCI was previously saved.
+
+d1_delta <- ddply(compBCI, .(Year),summarize, 
+                  DeltaDq = Dq[q==-5]-Dq[q==5], 
+                  SD.DeltaDq=sqrt(SD.Dq[q==-5]^2+SD.Dq[q==5]^2),
+                  D1=Dq[q==1],
+                  SD.D1=SD.Dq[q==1]   )
+
+# Calculate SD of DeltaDq using all years of BCI
+#sd_DeltaD5 <- sd(d1_delta$DeltaDq)
+#calcCI(sd_DeltaD5,7,0.05)
+#mean(d1_delta$DeltaDq)  
+# CI 0.01475477
+# Mean 1.101303
+
+md1 <- with(compMdlExpPow, compMdlExpPow[Time %in% seq(30,60,by=5),])
+
+d2_delta <- ddply(md1, .(Time,Type),summarize, 
+                  DeltaDq = Dq[q==-5]-Dq[q==5], 
+                  SD.DeltaDq=sqrt(SD.Dq[q==-5]^2+SD.Dq[q==5]^2),
+                  D1=Dq[q==1],
+                  SD.D1=SD.Dq[q==1]   )
+names(d1_delta)[1]="Time"
+d1_delta$Type = "BCI"
+names(d2_delta)
+names(d1_delta)
+d2_delta <- rbind(d2_delta,d1_delta)
+d1_delta <- ddply(d2_delta, .(Type), summarize, 
+                  SD.DeltaDq=sd(DeltaDq),
+                  SD.D1=sd(D1),
+                  D1=mean(D1),
+                  DeltaDq=mean(DeltaDq))
+            
+# A pandoc table could be generated with pander
+require(lattice)
+#bwplot(Type ~ DeltaDq,data=d2_delta)
+#bwplot(Type ~ D1,data=d2_delta)
+
+#require(pander)
+#options(scipen=3,digits=5)
+#panderOptions('table.style','grid')
+#pander(d1_delta)
+
+
+qci<- with(d1_delta, sapply(SD.DeltaDq,calcCI,7,0.05))
+d1_delta$CI.DeltaDq <- qci
+require(ggplot2)
+ggplot(d1_delta, aes(x=Type, y=DeltaDq)) +
+geom_errorbar(aes(ymin=DeltaDq-CI.DeltaDq, ymax=DeltaDq+CI.DeltaDq), width=.1) +
+geom_point(fill="white",shape=21)
+
+
+rm(d1_delta,d2_delta,qci,md1)
+```
+

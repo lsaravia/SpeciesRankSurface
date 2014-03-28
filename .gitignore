@@ -1,0 +1,13 @@
+*png
+*pdf
+*sed
+*~
+*.odt
+*ods
+.Rproj.user
+.RData
+.Rhistory
+*sublime*
+*.Rproj
+Fragments*
+*docx
