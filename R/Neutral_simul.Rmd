@@ -1,21 +1,80 @@
-# Multifractal patterns for spatial neutral simulacions based on BCI
+# Multifractal analysis of multispecies spatial distributions - Model simulations 
+
+I generate parameter files for the simulation of neutral/hierarchical model using logseries as the metacommunity distribution
+
+
+```{r generateLogSerParms}
+
+oldcd <-getwd()
+source("R/Neutral_fun.r")
+
+# Generate a SAD for metacommunity using a logseries 
+#
+# side is the side of the simulation lattice
+#
+# N is the total number of individuals 
+#
+# S is the species richness 
+#
+
+require(untb)
+side <- 500
+N <- side*side
+S <- 450 
+ff<-fisher.ecosystem(N=N,S=S,nmax=N)
+plot(ff)
+nrow(ff)
+ff <- data.frame(sp="",FreqT=as.numeric(ff),prob=0,Ord=1:length(ff))
+ff$prob <- ff$FreqT/sum(ff$FreqT)
+
+# Parameters
+#
+# Mortality = 0.2 - 0.4
+# Mean Dispersal distance 25  -> Exponential kernel parm  0.04
+#                         2.5 -> 0.4
+# Colonization = 0.001 -0.0001
+# Replacement  = 0 - 1
+
+setwd("Simul")
+#undebug(genNeutralParms)
+# First generate de inp file with species and metacommunity parameters 
+genNeutralParms("fishE",500,ff$prob,1,0.2,0.04,0.001)
+
+# Then pomac.lin to simulate a range of parmeters and repetitions.
+#
+# Generates pomac.lin for exponential dispersal to compare hierarchical and neutral communities 
+# and see when they have similar H and compare if they have similar SAD
+
+genPomacParms("pomExp",1,c(0.2,0.4),c(0.04,0.4),c(0.001,0.0001),c(0,1))
+
+# we need the par file with the simulations parameters
+
+par <- read.table("sim.par",quote="",stringsAsFactors=F)
+# Change base name
+par[par$V1=="baseName",]$V2 <- "Exp452"
+# Change model type
+par[par$V1=="modType",]$V2 <- 4 # Hierarchical saturated 
+
+# I have to run the model with the parameter ReplacementRate turned on!! take care
+
+
+```
+
 
 I add the BCI 1995 Coccoli & Sherman plot data. One option is to standarize the abundaces using total no. of individuals, but I finally used the raw data added as metacommunity.
 
 I also fit a logseries and compare different metacomunities generated with different parameters.
 
-"Because common local species are likely to be
-widespread metacommunity species, a better estimate can
-often be obtained from fitting only the common species in
-the local community." Hubell pag 300
-
 
 ```{r addCoccoliShermanBCI}
+
+rm(list = ls())
+
 # BCI folder data
 #
-BCIwd <- "~/Dropbox/BCI"
+BCIwd <- "~/Dropbox/Projects/BCI"
 
-getwd(oldcd)
+oldcd <-getwd()
 # "~/Dropbox/Multifractals/NaturalCommunities"
 
 
@@ -83,25 +142,25 @@ ff <- data.frame(sp="",FreqT=as.numeric(ff),prob=0,Ord=1:length(ff),Type="Fisher
 tot1 <-rbind(tot1,ff)
 
 # Parametro theta de Etienne 2007 
-N=500*500
+N=500*500*4 # assume a metacommunity with 1.000.000
 a=260
 lsf <- rand.neutral(N,a)
 ff <- data.frame(sp="",FreqT=as.numeric(lsf),prob=0,Ord=1:length(lsf),Type="Etienne")
+tot1 <- tot1[tot1$Type!="Etienne",]
 tot1 <-rbind(tot1,ff)
 
 require(ggplot2)
-g <- ggplot(data=tot1,aes(x=Ord,y=log(FreqT),col=Type)) + geom_line()
+ggplot(data=tot1,aes(x=Ord,y=log(FreqT),col=Type)) + geom_line()
 
-g
 #lsf <- function(x) log(rad.logserf(tot1[tot1$Type=="BCI",]$Freq,a)(x))
 #g + stat_function(fun=lsf)
 #g
 
-# Select only the raw data
+# Select only the raw data BCI+Cocoli+Sherman
 #
 tot1 <-tot1[tot1$Type=="BCI",]
 
-rm(lsf,ff,tot)
+rm(lsf,ff,tot,bci4)
 ```
 
 Now generate parameter files to simulate neutral models.
