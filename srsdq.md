@@ -1,4 +1,4 @@
-# Multifractal analysis of multispecies spatial distributions 
+# Species rank distributions in space: a multifractal analysis
 
 **Leonardo A. Saravia**, Ph.D.
 

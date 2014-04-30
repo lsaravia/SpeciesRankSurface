@@ -1,3 +1,5 @@
+# Species rank distributions in space: a multifractal analysis
+
 # Species Rank Surface: analysing multispecies spatial paterns using multifractals
 
 
