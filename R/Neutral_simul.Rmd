@@ -5,6 +5,8 @@ I generate parameter files for the simulation of neutral/hierarchical model usin
 
 ```{r generateLogSerParms}
 
+s_wait <- F # variable to make R wait until simulations ends or not 
+
 oldcd <-getwd()
 source("R/Neutral_fun.r")
 
@@ -76,7 +78,7 @@ neuBin <- "~/Dropbox/cpp/CaNew/Neutral/ipsNeutralExp"
 system("cp pomExp.lin pomac.lin")
 
 
-system(paste(neuBin,"sim.par","fishE.inp"),wait=F)
+system(paste(neuBin,"sim.par","fishE.inp"),wait=s_wait)
 
 
 
@@ -124,8 +126,8 @@ g
 
 Thus the SAD at Time=10 is not different from Time=100
 
-Let's try simulations with different parameters using pomac and at Time=100
-
+Let try simulations with different parameters using pomac and at Time=100
+ 
 ```{r simul_pomac467}
 
 setwd("Simul")
@@ -157,13 +159,28 @@ system("rm Exp467*")
 system("cp pomExp.lin pomac.lin")
 
 
-system(paste(neuBin,"sim.par","fishE.inp"),wait=F)
+system(paste(neuBin,"sim.par","fishE.inp"),wait=s_wait)
 
 ```
 
 Now I will read the densities for different parameters and test SADs and Shannon
 
 ```{r testKS_pomac467}
+# Read simulation output and change from wide to long format NO TIME
+#
+meltDensityOut_NT <- function(fname,num_sp){
+  den <- read.delim(fname)
+  names(den)[1:5]<-c("GrowthRate","MortalityRate","DispersalDistance","ColonizationRate","ReplacementRate")
+    
+  # from 7 to 473 there are species densities
+  # Put simpler names to variables to identify species
+  names(den)[7:(6+num_sp)]<-as.character(1:num_sp)
+  
+  require(reshape2)
+  
+  den1 <- melt(den,id.vars=c("MortalityRate","DispersalDistance","ColonizationRate","ReplacementRate"),measure.vars=c(7:473),variable.name="Species")
+    
+}
 
 den <- read.delim("Exp467Density.txt")
 names(den)[1:5]<-c("GrowthRate","MortalityRate","DispersalDistance","ColonizationRate","ReplacementRate")
@@ -181,30 +198,134 @@ den1 <- melt(den,id.vars=c("MortalityRate","DispersalDistance","ColonizationRate
 parms <- unique(den1[,1:4])
 combo <- combn(nrow(parms),2)
 
+require(plyr)
 mks <-adply(combo,2, function(x) {
       p1 <- parms[x[1],]
       p2 <- parms[x[2],]
       d1 <- merge(den1,p1)
       d2 <- merge(den1,p2)
       ks <- ks.test(d1$value,d2$value)
-      out <-data.frame(t(paste(p1,p2,sep="-")),p.value=ks$p.value)
-      names(out)[1:length(names(p1))]<-names(p1)
+      out <-data.frame(p1,p2,t(paste(p1,p2,sep="_")),p.value=ks$p.value,stringsAsFactors=F)
+      ln <-length(names(p1))*3
+      names(out)[1:ln]<-c(paste0(abbreviate(names(p1)),1),paste0(abbreviate(names(p1)),2),names(p1))
       return(out)      
       })
+
+#p1 <- parms[1,]
+#p2 <- parms[9,]
+#d1 <- merge(den1,p1)
+#d2 <- merge(den1,p2)
+#ks <- ks.test(d1$value,d2$value)
+#out <-data.frame(p1,p2,t(paste(p1,p2,sep="_")),p.value=ks$p.value,stringsAsFactors=F)
+#ln <-length(names(p1))*3
+#names(out)[1:ln]<-c(paste0(abbreviate(names(p1)),1),paste0(abbreviate(names(p1)),2),names(p1))
+#rm(d1,d2,p1,p2,out,ks,ln)
+
 
 
 mks$p.adjust <- p.adjust(mks$p.value, method="hommel")
 
 # wich are not different
-format(mks[mks$p.adjust>0.05,c(2:5,7)],digits=4)
 
-#rm(d1,d2,p1,p2,out,ks,x)
+format(mks[mks$p.adjust>0.05,c(10:13,14:15)],digits=4)
+format(mks[mks$p.adjust>0.1,c(10:13,14:15)],digits=4)
 
-# USING THE SAME adply technique a data.frame for ggplot could be generated!!!!!
+format(mks[mks$p.value>0.01,c(10:13,14:15)],digits=4)
 
+
+
+# Graph on pair with different mechanisms but not different SAD
+#
+# eks: 1 row data.frame with 2 sets of parms for which ks.test was done (fixed TIME)
+# den1: full data in long format
+#
+mergePairSAD <- function(eks, den1){
+# eks <- mks[61,]
+  
+  den2 <-merge(den1,eks,by.x=c(1:4),by.y=c(2:5))[,1:6]
+  den2 <- den2[den2$value>0,]
+  den2$parms <-paste(eks[,2:5],collapse="_")
+  den2$Rank <- nrow(den2) - rank(den2$value) +1
+  
+  den3 <-merge(den1,eks,by.x=c(1:4),by.y=c(6:9))[,1:6]
+  den3 <- den3[den3$value>0,]
+  den3$parms <-paste(eks[,6:9],collapse="_")
+  den3$Rank <- nrow(den3) - rank(den3$value) +1
+  den2 <- rbind(den2,den3)
+  
+  }
+# SE PODRIA HACER CON ddply para hacer varias filas del mks !!!!!
+
+#den2 <- ddply(den1,.(Time), function(x) { 
+  #tmp <- x[x$value>0,]
+#  tmp <- x[order(x$value),]
+#  tmp$Ord <- nrow(x):1
+#  data.frame(tmp)
+#  })
+
+format(mks[mks$p.value<0.05 & mks$p.adjust>0.05,c(10:13,14:15)],digits=4)
+
+debug(plotPairSAD)
+psa <-mergePairSAD(mks[61,],den1)
+# p.value = 
+require(ggplot2)
+g <- ggplot(psa,aes(x=Rank,y=log(value),colour=parms)) + geom_line()
+g
+
+psa <- mergePairSAD(mks[105,],den1)
+(g <- ggplot(psa,aes(x=Rank,y=log(value),colour=parms)) + geom_line())
+g + geom_point()
 ```
 
-The most important not-different are the ones that correspond to neutral vs non-neutral
-thus we will try to differentiate them using Dq
+In this case there are no semejant SAD for different mechanisms (neutral vs hierarchical) but some of adjusted p values lead to not reject differences when SADs seems different like mks[61,],105,107
 
+Now I will simulate with a smaller Replacement = 0.01 / 0.1 and compare with Replacement=0
+
+
+```{r simul_pomac467_R001,echo=F,message=F,warning=F}
+
+setwd("Simul")
+
+# read par file with simulations parameters
+
+par <- read.table("sim.par",quote="",stringsAsFactors=F)
+
+# Number of time steps 
+par[par$V1=="nEvals",]$V2 <- 100
+
+par[par$V1=="inter",]$V2 <- 100 # interval to measure Density and Diversity
+par[par$V1=="init",]$V2 <- 100  # Firs time of measurement = interval
+par[par$V1=="modType",]$V2 <- 4 # Hierarchical saturated
+par[par$V1=="sa",]$V2 <- "N" # Save a snapshot of the model
+par[par$V1=="baseName",]$V2 <- paste0("Exp",nrow(ff))
+par[par$V1=="pomac",]$V2 <- 1 # 0:one set of parms 
+                              # 1:several simulations with pomac.lin parameters 
+
+write.table(par, "sim.par",sep="\t",row.names=F,col.names=F,quote=F)
+
+# I will not delete old simulations
+# system("rm Exp467*")
+
+# I have to modify pomExp.lin to make different simulations
+#undebug(genPomacParms)
+
+genPomacParms("pomExp",1,c(0.2,0.4),c(0.04,0.4),c(0.001,0.0001),c(0.01))
+
+# copy pomExp.lin to pomac.lin
+system("cp pomExp.lin pomac.lin")
+
+
+system(paste(neuBin,"sim.par","fishE.inp"),wait=s_wait)
+
+# add more paremeter combinations 
+genPomacParms("pomExp",1,c(0.2,0.4),c(0.04,0.4),c(0.001,0.0001),c(0.1,0.01))
+system("cp pomExp.lin pomac.lin")
+system(paste(neuBin,"sim.par","fishE.inp"),wait=s_wait)
+
+
+
+########### TEST THIS FUNCTION
+den4 <- meltDensityOut_NT("Exp467Density.txt",nrow(ff))
+
+```
 
