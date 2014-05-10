@@ -166,32 +166,8 @@ system(paste(neuBin,"sim.par","fishE.inp"),wait=s_wait)
 Now I will read the densities for different parameters and test SADs and Shannon
 
 ```{r testKS_pomac467}
-# Read simulation output and change from wide to long format NO TIME
-#
-meltDensityOut_NT <- function(fname,num_sp){
-  den <- read.delim(fname)
-  names(den)[1:5]<-c("GrowthRate","MortalityRate","DispersalDistance","ColonizationRate","ReplacementRate")
-    
-  # from 7 to 473 there are species densities
-  # Put simpler names to variables to identify species
-  names(den)[7:(6+num_sp)]<-as.character(1:num_sp)
-  
-  require(reshape2)
-  
-  den1 <- melt(den,id.vars=c("MortalityRate","DispersalDistance","ColonizationRate","ReplacementRate"),measure.vars=c(7:473),variable.name="Species")
-    
-}
 
-den <- read.delim("Exp467Density.txt")
-names(den)[1:5]<-c("GrowthRate","MortalityRate","DispersalDistance","ColonizationRate","ReplacementRate")
-  
-# from 7 to 473 there are species densities
-# Put simpler names to variables to identify species
-names(den)[7:473]<-as.character(1:467)
-
-require(reshape2)
-
-den1 <- melt(den,id.vars=c("MortalityRate","DispersalDistance","ColonizationRate","ReplacementRate"),measure.vars=c(7:473),variable.name="Species")
+den1 <- meltDensityOut_NT("Simul/Exp467Density.txt",nrow(ff))
 
 # Kolmogorov-smirnov test for two distributions
 
@@ -234,26 +210,6 @@ format(mks[mks$p.value>0.01,c(10:13,14:15)],digits=4)
 
 
 
-# Graph on pair with different mechanisms but not different SAD
-#
-# eks: 1 row data.frame with 2 sets of parms for which ks.test was done (fixed TIME)
-# den1: full data in long format
-#
-mergePairSAD <- function(eks, den1){
-# eks <- mks[61,]
-  
-  den2 <-merge(den1,eks,by.x=c(1:4),by.y=c(2:5))[,1:6]
-  den2 <- den2[den2$value>0,]
-  den2$parms <-paste(eks[,2:5],collapse="_")
-  den2$Rank <- nrow(den2) - rank(den2$value) +1
-  
-  den3 <-merge(den1,eks,by.x=c(1:4),by.y=c(6:9))[,1:6]
-  den3 <- den3[den3$value>0,]
-  den3$parms <-paste(eks[,6:9],collapse="_")
-  den3$Rank <- nrow(den3) - rank(den3$value) +1
-  den2 <- rbind(den2,den3)
-  
-  }
 # SE PODRIA HACER CON ddply para hacer varias filas del mks !!!!!
 
 #den2 <- ddply(den1,.(Time), function(x) { 
@@ -265,7 +221,6 @@ mergePairSAD <- function(eks, den1){
 
 format(mks[mks$p.value<0.05 & mks$p.adjust>0.05,c(10:13,14:15)],digits=4)
 
-debug(plotPairSAD)
 psa <-mergePairSAD(mks[61,],den1)
 # p.value = 
 require(ggplot2)
@@ -324,8 +279,24 @@ system(paste(neuBin,"sim.par","fishE.inp"),wait=s_wait)
 
 
 
-########### TEST THIS FUNCTION
-den4 <- meltDensityOut_NT("Exp467Density.txt",nrow(ff))
+# Read all simulations and change to long format
+
+den1 <- meltDensityOut_NT("Simul/Exp467Density.txt",nrow(ff))
+
+pairKS_SAD(den1)
+
+
+format(mks[mks$p.adjust>0.05,c(10:13,14:15)],digits=4)
+
+nrow(mks[mks$p.adjust>0.05,c(10:13,14:15)])/nrow(mks)
+
+psa <- mergePairSAD(mks[468,],den1)
+
+require(ggplot2)
+
+(g <- ggplot(psa,aes(x=Rank,y=log(value),colour=parms)) + geom_line())
 
 ```
+
+The proportion of equal distributions is 0.30 what happens if we test Dq
 
