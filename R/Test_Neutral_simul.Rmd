@@ -1,0 +1,150 @@
+# TEST for Multifractal analysis of multispecies spatial distributions - Model simulations 
+
+I generate parameter files for the simulation of neutral/hierarchical model using logseries as the metacommunity distribution
+
+
+```{r setup, eval=T }
+
+s_wait <- T # variable to make R wait until simulations ends or not 
+
+simul  <- F # variable to perform or not the simulations
+
+oldcd <-getwd()
+source("R/Neutral_fun.r")
+
+# Set the location of the binary 
+#
+neuBin <- "~/Dropbox/cpp/CaNew/Neutral/ipsNeutralExp"
+
+```
+
+## Generate a metacommunity using a logseries 
+
+side: is the side of the simulation lattice
+
+N: is the total number of individuals 
+
+S: is the species richness 
+
+
+
+```{r generateLogSerParms, eval=FALSE,echo=F,message=F,warning=F}
+# Generate a SAD for metacommunity using a logseries 
+#
+# side is the side of the simulation lattice
+#
+# N is the total number of individuals 
+#
+# S is the species richness 
+#
+
+require(untb)
+side <- 500
+N <- side*side
+S <- 450 
+ff<-fisher.ecosystem(N=N,S=S,nmax=N)
+plot(ff)
+nrow(ff)
+ff <- data.frame(sp="",FreqT=as.numeric(ff),prob=0,Ord=1:length(ff))
+ff$prob <- ff$FreqT/sum(ff$FreqT)
+
+# Parameters
+#
+# Mortality = 0.2 - 0.4
+# Mean Dispersal distance 25  -> Exponential kernel parm  0.04
+#                         2.5 -> 0.4
+# Colonization = 0.001 -0.0001
+# Replacement  = 0 - 1
+
+setwd("Simul")
+#undebug(genNeutralParms)
+# First generate de inp file with species and metacommunity parameters 
+genNeutralParms("fishE",500,ff$prob,1,0.2,0.04,0.001)
+
+# Then pomac.lin to simulate a range of parmeters and repetitions.
+#
+# Generates pomac.lin for multiple simulations exponential dispersal to compare hierarchical and neutral communities  
+# and see when they have similar H and compare if they have similar SAD
+
+genPomacParms("pomExp",1,c(0.2,0.4),c(0.04,0.4),c(0.001,0.0001),c(0,1))
+
+# we need the par file with the simulations parameters
+
+
+par <- read.table("sim.par",quote="",stringsAsFactors=F)
+# Change base name
+
+# Number of time steps 
+par[par$V1=="nEvals",]$V2 <- 100
+# Change interval to measure Density and Diversity
+par[par$V1=="inter",]$V2 <- 10
+par[par$V1=="modType",]$V2 <- 4 # Hierarchical saturated
+par[par$V1=="sa",]$V2 <- "S" # Save a snapshot of the model
+par[par$V1=="baseName",]$V2 <- paste0("Exp",nrow(ff))
+par[par$V1=="pomac",]$V2 <- 0 # 0:one set of parms 
+                              # 1:several simulations with pomac.lin parameters 
+
+
+write.table(par, "sim.par",sep="\t",row.names=F,col.names=F,quote=F)
+
+
+# Run the model with the parameter ReplacementRate turned on = Hierarchical 
+# and exponential dispersal 
+#
+# Set the location of the binary 
+neuBin <- "~/Dropbox/cpp/CaNew/Neutral/ipsNeutralExp"
+
+# copy pomExp.lin to pomac.lin
+system("cp pomExp.lin pomac.lin")
+
+# make simulations
+if(simul) system(paste(neuBin,"sim.par","fishE.inp"),wait=s_wait)
+
+
+```
+
+## Test: Simulations with Time 1-100 
+
+Now I will read the output generated from simulations (not from pomac) to test if the SAD are equal in time using Kolmogorov Smirnov test. These simulations have TIME as a variable
+
+
+```{r testRAD_KS,eval=FALSE, echo=F,message=F,warning=F}
+
+den <- read.delim("Simul/Exp467Density.txt")
+names(den)[1:5]<-c("GrowthRate","MortalityRate","DispersalDistance","ColonizationRate","ReplacementRate")
+  
+# from 7 to 473 there are species densities
+
+require(reshape2)
+
+# Put simpler names to variables to identify species
+names(den)[7:473]<-as.character(1:467)
+
+den1 <- melt(den,id.vars=c("Time"),measure.vars=c(7:473),variable.name="Species")
+
+# Kolmogorov-smirnov test for two distributions
+
+with(den1,ks.test(den1[Time==10 & value>0,]$value,den1[Time==100 & value>0,]$value))
+
+require(ggplot2)
+#den2<-with(den1,den1[Time==90 & value>0,])
+#den2 <- den2[order(den2$value),]
+#den2$Ord <- nrow(den2):1
+
+require(plyr)
+
+den2 <- ddply(den1,.(Time), function(x) { 
+  #tmp <- x[x$value>0,]
+  tmp <- x[order(x$value),]
+  tmp$Ord <- nrow(x):1
+  data.frame(tmp)
+  })
+den2 <- with(den2,den2[value>0 & (Time==10 | Time==100),])
+g <- ggplot(den2,aes(x=Ord,y=log(value),colour=as.character(Time))) + geom_line()
+g
+
+
+```
+
+Thus the SAD at Time=10 is not different from Time=100
+

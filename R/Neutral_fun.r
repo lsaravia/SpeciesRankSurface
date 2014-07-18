@@ -49,6 +49,20 @@ mergePairSAD <- function(eks, den1){
   
 }
 
+# Calculate Ranks for every parameter combination, for ggplot2  
+#
+calcRankSAD  <- function(den)
+{
+  require(plyr)
+  hh <- function(x) { 
+  x1 <- x[x$value>0,]
+  x1$parms <- paste(unique(x[,1:4]),collapse="_")
+  x1$Rank <- nrow(x1) - rank(x1$value) +1
+  return(x1)
+  }
+  ddply(den, .(MortalityRate,DispersalDistance,ColonizationRate,ReplacementRate),hh )
+}
+
 # pairwise KS test for all combinations of parameters in denl= density in long format
 # parameters are in columns 1:4
 # 
@@ -91,4 +105,124 @@ meltDensityOut_NT <- function(fname,num_sp){
   
   den1 <- melt(den,id.vars=c("MortalityRate","DispersalDistance","ColonizationRate","ReplacementRate"),measure.vars=c(7:473),variable.name="Species")
   
+}
+
+# Read simulation output and set variable names in wide format 
+#
+readWideDensityOut <- function(fname,num_sp){
+  den <- read.delim(fname)
+  names(den)[1:5]<-c("GrowthRate","MortalityRate","DispersalDistance","ColonizationRate","ReplacementRate")
+  return(den)
+}
+
+
+# Proportion of not different SAD at 0.05 Hommel adjusted level 
+#
+propNotDiffSAD <- function(mk) nrow(mk[mk$p.adjust>0.05,c(10:13,14:15)])/nrow(mk)
+
+# Proportion of not different SRS at 0.05 Hommel adjusted level 
+#
+propNotDiffSRS <- function(mk) nrow(mk[mk$adj.P.Value>0.05,])/nrow(mk)
+
+
+# Calculates Dq from a data.frame read from the output of neutral model 
+# auxiliar function for the next one
+#
+calcDq_frame <- function(pp)
+{
+  pp$Dq  <- with(pp,ifelse(q==1,alfa,Tau/(q-1)))
+  pp$SD.Dq  <- with(pp,ifelse(q==1,SD.alfa,abs(SD.Tau/(q-1))))
+  pp$R.Dq <- with(pp,ifelse(q==1,R.alfa,R.Tau))
+  return(pp[,c(1:6,15:17)])
+}              
+# Reads the output of multifractal spectra of neutral model
+# an calculates Dq 
+#
+readNeutral_calcDq <-function(fname)
+{
+  md1 <- read.table(fname,header=F,skip=1)
+  md1 <- md1[,c(2:16)]
+  names(md1)<-c("MortalityRate","DispersalDistance","ColonizationRate","ReplacementRate","Time","q","Tau","alfa","f(alfa)","R.Tau","R.alfa","R.f","SD.Tau","SD.alfa","SD.f")
+  
+  md1 <-calcDq_frame(md1)
+}
+
+
+# Read Dq output from neutral model and calculate pairwise differences 
+#
+# Dqf: data frame from readNeutral_calcDq 
+# qNumber: number of q used
+#
+compDq_frame <- function(Dqf,qNumber)
+{
+  if( !require(statmod) & !require(reshape2))
+    stop("required statmod and reshape2")
+  
+  # Subset for testing 
+  #
+  #Dqf <- with(Dqf,Dqf[MortalityRate==.2 & DispersalDistance==0.04 & ColonizationRate==0.001, ])
+  
+  # Set the number of repetitions using nrow and number of q  
+  # 
+  Dqf$rep <- rep( 1:(nrow(Dqf)/qNumber),each=qNumber)
+  
+  # Build variable for comparisons
+  Dqf$factor <- do.call(paste, c(Dqf[,1:4],sep="_"))
+    
+  # Prepare data.frame in wide format 
+  #
+  Dq2 <- melt(Dqf, id.vars=c("q","rep","factor"),measure.var="Dq")
+  Dq2 <- dcast(Dq2, factor+rep~ q)
+  
+  # Compare SRS curves
+  #
+  c2 <- compareGrowthCurves(Dq2$factor,Dq2[,3:37],nsim=1000)
+}
+
+# Plot Dq with fixed parameters except ReplacementRate
+#
+plotDq_ReplaceR <- function(Dqf,MortR,DispD,ColonR)
+{
+  require(plyr)
+  c3 <- with(Dqf,Dqf[MortalityRate==MortR & DispersalDistance==DispD & ColonizationRate==ColonR, ])
+  c3$factor <- do.call(paste, c(c3[,1:4],sep="_"))
+  c3 <- ddply(c3, .(factor,q), summarize, SD.Dq=sd(Dq),Dq=mean(Dq))
+
+  require(ggplot2)
+  gp <- ggplot(c3, aes(x=q, y=Dq, colour=factor)) +
+    geom_errorbar(aes(ymin=Dq-SD.Dq, ymax=Dq+SD.Dq), width=.1) +
+    geom_point() + theme_bw()
+  print(gp)
+
+}
+
+# Compare 2 communities
+#
+H_bss <- function (comm, R = 2000, index = "shannon") 
+{
+  if (length(rownames(comm)) > 2) 
+    stop("Please supply community of only 2 samples.\n\n")
+  require(vegan)
+  RT <- rowSums(comm)
+  DF <- sum(rowSums(comm > 0)) - 2
+  CT <- colSums(comm)
+  Hx <- as.numeric(diversity(comm, index = index))[1]
+  Hy <- as.numeric(diversity(comm, index = index))[2]
+  Ho <- abs(Hx - Hy)
+  Hb <- vector(mode = "numeric", length = R)
+  for (i in 1:R) {
+    Mb <- r2dtable(1, RT, CT)
+    Mb <- as.matrix(Mb[[1]])
+    Hd <- as.numeric(abs(diversity(Mb, index = index)[1] - 
+                           diversity(Mb, index = index)[2]))
+    Hb[i] <- Hd
+  }
+  Q <- quantile(Hb, c(0.025, 0.975))
+  Z <- abs((Ho - mean(Hb))/sd(Hb))
+  P <- mean(abs(Hb) > Ho)
+  Pz <- pt(Z, df = DF, lower.tail = FALSE) * 2
+  result <- list(H.orig = c(Hx, Hy), statistic = Ho, z.score = Z, 
+                 CI = Q, p.sim = P, p.z = Pz, df = DF, Index = index)
+  class(result) = "Hbss"
+  return(result)
 }
