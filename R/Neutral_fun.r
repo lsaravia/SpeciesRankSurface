@@ -36,15 +36,15 @@ genPomacParms <- function(fname,GrowthR,MortR,DispD,ColonR,ReplaceR,numRep=1)
 mergePairSAD <- function(eks, den1){
   # eks <- mks[61,]
   
-  den2 <-merge(den1,eks,by.x=c(1:4),by.y=c(2:5))[,1:6]
-  den2 <- den2[den2$value>0,]
-  den2$parms <-paste(eks[,2:5],collapse="_")
-  den2$Rank <- nrow(den2) - rank(den2$value) +1
+  den2 <-merge(den1,eks,by.x=c(1:4),by.y=c(1:4))[,1:6]
+  den2 <- den2[den2$den>0,]
+  den2$parms <-paste(eks[,1:4],collapse="_")
+  den2$Rank <- nrow(den2) - rank(den2$den) +1
   
-  den3 <-merge(den1,eks,by.x=c(1:4),by.y=c(6:9))[,1:6]
-  den3 <- den3[den3$value>0,]
-  den3$parms <-paste(eks[,6:9],collapse="_")
-  den3$Rank <- nrow(den3) - rank(den3$value) +1
+  den3 <-merge(den1,eks,by.x=c(1:4),by.y=c(5:8))[,1:6]
+  den3 <- den3[den3$den>0,]
+  den3$parms <-paste(eks[,5:8],collapse="_")
+  den3$Rank <- nrow(den3) - rank(den3$den) +1
   den2 <- rbind(den2,den3)
   
 }
@@ -79,9 +79,9 @@ pairKS_SAD <- function(denl){
     d1 <- merge(denl,p1)
     d2 <- merge(denl,p2)
     ks <- ks.test(d1$value,d2$value)
-    out <-data.frame(p1,p2,t(paste(p1,p2,sep="_")),p.value=ks$p.value,stringsAsFactors=F)
-    ln <-length(names(p1))*3
-    names(out)[1:ln]<-c(paste0(abbreviate(names(p1)),1),paste0(abbreviate(names(p1)),2),names(p1))
+    out <-data.frame(p1,p2,stat=ks$statistic,p.value=ks$p.value,stringsAsFactors=F)
+    ln <-length(names(p1))*2
+    names(out)[1:(ln)]<-c(paste0(abbreviate(names(p1)),1),paste0(abbreviate(names(p1)),2))
     return(out)      
   })
   mks$p.adjust <- p.adjust(mks$p.value, method="hommel")
@@ -118,7 +118,7 @@ readWideDensityOut <- function(fname,num_sp){
 
 # Proportion of not different SAD at 0.05 Hommel adjusted level 
 #
-propNotDiffSAD <- function(mk) nrow(mk[mk$p.adjust>0.05,c(10:13,14:15)])/nrow(mk)
+propNotDiffSAD <- function(mk) nrow(mk[mk$p.adjust>0.05,])/nrow(mk)
 
 # Proportion of not different SRS at 0.05 Hommel adjusted level 
 #
@@ -181,7 +181,7 @@ compDq_frame <- function(Dqf,qNumber)
 
 # Plot Dq with fixed parameters except ReplacementRate
 #
-plotDq_ReplaceR <- function(Dqf,MortR,DispD,ColonR)
+plotDq_ReplaceR <- function(Dqf,MortR,DispD,ColonR,tit="")
 {
   require(plyr)
   c3 <- with(Dqf,Dqf[MortalityRate==MortR & DispersalDistance==DispD & ColonizationRate==ColonR, ])
@@ -191,9 +191,95 @@ plotDq_ReplaceR <- function(Dqf,MortR,DispD,ColonR)
   require(ggplot2)
   gp <- ggplot(c3, aes(x=q, y=Dq, colour=factor)) +
     geom_errorbar(aes(ymin=Dq-SD.Dq, ymax=Dq+SD.Dq), width=.1) +
-    geom_point() + theme_bw()
+    geom_point() + theme_bw() + ggtitle(tit)
   print(gp)
 
+}
+
+compMethods_Time <- function(bName,Time,spMeta) 
+{
+  # Read all simulations and change to long format
+  fname <- paste0(bName,"T",Time,"Density.txt")
+
+  den1 <- meltDensityOut_NT(fname,spMeta)
+
+  # Select a subset to test the procedure !
+  #
+  den1 <- den1[den1$MortalityRate==.2 & den1$DispersalDistance==0.04 & den1$ColonizationRate==0.001, ]
+  
+  # have to make averages
+  require(plyr)
+  den2 <- ddply(den1,.(MortalityRate,DispersalDistance,ColonizationRate,ReplacementRate,Species),summarise,den=mean(value))
+
+  names(den2)[6] <- "value" # the functions use this field name
+
+
+
+  # Test pairwise diferences in SAD
+  #
+  mKS <- pairKS_SAD(den2)
+
+  # Build data.frame with proportions
+  #
+
+  compM <- data.frame(time=Time,notdif=propNotDiffSAD(mKS),method="SAD")
+
+  # Leer Dq SRS
+  #
+  fname <- paste0(bName,"T",Time,"mfOrd.txt")
+  Dq1 <- readNeutral_calcDq(fname)
+
+  # Subset for testing
+  Dq1 <- with(Dq1,Dq1[MortalityRate==.2 & DispersalDistance==0.04 & ColonizationRate==0.001, ])
+
+  # Testing pairwise differences
+  #
+  c2 <- compDq_frame(Dq1,35)
+
+  # Add to data.frame with proportions
+  #
+  compM <- rbind(compM, data.frame(time=Time,notdif=propNotDiffSRS(c2),method="SRS"))
+
+  # Build Data frame with complete set of p-values
+  #
+  c2$method <- "SRS"
+  c3 <- c2                    
+
+  #
+  # Leer Dq SAD
+  #
+  fname <- paste0(bName,"T",Time,"mfSAD.txt")
+  Dq1 <- readNeutral_calcDq(fname)
+
+  # Subset for testing
+  Dq1 <- with(Dq1,Dq1[MortalityRate==.2 & DispersalDistance==0.04 & ColonizationRate==0.001, ])
+
+  # Testing pairwise differences
+  #
+  c2 <- compDq_frame(Dq1,35)
+
+  # Add to data.frame with proportions
+  #
+  compM <- rbind(compM, data.frame(time=Time,notdif=propNotDiffSRS(c2),method="DqSAD"))
+
+  # Add to Data frame with complete set of p-values
+  #
+  c2$method <- "DqSAD"
+  c3 <- rbind(c3,c2)                    
+
+  # Change to match different data.frames
+  #
+  cc3 <- cbind(ldply(strsplit(as.character(c3$Group1),"_")),ldply(strsplit(as.character(c3$Group2),"_")))
+  nn3 <- abbreviate(names(Dq1)[1:4])
+  names(cc3) <- c(paste0(nn3,1),paste0(nn3,2))
+  cc3 <- cbind(cc3,c3)[,c(1:8,11:14)]
+  names(cc3)[9:11] <-c("stat","p.value","p.adjust")
+  mKS <- mKS[,2:12]
+  mKS$method <- "SAD"
+  c3 <- rbind(cc3,mKS)
+  
+  
+  return(list("compM"=compM,"mPval"=c3))
 }
 
 # Compare 2 communities

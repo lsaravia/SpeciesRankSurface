@@ -14,6 +14,9 @@ source("R/Neutral_fun.r")
 #
 neuBin <- "~/Dropbox/cpp/CaNew/Neutral/ipsNeutralExp"
 
+# Load data if run only one chunk 
+load(".RData")
+
 ```
 
 This is run only once to generate the metacommunity then set eval=FALSE and generate
@@ -39,6 +42,8 @@ plot(ff)
 nrow(ff)
 ff <- data.frame(sp="",FreqT=as.numeric(ff),prob=0,Ord=1:length(ff))
 ff$prob <- ff$FreqT/sum(ff$FreqT)
+
+spMeta <- nrow(ff)
 
 # Parameters
 #
@@ -102,7 +107,6 @@ Replacement = 0,0.001,0.01,0.1,1 and ten repetitions
 
 
 ```{r simul_pomac467_T100,echo=F,message=F,warning=F}
-
 setwd("Simul")
 
 spMeta <- 467 # nrow(ff) number of species in the generated metacommunity 
@@ -141,49 +145,42 @@ if(simul) {
   # copy pomExp.lin to pomac.lin
   system("cp pomExp.lin pomac.lin")
 
-
   system(paste(neuBin,"sim.par","fishE.inp"))
 }
 
-# Read all simulations and change to long format
+m <- compMethods_Time(bName,100,spMeta) 
+
+mks1 <- m$mPval
+mks1 <- mks1[mks1$method=="SAD",]
+
+# Which are not different
+format(mks1[mks1$p.adjust>0.05,],digits=4)
 
 den1 <- meltDensityOut_NT(paste0(bName,"T100Density.txt"),spMeta)
+# Select a subset to test the procedure !
+#
+den1 <- den1[den1$MortalityRate==.2 & den1$DispersalDistance==0.04 & den1$ColonizationRate==0.001, ]
 
-# have to make averages of 
 require(plyr)
 den2 <- ddply(den1,.(MortalityRate,DispersalDistance,ColonizationRate,ReplacementRate,Species),summarise,den=mean(value))
 
-names(den2)[6] <- "value" # the functions use this field name
-
-# Select a subset to test the procedure !
-#
-#den2 <- den2[den2$MortalityRate==.2 & den2$DispersalDistance==0.04 & den2$ColonizationRate==0.001, ]
-
-mks100 <- pairKS_SAD(den2)
-
-# Which are not different
-format(mks100[mks100$p.adjust>0.05,c(10:13,14:15)],digits=4)
-
-# which is the proportion of not different
-compM <- data.frame(time=100,notdif=propNotDiffSAD(mks100),method="SAD")  
-
-
 # Plot the first pairs not different 
 #
-mks <- mks100[mks100$p.adjust>0.05,]
+
+mks <- mks1[mks1$p.adjust>0.05,]
 psa <- mergePairSAD(mks[1,],den2)
 
 require(ggplot2)
 
-(g <- ggplot(psa,aes(x=Rank,y=log(value),colour=parms)) + geom_line())
-
+(g <- ggplot(psa,aes(x=Rank,y=log(den),colour=parms)) + geom_line() + ggtitle("SAD not dif"))
 
 
 # Plot the first pair different 
 #
-mks <- mks100[mks100$p.adjust<=0.05,]
+mks <- mks1[mks1$p.adjust<=0.05,]
 psa <- mergePairSAD(mks[1,],den2)
-(g <- ggplot(psa,aes(x=Rank,y=log(value),colour=parms)) + geom_line())
+(g <- ggplot(psa,aes(x=Rank,y=log(den),colour=parms)) + geom_line()
+ + ggtitle("SAD different"))
 
 
 # Calculate ranks for each parameter combination with different ReplacementRate
@@ -194,7 +191,7 @@ den3 <- calcRankSAD(den2)
 (g <- ggplot(den3,aes(x=Rank,y=log(value),colour=parms)) + geom_line())
 
 
-rm(mks,psa,den1,den2,den3)
+rm(mks,psa)
 
 #
 # Now check differences using multifractals mfSAD o mfSRS
@@ -204,73 +201,60 @@ rm(mks,psa,den1,den2,den3)
 #
 Dq1 <- readNeutral_calcDq(paste0(bName,"T100mfOrd.txt"))
 
-#Dq1 <- with(Dq1,Dq1[MortalityRate==.2 & DispersalDistance==0.04 & ColonizationRate==0.001, ])
-
-# Testing pairwise differences
-#
-c2 <- compDq_frame(Dq1,35)
-
-compM <- rbind(compM, data.frame(time=100,notdif=propNotDiffSRS(c2),method="SRS"))
-
-#c3 <- melt(Dq2, id.vars=c("factor","rep"), measure=c(3:37),variable="q",value.name="Dq")
-
-c3 <- c2
-c3$method <- "SRS"
-
-
 # Plot Dq with differente replacementRate!!!!!!!!!!!!!!!!!!!!!!!!!!
 #
 
-plotDq_ReplaceR(Dq1,0.2,0.04,0.0001)
-plotDq_ReplaceR(Dq1,0.2,0.4,0.001)
-plotDq_ReplaceR(Dq1,0.2,0.04,0.001)
+plotDq_ReplaceR(Dq1,0.2,0.04,0.0001, "SRS")
+plotDq_ReplaceR(Dq1,0.2,0.4,0.001, "SRS")
+plotDq_ReplaceR(Dq1,0.2,0.04,0.001, "SRS")
+
+mks1 <- m$mPval
+mks1 <- mks1[mks1$method=="SRS",]
+
+mks <- mks1[mks1$p.adjust<=0.05,]
+# NO FUNCIONA MERGE
+#psa <- mergePairSAD(mks[1,],Dq1)
+
 #
 #
 # Leer Dq SAD
 #
 Dq1 <- readNeutral_calcDq(paste0(bName,"T100mfSAD.txt"))
 
-#Dq1 <- with(Dq1,Dq1[MortalityRate==.2 & DispersalDistance==0.04 & ColonizationRate==0.001, ])
-
-# Testing pairwise differences
-#
-c2 <- compDq_frame(Dq1,35)
-
-# Build data.frame with proportion
-#
-compM <- rbind(compM, data.frame(time=100,notdif=propNotDiffSRS(c2),method="DqSAD"))
-
-
-
-c2$method <- "DqSAD"
-c3 <- rbind(c3,c2)                    
-
-#c3 <- melt(Dq2, id.vars=c("factor","rep"), measure=c(3:37),variable="q",value.name="Dq")
-
-plotDq_ReplaceR(Dq1,0.2,0.04,0.001)
-plotDq_ReplaceR(Dq1,0.2,0.4,0.001)
-plotDq_ReplaceR(Dq1,0.2,0.04,0.0001)
+plotDq_ReplaceR(Dq1,0.2,0.04,0.001,"DqSAD")
+plotDq_ReplaceR(Dq1,0.2,0.4,0.001,"DqSAD")
+plotDq_ReplaceR(Dq1,0.2,0.04,0.0001,"DqSAD")
 
 # Revisar R2 y validez de rangos porque para q positivos da creciente!!!!
 
-kable(compM)
+compM
+
+m$compM
+
+compM <- m$compM
+
+mPval <- m$mPval
+
 
 setwd(oldcd)
-rm(c1,c2,Dq2)
+rm(c1,c2,Dq2,Dq1)
 rm(den1,den)
 save.image()
+
 ```
 
-# Simulations at T=500
+## Simulations at Time=500
 
-```{r simul_pomac467_T500, eval=FALSE,echo=F,message=F,warning=F }
+
+```{r simul_pomac467_T500, eval=T,echo=F,message=F,warning=F }
 
 setwd("Simul")
 
 # read par file with simulations parameters
 if(simul)
 {
-  system("rm Exp467T100*")
+  # Delete old simulations
+  system("rm Exp467T500*")
     
   par <- read.table("sim.par",quote="",stringsAsFactors=F)
   
@@ -280,7 +264,7 @@ if(simul)
   par[par$V1=="init",]$V2 <- 500  # Firs time of measurement = interval
   par[par$V1=="modType",]$V2 <- 4 # Hierarchical saturated
   par[par$V1=="sa",]$V2 <- "N" # Save a snapshot of the model
-  par[par$V1=="baseName",]$V2 <- paste0("Exp",nrow(ff),"T500")
+  par[par$V1=="baseName",]$V2 <- paste0("Exp",spMeta,"T500")
   par[par$V1=="pomac",]$V2 <- 1 # 0:one set of parms 
                                 # 1:several simulations with pomac.lin parameters 
   
@@ -291,122 +275,21 @@ if(simul)
   
   # I have to modify pomExp.lin to make different simulations
   
-  genPomacParms("pomExp",1,c(0.2,0.4),c(0.04,0.4),c(0.001,0.0001),c(0,0.01,0.1,1))
+  genPomacParms("pomExp",1,c(0.2,0.4),c(0.04,0.4),c(0.001,0.0001),c(0,0.001,0.01,0.1,1),10)
   
   # copy pomExp.lin to pomac.lin
   system("cp pomExp.lin pomac.lin")
   
   s <- paste(neuBin,"sim.par","fishE.inp")
   s
-  system(s)
+  system(s,wait=F)
 }
 
-# Read all simulations and change to long format
+m <- compMethods_Time(bName,500,spMeta) 
 
-den1 <- meltDensityOut_NT(paste0(bName,"T500Density.txt"),spMeta)
+compM <- rbind(compM,m$compM)
 
-# have to make averages of 
-require(plyr)
-den2 <- ddply(den1,.(MortalityRate,DispersalDistance,ColonizationRate,ReplacementRate,Species),summarise,den=mean(value))
-
-names(den2)[6] <- "value" # the functions use this field name
-
-# Test pairwise diferences in SAD
-#
-mks100 <- pairKS_SAD(den2)
-
-# Which are not different
-format(mks100[mks100$p.adjust>0.05,c(10:13,14:15)],digits=4)
-
-# which is the proportion of not different
-compM <- rbind(compM, data.frame(time=500,notdif=propNotDiffSAD(mks100),method="SAD"))  
-
-
-# Plot the first pairs not different 
-#
-mks <- mks100[mks100$p.adjust>0.05,]
-psa <- mergePairSAD(mks[1,],den2)
-
-require(ggplot2)
-
-(g <- ggplot(psa,aes(x=Rank,y=log(value),colour=parms)) + geom_line())
-
-
-
-# Plot the first pair different 
-#
-mks <- mks100[mks100$p.adjust<=0.05,]
-psa <- mergePairSAD(mks[1,],den2)
-(g <- ggplot(psa,aes(x=Rank,y=log(value),colour=parms)) + geom_line())
-
-
-# Calculate ranks for each parameter combination with different ReplacementRate
-#
-den2 <- den2[den2$MortalityRate==.2 & den2$DispersalDistance==0.04 & den2$ColonizationRate==0.001, ]
-den3 <- calcRankSAD(den2)
-
-(g <- ggplot(den3,aes(x=Rank,y=log(value),colour=parms)) + geom_line())
-
-
-rm(mks,psa,den1,den2,den3)
-
-#
-# Now check differences using multifractals mfSAD o mfSRS
-#
-
-# Leer Dq SRS
-#
-Dq1 <- readNeutral_calcDq(paste0(bName,"T500mfOrd.txt"))
-
-#Dq1 <- with(Dq1,Dq1[MortalityRate==.2 & DispersalDistance==0.04 & ColonizationRate==0.001, ])
-
-# Testing pairwise differences
-#
-c2 <- compDq_frame(Dq1,35)
-
-compM <- rbind(compM, data.frame(time=500,notdif=propNotDiffSRS(c2),method="SRS"))
-
-#c3 <- melt(Dq2, id.vars=c("factor","rep"), measure=c(3:37),variable="q",value.name="Dq")
-
-c2$method <- "SRS"
-c3 <- rbind(c3,c2)                    
-
-
-# Plot Dq with differente replacementRate!!!!!!!!!!!!!!!!!!!!!!!!!!
-#
-
-plotDq_ReplaceR(Dq1,0.2,0.04,0.0001)
-plotDq_ReplaceR(Dq1,0.2,0.4,0.001)
-plotDq_ReplaceR(Dq1,0.2,0.04,0.001)
-#
-#
-# Leer Dq SAD
-#
-Dq1 <- readNeutral_calcDq(paste0(bName,"T500mfSAD.txt"))
-
-#Dq1 <- with(Dq1,Dq1[MortalityRate==.2 & DispersalDistance==0.04 & ColonizationRate==0.001, ])
-
-# Testing pairwise differences
-#
-c2 <- compDq_frame(Dq1,35)
-
-# Build data.frame with proportion
-#
-compM <- rbind(compM, data.frame(time=500,notdif=propNotDiffSRS(c2),method="DqSAD"))
-
-
-c2$method <- "DqSAD"
-c3 <- rbind(c3,c2)                    
-
-#c3 <- melt(Dq2, id.vars=c("factor","rep"), measure=c(3:37),variable="q",value.name="Dq")
-
-plotDq_ReplaceR(Dq1,0.2,0.04,0.001)
-plotDq_ReplaceR(Dq1,0.2,0.4,0.001)
-plotDq_ReplaceR(Dq1,0.2,0.04,0.0001)
-
-# Revisar R2 y validez de rangos porque para q positivos da creciente!!!!
-
-kable(compM)
+mPval <- rbind(mPval,m$mPval)
 
 setwd(oldcd)
 rm(c1,c2,Dq2)
