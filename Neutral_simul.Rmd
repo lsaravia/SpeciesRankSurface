@@ -14,8 +14,9 @@ source("R/Neutral_fun.r")
 #
 neuBin <- "~/Dropbox/cpp/CaNew/Neutral/ipsNeutralExp"
 
-# Load data if run only one chunk 
-load(".RData")
+
+require(pander)
+panderOptions('table.split.table',Inf)
 
 ```
 
@@ -106,7 +107,7 @@ Now I will simulate the model to Time=100 with a full set of parameters
 Replacement = 0,0.001,0.01,0.1,1 and ten repetitions 
 
 
-```{r simul_pomac467_T100,echo=F,message=F,warning=F}
+```{r simul_pomac467_T100, eval=T,echo=F,message=F,warning=F}
 setwd("Simul")
 
 spMeta <- 467 # nrow(ff) number of species in the generated metacommunity 
@@ -154,12 +155,12 @@ mks1 <- m$mPval
 mks1 <- mks1[mks1$method=="SAD",]
 
 # Which are not different
-format(mks1[mks1$p.adjust>0.05,],digits=4)
+pander(mks1[mks1$p.adjust>0.05,],caption="SAD not different")
 
 den1 <- meltDensityOut_NT(paste0(bName,"T100Density.txt"),spMeta)
 # Select a subset to test the procedure !
 #
-den1 <- den1[den1$MortalityRate==.2 & den1$DispersalDistance==0.04 & den1$ColonizationRate==0.001, ]
+#den1 <- den1[den1$MortalityRate==.2 & den1$DispersalDistance==0.04 & den1$ColonizationRate==0.001, ]
 
 require(plyr)
 den2 <- ddply(den1,.(MortalityRate,DispersalDistance,ColonizationRate,ReplacementRate,Species),summarise,den=mean(value))
@@ -191,7 +192,7 @@ den3 <- calcRankSAD(den2)
 (g <- ggplot(den3,aes(x=Rank,y=log(value),colour=parms)) + geom_line())
 
 
-rm(mks,psa)
+rm(mks,psa,den2,den3)
 
 #
 # Now check differences using multifractals mfSAD o mfSRS
@@ -209,9 +210,9 @@ plotDq_ReplaceR(Dq1,0.2,0.4,0.001, "SRS")
 plotDq_ReplaceR(Dq1,0.2,0.04,0.001, "SRS")
 
 mks1 <- m$mPval
-mks1 <- mks1[mks1$method=="SRS",]
+mks1 <- mks1[mks1$method=="SRS" & mks1$p.adjust>0.05,]
+pander(mks1,split.tables=Inf,caption="SRS not different")
 
-mks <- mks1[mks1$p.adjust<=0.05,]
 # NO FUNCIONA MERGE
 #psa <- mergePairSAD(mks[1,],Dq1)
 
@@ -225,11 +226,13 @@ plotDq_ReplaceR(Dq1,0.2,0.04,0.001,"DqSAD")
 plotDq_ReplaceR(Dq1,0.2,0.4,0.001,"DqSAD")
 plotDq_ReplaceR(Dq1,0.2,0.04,0.0001,"DqSAD")
 
+
+mks1 <- m$mPval
+mks1 <- mks1[mks1$method=="DqSAD" & mks1$p.adjust>0.05,]
+pander(mks1,caption="DqSAD not different")
+
+
 # Revisar R2 y validez de rangos porque para q positivos da creciente!!!!
-
-compM
-
-m$compM
 
 compM <- m$compM
 
@@ -238,7 +241,7 @@ mPval <- m$mPval
 
 setwd(oldcd)
 rm(c1,c2,Dq2,Dq1)
-rm(den1,den)
+rm(den1,den,mks1,mks,mks100)
 save.image()
 
 ```
@@ -285,100 +288,179 @@ if(simul)
   system(s,wait=F)
 }
 
-m <- compMethods_Time(bName,500,spMeta) 
+m <- compMethods_Time(bName,1000,spMeta) 
+
 
 compM <- rbind(compM,m$compM)
 
+pander(compM,caption="Proportion of not different")
+
+
+mks1 <- m$mPval
+mks1 <- mks1[mks1$method=="DqSAD" & mks1$p.adjust>0.05,]
+pander(mks1,caption="DqSAD not different T=1000")
+
+Dq1 <- readNeutral_calcDq(paste0(bName,"T1000mfSAD.txt"))
+
+mergePair_plotDq(mks1[1,],Dq1,"DqSAD not different T=1000")
+
+
 mPval <- rbind(mPval,m$mPval)
 
+mks1 <- mPval[mPval$method=="DqSAD" & mPval$p.adjust>0.05,]
+
+
 setwd(oldcd)
-rm(c1,c2,Dq2)
-rm(den1,den)
+rm(m,mks1)
 save.image()
 
 ```
 
 Now the same set of simulations for T=1000
 
-```{r simul_pomac467_T1000, eval=FALSE,echo=F,message=F,warning=F}
+```{r simul_pomac467_T1000, eval=T,echo=F,message=F,warning=F}
+
+# Load data if run only one chunk 
+#load(".RData")
+
 setwd("Simul")
 
-# read par file with simulations parameters
+if(simul)
+{
+  # Delete old simulations
+  system("rm Exp467T1000*")
+    
+  # read par file with simulations parameters
 
-par <- read.table("sim.par",quote="",stringsAsFactors=F)
+  par <- read.table("sim.par",quote="",stringsAsFactors=F)
 
-# Number of time steps 
-par[par$V1=="nEvals",]$V2 <- 1000
-par[par$V1=="inter",]$V2 <- 1000 # interval to measure Density and Diversity
-par[par$V1=="init",]$V2 <- 1000  # Firs time of measurement = interval
-par[par$V1=="modType",]$V2 <- 4 # Hierarchical saturated
-par[par$V1=="sa",]$V2 <- "N" # Save a snapshot of the model
-par[par$V1=="baseName",]$V2 <- paste0("Exp",nrow(ff),"T1000")
-par[par$V1=="pomac",]$V2 <- 1 # 0:one set of parms 
-                              # 1:several simulations with pomac.lin parameters 
+  # Number of time steps 
+  par[par$V1=="nEvals",]$V2 <- 1000
+  par[par$V1=="inter",]$V2 <- 1000 # interval to measure Density and Diversity
+  par[par$V1=="init",]$V2 <- 1000  # Firs time of measurement = interval
+  par[par$V1=="modType",]$V2 <- 4 # Hierarchical saturated
+  par[par$V1=="sa",]$V2 <- "N" # Save a snapshot of the model
+  par[par$V1=="baseName",]$V2 <- paste0("Exp",spMeta,"T1000")
+  par[par$V1=="pomac",]$V2 <- 1 # 0:one set of parms 
+                                # 1:several simulations with pomac.lin parameters 
 
-write.table(par, "sim.par",sep="\t",row.names=F,col.names=F,quote=F)
+  write.table(par, "sim.par",sep="\t",row.names=F,col.names=F,quote=F)
 
-# I will not delete old simulations
-# system("rm Exp467*")
+  # I have to modify pomExp.lin to make different simulations
 
-# I have to modify pomExp.lin to make different simulations
+  genPomacParms("pomExp",1,c(0.2,0.4),c(0.04,0.4),c(0.001,0.0001),c(0,0.001,0.01,0.1,1),10)
 
-genPomacParms("pomExp",1,c(0.2,0.4),c(0.04,0.4),c(0.001,0.0001),c(0,0.01,0.1,1))
+  # copy pomExp.lin to pomac.lin
+  system("cp pomExp.lin pomac.lin")
 
-# copy pomExp.lin to pomac.lin
-system("cp pomExp.lin pomac.lin")
+  s <- paste(neuBin,"sim.par","fishE.inp")
+  s
+  if(simul) system(s,wait=F)
+}
 
-s <- paste(neuBin,"sim.par","fishE.inp")
-s
-if(simul) system(s,wait=s_wait)
+m <- compMethods_Time(bName,1000,spMeta) 
 
-den1 <- meltDensityOut_NT("Exp467T1000Density.txt",nrow(ff))
+compM <- rbind(compM,m$compM)
 
-mks1000 <- pairKS_SAD(den1)
-
-# Which are not different
-format(mks1000[mks1000$p.adjust>0.05,c(10:13,14:15)],digits=4)
-
-# which is the proportion of not different
-nrow(mks1000[mks1000$p.adjust>0.05,c(10:13,14:15)])/nrow(mks1000)
+pander(compM,caption="Proportion of not different")
 
 
-propNotDiffSAD(mks100)  
-propNotDiffSAD(mks500)  
-propNotDiffSAD(mks1000)  
+mks1 <- m$mPval
+mks1 <- mks1[mks1$method=="DqSAD" & mks1$p.adjust>0.05,]
+pander(mks1,caption="DqSAD not different T500")
+
+mPval <- rbind(mPval,m$mPval)
+
+setwd(oldcd)
+rm(m,mks1)
+save.image()
+
+
 ``` 
 
 The the proportion of different SAD is constant from T=500 it seems we reach steady state. I have to compare now using H and Dq, for that I should do repeated simulations
 of each combination.
 
-```{r boot_H_pomac467_T500,eval=FALSE,echo=F,message=F,warning=F}
+```{r plot_Time_pomac467,eval=T,echo=F,message=F,warning=F}
 
 setwd("Simul")
 
-require(plyr)
-require(boot)
-require(vegan)
+# Plot different SAD with time
 
-# den <- readWideDensityOut("Exp467T100Density.txt")
-num_sp <- nrow(ff)
-# how to apply a function to each row of a data frame
-hh <- function(x) diversity(x[7:(6+num_sp)])
-H <- apply(den,1,hh)
+# Plot different Dq SRS with time
 
-#H <- lapply(den,function(x) diversity(x[7:(6+num_sp)]))
-#ldply(H)
-# data.frame(colembolos = rowSums(spe[,1:5]), acaros=rowSums(spe[,6:33]),lombrices=rowSums(spe[,34:41]))
-den[c(1,7),c("H","Richness")]
-den[c(2,4),c("H","Richness")]
+Dq1 <- readNeutral_calcDq(paste0(bName,"T100mfOrd.txt"))
+Dq1 <- rbind(Dq1,readNeutral_calcDq(paste0(bName,"T500mfOrd.txt")))
+Dq1 <- rbind(Dq1,readNeutral_calcDq(paste0(bName,"T1000mfOrd.txt")))
 
-difh <- den[c(2,4),7:(6+num_sp)]*(500*500)
-difh <- H_bss(difh)
+mks1 <- mPval[mPval$method=="SRS" & mPval$p.adjust>0.05,]
 
-print(difh)
-summary(difh)
+mergePair_plotDq(mks1[1,],Dq1,"SRS not different")
 
-ciH <-ddply(s_col,.(Ambiente),function(df) boot_shannon(df[,1:5]) )
+mks1 <- mPval[mPval$method=="SRS" & mPval$p.adjust<=0.05,]
+
+mergePair_plotDq(mks1[4,],Dq1,"SRS different")
+
+
+# Plot different Dq SAD with time
+
+
+Dq1 <- readNeutral_calcDq(paste0(bName,"T100mfSAD.txt"))
+Dq1 <- rbind(Dq1,readNeutral_calcDq(paste0(bName,"T500mfSAD.txt")))
+Dq1 <- rbind(Dq1,readNeutral_calcDq(paste0(bName,"T1000mfSAD.txt")))
+
+mks1 <- mPval[mPval$method=="DqSAD" & mPval$p.adjust>0.05,]
+
+mergePair_plotDq(mks1[1,],Dq1,"DqSAD not different")
+
+mks1 <- mPval[mPval$method=="DqSAD" & mPval$p.adjust<=0.05,]
+
+mergePair_plotDq(mks1[4,],Dq1,"DqSAD different")
+
+
+
+setwd(oldcd)
+
+```
+
+```{r compKS_pomac467,eval=T,echo=F,message=F,warning=F}
+source("R/Neutral_fun.r")
+
+setwd("Simul")
+
+m <- compMethod_DqKS_Time(bName,100,spMeta) 
+
+compM <- rbind(compM,m$compM)
+
+pander(compM,caption="Proportion of not different")
+
+mPval <- rbind(mPval,m$mPval)
+
+
+m <- compMethod_DqKS_Time(bName,500,spMeta) 
+compM <- rbind(compM,m$compM)
+pander(compM,caption="Proportion of not different")
+mPval <- rbind(mPval,m$mPval)
+
+
+m <- compMethod_DqKS_Time(bName,1000,spMeta) 
+compM <- rbind(compM,m$compM)
+pander(compM,caption="Proportion of not different")
+mPval <- rbind(mPval,m$mPval)
+
+setwd(oldcd)
+
+rm(m)
+
+compM
+
+save.image()
+
+names(mPval)
+unique(mPval$method)
+m <- with(mPval,mPval[method=="DqSADKS" & time==100,])
+propNotDiffSAD(m)
+
 
 
 ```

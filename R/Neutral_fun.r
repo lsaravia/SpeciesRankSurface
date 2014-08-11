@@ -88,6 +88,66 @@ pairKS_SAD <- function(denl){
   return(mks)
 }
 
+# pairwise KS test for Dq of all combinations of variable rep
+# 
+#
+pairKS_DqByRep <- function(Dq,rep){
+  
+  parms <- unique(rep)
+  combo <- combn(parms,2)
+  hh <- function(x) {
+    p1 <- x[1]
+    p2 <- x[2]
+    d1 <- Dq[rep==p1]
+    d2 <- Dq[rep==p2]
+    ks <- ks.test(d1,d2)
+    out <-data.frame(p1,p2,stat=ks$statistic,p.value=ks$p.value,stringsAsFactors=F)
+    #  ln <-length(names(p1))*2
+    #  names(out)[1:(ln)]<-c(paste0(abbreviate(names(p1)),1),paste0(abbreviate(names(p1)),2))
+    return(out)      
+  }
+  
+  require(plyr)
+  mks <-adply(combo,2, hh)
+  mks$p.adjust <- p.adjust(mks$p.value, method="hommel")
+  return(mks[,2:ncol(mks)])
+}
+
+# pairwise KS test for Dq of all combinations parameters 
+# 
+# dql: data frame with Dq and in columns 1:4 of dql parameter
+# numq: number of repetitions for each parameter combination, if >1 selects one of
+# de repetitions to do the comparison.
+#
+pairKS_Dq <- function(dql,numq=1){
+  
+  require(plyr)
+
+  parms <- unique(dql[,1:4])
+  combo <- combn(nrow(parms),2)
+
+  if( numq>1){
+    dql <- ddply(dql,.(MortalityRate,DispersalDistance,ColonizationRate,ReplacementRate),
+    function(x) { n <- nrow(x)/35
+                  rp <- rep( 1:n,each=35)
+                  return(x[rp==sample(n,1),])}
+                  )
+  }
+  
+  mks <-adply(combo,2, function(x) {
+    p1 <- parms[x[1],]
+    p2 <- parms[x[2],]
+    d1 <- merge(dql,p1)
+    d2 <- merge(dql,p2)
+    ks <- ks.test(d1$Dq,d2$Dq)
+    out <-data.frame(p1,p2,stat=ks$statistic,p.value=ks$p.value,stringsAsFactors=F)
+    ln <-length(names(p1))*2
+    names(out)[1:(ln)]<-c(paste0(abbreviate(names(p1)),1),paste0(abbreviate(names(p1)),2))
+    return(out)      
+  })
+  mks$p.adjust <- p.adjust(mks$p.value, method="hommel")
+  return(mks)
+}
 
 
 
@@ -133,7 +193,8 @@ calcDq_frame <- function(pp)
   pp$Dq  <- with(pp,ifelse(q==1,alfa,Tau/(q-1)))
   pp$SD.Dq  <- with(pp,ifelse(q==1,SD.alfa,abs(SD.Tau/(q-1))))
   pp$R.Dq <- with(pp,ifelse(q==1,R.alfa,R.Tau))
-  return(pp[,c(1:6,15:17)])
+  nc <- ncol(pp)
+  return(pp[,c(1:6,(nc-2):nc)])
 }              
 # Reads the output of multifractal spectra of neutral model
 # an calculates Dq 
@@ -180,6 +241,7 @@ compDq_frame <- function(Dqf,qNumber)
 }
 
 # Plot Dq with fixed parameters except ReplacementRate
+# Calculate SD from repeated simulations
 #
 plotDq_ReplaceR <- function(Dqf,MortR,DispD,ColonR,tit="")
 {
@@ -196,6 +258,89 @@ plotDq_ReplaceR <- function(Dqf,MortR,DispD,ColonR,tit="")
 
 }
 
+sel_ReplaceR <- function(Dqf,MortR,DispD,ColonR,RepR) with(Dqf,Dqf[MortalityRate==MortR & DispersalDistance==DispD 
+                                                                   & ColonizationRate==ColonR & ReplacementRate==RepR , ])
+# Plot Dq by factor "grp" shows SD from data.frame
+#
+plotDq <- function(Dq1,grp) 
+  {
+  require(ggplot2)
+  print(gp <- ggplot(Dq1, aes_string(x="q", y="Dq", colour=grp)) +
+          geom_errorbar(aes(ymin=Dq-SD.Dq, ymax=Dq+SD.Dq), width=.1) +
+          geom_point() + theme_bw()) 
+  }
+
+
+mergePair_plotDq <- function(eks, Dqf,tit="")
+{
+  den2 <-merge(Dqf,eks,by.x=c(1:4),by.y=c(1:4))[1:9]
+  den2$parms <-paste(eks[,1:4],collapse="_")
+  
+  den3 <-merge(Dqf,eks,by.x=c(1:4),by.y=c(5:8))[1:9]
+  den3$parms <-paste(eks[,5:8],collapse="_")
+  den2 <- rbind(den2,den3)
+
+  require(plyr)
+  require(ggplot2)
+  if(length(unique(den2$Time))>1)
+  {
+    den2 <- ddply(den2, .(parms,Time,q), summarize, SD.Dq=sd(Dq),Dq=mean(Dq))
+
+    gp <- ggplot(den2, aes(x=q, y=Dq, colour=parms)) +
+      geom_errorbar(aes(ymin=Dq-SD.Dq, ymax=Dq+SD.Dq), width=.1) +
+      geom_point() + theme_bw() + ggtitle(tit) +
+      facet_wrap(~ Time)
+
+  } else {
+    den2 <- ddply(den2, .(parms,q), summarize, SD.Dq=sd(Dq),Dq=mean(Dq))
+
+    gp <- ggplot(den2, aes(x=q, y=Dq, colour=parms)) +
+      geom_errorbar(aes(ymin=Dq-SD.Dq, ymax=Dq+SD.Dq), width=.1) +
+      geom_point() + theme_bw() + ggtitle(tit)
+
+  }
+  print(gp)
+  return(gp)
+} 
+
+compMethod_DqKS_Time <- function(bName,Time,spMeta) 
+{
+  # Read all simulations and change to long format
+  fname <- paste0(bName,"T",Time,"mfOrd.txt")
+  Dq1 <- readNeutral_calcDq(fname)
+
+  # Subset for testing 
+  #
+  #Dq1 <- with(Dq1,Dq1[MortalityRate==.2 & DispersalDistance==0.04 & ColonizationRate==0.001, ])
+  
+  # Testing pairwise differences
+  #
+  mKS <- pairKS_Dq(Dq1,35)
+  mKS <- mKS[,2:12]
+  mKS$method <- "SRSKS"
+  compM <- data.frame(time=Time,notdif=propNotDiffSAD(mKS),method="SRSKS")
+
+  # Read all simulations and change to long format
+  fname <- paste0(bName,"T",Time,"mfSAD.txt")
+  Dq1 <- readNeutral_calcDq(fname)
+  #Dq1 <- with(Dq1,Dq1[MortalityRate==.2 & DispersalDistance==0.04 & ColonizationRate==0.001, ])
+
+  # Testing pairwise differences
+  #
+  mK1 <- pairKS_Dq(Dq1,35)
+  mK1 <- mK1[,2:12]
+  mK1$method <- "DqSADKS"
+  # Add to data.frame with proportions
+  #
+  compM <- rbind(compM, data.frame(time=Time,notdif=propNotDiffSAD(mK1),method="DqSADKS"))
+
+  mKS <- rbind(mKS,mK1)
+  mkS$time <- Time
+  
+  return(list("compM"=compM,"mPval"=mKS))
+}
+
+
 compMethods_Time <- function(bName,Time,spMeta) 
 {
   # Read all simulations and change to long format
@@ -205,7 +350,7 @@ compMethods_Time <- function(bName,Time,spMeta)
 
   # Select a subset to test the procedure !
   #
-  den1 <- den1[den1$MortalityRate==.2 & den1$DispersalDistance==0.04 & den1$ColonizationRate==0.001, ]
+  #den1 <- den1[den1$MortalityRate==.2 & den1$DispersalDistance==0.04 & den1$ColonizationRate==0.001, ]
   
   # have to make averages
   require(plyr)
@@ -230,7 +375,7 @@ compMethods_Time <- function(bName,Time,spMeta)
   Dq1 <- readNeutral_calcDq(fname)
 
   # Subset for testing
-  Dq1 <- with(Dq1,Dq1[MortalityRate==.2 & DispersalDistance==0.04 & ColonizationRate==0.001, ])
+  #Dq1 <- with(Dq1,Dq1[MortalityRate==.2 & DispersalDistance==0.04 & ColonizationRate==0.001, ])
 
   # Testing pairwise differences
   #
@@ -252,7 +397,7 @@ compMethods_Time <- function(bName,Time,spMeta)
   Dq1 <- readNeutral_calcDq(fname)
 
   # Subset for testing
-  Dq1 <- with(Dq1,Dq1[MortalityRate==.2 & DispersalDistance==0.04 & ColonizationRate==0.001, ])
+  #Dq1 <- with(Dq1,Dq1[MortalityRate==.2 & DispersalDistance==0.04 & ColonizationRate==0.001, ])
 
   # Testing pairwise differences
   #
@@ -277,9 +422,51 @@ compMethods_Time <- function(bName,Time,spMeta)
   mKS <- mKS[,2:12]
   mKS$method <- "SAD"
   c3 <- rbind(cc3,mKS)
-  
+  c3$time <- Time
   
   return(list("compM"=compM,"mPval"=c3))
+}
+
+# Read a sed file in a matrix
+#
+# fname: file name of the sed file
+#
+read_sed <- function(fname)
+{
+  per <-data.matrix(read.table(fname, skip=2,header=F))
+}
+
+# Function to plot Dq fit from t* files generated by mfSBA 
+# 
+# fname: file name of the t.inputFile
+# qname: file name of the q sed file used
+#
+plotDqFit <- function(fname,qname)
+{
+  zq <- read.table(fname, sep="\t",header=T)
+  cna <- read_sed(qname)
+  q <-t(cna)
+  zq0 <- reshape(zq, timevar="q",times=q,v.names=c("logTr"),
+                 varying=list(3:length(names(zq))),
+                 direction="long")
+  library(lattice)
+  zq1 <- subset(zq0, q==1 | q==2 | q==3 | q==4 | q==5 | q==0 | q==-1 | q==-2 | q==-3 | q==-4 | q==-5 )
+
+#  oname <- paste("lsaravia_figS_W",sem,"_",wnro,".tif",sep="")
+#  tiff(oname, width=4.86,height=4.86,units="in",res=600,compression=c("lzw"))
+  
+  trellis.par.set(superpose.symbol=list(pch=c(0,1,2,3,4,5,6,8,15,16,17)))
+  trellis.par.set(superpose.symbol=list(cex=c(rep(0.6,11))))
+  trellis.par.set(superpose.line=list(lty=3))
+  
+  #show.settings()
+  if(names(zq1)[2]=="LogBox") names(zq1)[2]<-"Log.Box"
+  print(xyplot(logTr~Log.Box , data =zq1, groups=q, type=c("r","p"), scales=list(tck=-1), 
+               #main=list(wtitle,cex=0.9),
+               auto.key=list(space = "right",title=expression(italic("q")),cex.title=.7, points=TRUE,cex=.7),
+               ylab=expression(italic(paste("log ",  Z[q](epsilon) ))) , xlab=expression(italic(paste("log ",epsilon)))  
+  ))
+#  dev.off()    
 }
 
 # Compare 2 communities
