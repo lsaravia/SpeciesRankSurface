@@ -107,7 +107,7 @@ Now I will simulate the model to Time=100 with a full set of parameters
 Replacement = 0,0.001,0.01,0.1,1 and ten repetitions 
 
 
-```{r simul_pomac467_T100, eval=T,echo=F,message=F,warning=F}
+```{r simul_pomac467_T100, eval=F,echo=F,message=F,warning=F}
 setwd("Simul")
 
 spMeta <- 467 # nrow(ff) number of species in the generated metacommunity 
@@ -155,7 +155,7 @@ mks1 <- m$mPval
 mks1 <- mks1[mks1$method=="SAD",]
 
 # Which are not different
-pander(mks1[mks1$p.adjust>0.05,],caption="SAD not different")
+#pander(mks1[mks1$p.adjust>0.05,],caption="SAD not different")
 
 den1 <- meltDensityOut_NT(paste0(bName,"T100Density.txt"),spMeta)
 # Select a subset to test the procedure !
@@ -192,7 +192,7 @@ den3 <- calcRankSAD(den2)
 (g <- ggplot(den3,aes(x=Rank,y=log(value),colour=parms)) + geom_line())
 
 
-rm(mks,psa,den2,den3)
+rm(mks,psa,den2)
 
 #
 # Now check differences using multifractals mfSAD o mfSRS
@@ -209,9 +209,9 @@ plotDq_ReplaceR(Dq1,0.2,0.04,0.0001, "SRS")
 plotDq_ReplaceR(Dq1,0.2,0.4,0.001, "SRS")
 plotDq_ReplaceR(Dq1,0.2,0.04,0.001, "SRS")
 
-mks1 <- m$mPval
-mks1 <- mks1[mks1$method=="SRS" & mks1$p.adjust>0.05,]
-pander(mks1,split.tables=Inf,caption="SRS not different")
+#mks1 <- m$mPval
+#mks1 <- mks1[mks1$method=="SRS" & mks1$p.adjust>0.05,]
+#pander(mks1,split.tables=Inf,caption="SRS not different")
 
 # NO FUNCIONA MERGE
 #psa <- mergePairSAD(mks[1,],Dq1)
@@ -229,7 +229,7 @@ plotDq_ReplaceR(Dq1,0.2,0.04,0.0001,"DqSAD")
 
 mks1 <- m$mPval
 mks1 <- mks1[mks1$method=="DqSAD" & mks1$p.adjust>0.05,]
-pander(mks1,caption="DqSAD not different")
+#pander(mks1,caption="DqSAD not different")
 
 
 # Revisar R2 y validez de rangos porque para q positivos da creciente!!!!
@@ -240,7 +240,7 @@ mPval <- m$mPval
 
 
 setwd(oldcd)
-rm(c1,c2,Dq2,Dq1)
+rm(Dq1,den1)
 rm(den1,den,mks1,mks,mks100)
 save.image()
 
@@ -250,6 +250,7 @@ save.image()
 
 
 ```{r simul_pomac467_T500, eval=T,echo=F,message=F,warning=F }
+load(".RData")
 
 setwd("Simul")
 
@@ -288,7 +289,7 @@ if(simul)
   system(s,wait=F)
 }
 
-m <- compMethods_Time(bName,1000,spMeta) 
+m <- compMethods_Time(bName,500,spMeta) 
 
 
 compM <- rbind(compM,m$compM)
@@ -298,12 +299,11 @@ pander(compM,caption="Proportion of not different")
 
 mks1 <- m$mPval
 mks1 <- mks1[mks1$method=="DqSAD" & mks1$p.adjust>0.05,]
-pander(mks1,caption="DqSAD not different T=1000")
+pander(mks1,caption="DqSAD not different T=500")
 
-Dq1 <- readNeutral_calcDq(paste0(bName,"T1000mfSAD.txt"))
+Dq1 <- readNeutral_calcDq(paste0(bName,"T500mfSAD.txt"))
 
-mergePair_plotDq(mks1[1,],Dq1,"DqSAD not different T=1000")
-
+mergePair_plotDq(mks1[1,],Dq1,"DqSAD not different T=500")
 
 mPval <- rbind(mPval,m$mPval)
 
@@ -311,7 +311,7 @@ mks1 <- mPval[mPval$method=="DqSAD" & mPval$p.adjust>0.05,]
 
 
 setwd(oldcd)
-rm(m,mks1)
+rm(Dq1,m,mks1)
 save.image()
 
 ```
@@ -367,7 +367,7 @@ pander(compM,caption="Proportion of not different")
 
 mks1 <- m$mPval
 mks1 <- mks1[mks1$method=="DqSAD" & mks1$p.adjust>0.05,]
-pander(mks1,caption="DqSAD not different T500")
+pander(mks1,caption="DqSAD not different T1000")
 
 mPval <- rbind(mPval,m$mPval)
 

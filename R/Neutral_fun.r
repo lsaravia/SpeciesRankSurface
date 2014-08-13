@@ -323,6 +323,8 @@ compMethod_DqKS_Time <- function(bName,Time,spMeta)
   # Read all simulations and change to long format
   fname <- paste0(bName,"T",Time,"mfSAD.txt")
   Dq1 <- readNeutral_calcDq(fname)
+  # Subset for testing 
+  #
   #Dq1 <- with(Dq1,Dq1[MortalityRate==.2 & DispersalDistance==0.04 & ColonizationRate==0.001, ])
 
   # Testing pairwise differences
@@ -335,8 +337,8 @@ compMethod_DqKS_Time <- function(bName,Time,spMeta)
   compM <- rbind(compM, data.frame(time=Time,notdif=propNotDiffSAD(mK1),method="DqSADKS"))
 
   mKS <- rbind(mKS,mK1)
-  mkS$time <- Time
-  
+  mKS$time <- Time
+
   return(list("compM"=compM,"mPval"=mKS))
 }
 
