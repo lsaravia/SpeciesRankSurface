@@ -6,14 +6,6 @@ In this manuscript I describe a new way to analyze species abundance distributio
 
 Different communities may have the same species-abundance, the simplest example is a neutral community without local dispersal, I mean one determined only by migration from metacommunity. When I add local dispersal the same SAD is observed and also with different dispersal Kernels the SAD is conserved but SAR and SRS should be different. 
 
-- Metacommunity from periphyton and BCI (log-series)
-
- Modelos usar Con y Sin Metacommunity Con y sin saturacion Con y sin hierarchical
-
-I use the two sample Kolmogorov-smirnov test 
-http://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test
-
-ks.test in R
 
 # Notes
 
@@ -21,7 +13,9 @@ Chave, J., H. C. Muller-Landau, and S. A. Levin. 2002. Comparing Classical Commu
 
 termina diciendo que hacen falta otras medidas de las comunidades 
 
+# Interpretation of multifractal spectrum
 
+We propose an interpretation of the multifractal spectrum in ecological terms as diversity patterns of subsets of species with a similar spatial distribution [Yakimov2008].
 
 --------------
 
@@ -55,4 +49,65 @@ But why should species distributions be self-similar? One possibility is that th
 The power law in this case emerges because of the spatial aggregation of species which is not fully attributable to habitats. It is thus necessary to look for spatial population processes that generate self-similarity, i.e. to consider the dynamic nature of species assemblages (Adler & Lauenroth 2003).
 
 
+2.Instead of one process determining changes in species richness across a wide range of scales, different processes might determine plant biodiversity at different spatial scales. [Crawley2001]
+
+
+3. The SAR describes the observed increase in the
+number of species identified as the area sampled
+increases. The SAR is one of the most studied patterns
+in ecology (e.g. Connor & McCoy 1979; Rosenzweig
+1995) [@White2010a]
+
+4. The species-area relationship (SAR) is considered to be
+one of a few generalities in ecology, yet a universal model of its shape
+and slope has remained elusive. [@Sizling2011]
+---
+
+
+5. McGill BJ, Nekola JC (2010) Mechanisms in macroecology: AWOL or purloined letter? Towards a pragmatic view of mechanism. Oikos 119: 591–603. doi:10.1111/j.1600-0706.2009.17771.x.
+
+Harte et al. have demonstrated how spatial fracti-
+cality may give rise to the power law form of the species-area
+relationship (Harte 2008), and that a fractal distribution of
+individuals can lead to realistic species abundance distribu-
+tions (Harte et al. 1999). These theories have subsequently
+been extensively elaborated and tested (Green et al. 2003,
+Green and Ostling 2003). Kunin and colleagues (Kunin
+et al. 2000, Hartley et al. 2004) sought to use fractaility to
+extrapolate from easily measured smaller scales up to impor-
+tant but hard to measure larger scales. 
+
+Similarly, several authors (Hawkins and Diniz-Filho 2002, Connolly et al.
+2003, Kerr et al. 2006) have shown that random placement
+alone is not enough to fully explain variations in diversity
+across landscapes. However, random placement of species
+with intra-specific clumping does a good job of parsimoni-
+ously producing many key macroecological patterns (McGill
+and Collins 2003, Harte et al. 2005, 2008).
+
+
+------
+
+1. Yakimov BN, Gelashvili DB, Solntsev LA, Iudin DI, Rozenberg GS (2014) Nonconcavity of mass exponents’ spectrum in multifractal analysis of community spatial structure: The problem and possible solutions. Ecol Complex 20: 11–22. doi:10.1016/j.ecocom.2014.07.003.
+
+The slope of the SAR z is its main parameter, which
+determines the growth rate of species richness with increasing
+area. Theoretical limits for z are 0 (fixed species richness) and 1
+(simple linear proportionality). Thus, in natural communities z is a
+non-integer and so it corresponds to fractal dimension features.
+
+Multifractal analysis is a generalisation of such a simple
+approach, which also finds many applications in ecology. It is
+applied to simulate neutral landscapes (Gamarra, 2005; Kirkpa-
+trick and Weishampel, 2005) for time series analysis (reviewed by
+Seuront, 2010), the description of microphytobenthos biomass
+distribution (Seuront and Spilmont, 2002; Saravia et al., 2012a,b),
+description of spatial structure of the tropical forest as a whole
+(Sole and Manrubia, 1995a,b) and description of the individual
+species distribution (Borda-de-Agua et al., 2007), as well as to
+quantify the heterogeneity of species richness (Laurie and Perrier,
+2010, 2011). Applications of multifractal analysis in ecology
+mentioned above applied the standard version of this analysis,
+which deals with the spatial distribution of a single measure (e.g.
+biomass or stem density).
 

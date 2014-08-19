@@ -471,33 +471,99 @@ plotDqFit <- function(fname,qname)
 #  dev.off()    
 }
 
-# Compare 2 communities
+
+# Calculates theoretic Dq from pmodel
 #
-H_bss <- function (comm, R = 2000, index = "shannon") 
-{
-  if (length(rownames(comm)) > 2) 
-    stop("Please supply community of only 2 samples.\n\n")
-  require(vegan)
-  RT <- rowSums(comm)
-  DF <- sum(rowSums(comm > 0)) - 2
-  CT <- colSums(comm)
-  Hx <- as.numeric(diversity(comm, index = index))[1]
-  Hy <- as.numeric(diversity(comm, index = index))[2]
-  Ho <- abs(Hx - Hy)
-  Hb <- vector(mode = "numeric", length = R)
-  for (i in 1:R) {
-    Mb <- r2dtable(1, RT, CT)
-    Mb <- as.matrix(Mb[[1]])
-    Hd <- as.numeric(abs(diversity(Mb, index = index)[1] - 
-                           diversity(Mb, index = index)[2]))
-    Hb[i] <- Hd
+calcDqTeor <- function(q,p1) {
+  if( q==1)
+    q <- q+1e-10
+  p2 <- p3 <- p4 <- (1-p1)/3
+  f1 <- p1/(p1+p2+p3+p4)
+  f2 <- p2/(p1+p2+p3+p4)
+  f3 <- p3/(p1+p2+p3+p4)
+  f4 <- p4/(p1+p2+p3+p4)
+  dq <- log2(f1^q+f2^q+f3^q+f4^q)/(1-q)
+  return(dq)
   }
-  Q <- quantile(Hb, c(0.025, 0.975))
-  Z <- abs((Ho - mean(Hb))/sd(Hb))
-  P <- mean(abs(Hb) > Ho)
-  Pz <- pt(Z, df = DF, lower.tail = FALSE) * 2
-  result <- list(H.orig = c(Hx, Hy), statistic = Ho, z.score = Z, 
-                 CI = Q, p.sim = P, p.z = Pz, df = DF, Index = index)
-  class(result) = "Hbss"
-  return(result)
+
+
+# Save a matrix as a sed file with type BI (floating point)
+#
+save_matrix_as_sed <- function(mat,fname)
+{
+  header <- paste(nrow(mat),ncol(mat),"BI")
+  write.table(header,file=fname,row.names=F,col.names=F,quote=F)
+  write.table(mat,file=fname,row.names=F,col.names=F,quote=F,append=T)
+}
+
+calcDq_multiSBA <- function(fname,parms,pathBin="",recalc=FALSE)
+{
+  sname <- paste0("s.", fname)
+  if((!file.exists(sname)) | recalc)
+  {
+    if(nchar(pathBin)==0)
+    {
+      syst.txt <- paste("./multiSpeciesSBA ",fname, parms)
+    } else {
+      syst.txt <- paste0(pathBin,"/multiSpeciesSBA ",fname," ",parms)
+    }
+
+    system(syst.txt)
+  }
+  pp <- read.delim(sname, header=T)
+  
+  for(nc in 1:ncol(pp)){
+    if( class(pp[,nc ])=="factor") pp[,nc]<-as.numeric(as.character(pp[,nc])) 
+  }
+
+  pp$Dq  <- with(pp,ifelse(q==1,alfa,Tau/(q-1)))
+  pp$SD.Dq  <- with(pp,ifelse(q==1,SD.alfa,abs(SD.Tau/(q-1))))
+  pp$R.Dq <- with(pp,ifelse(q==1,R.alfa,R.Tau))
+    
+  return(pp[,c("q","Dq","SD.Dq","R.Dq")])
+}
+
+# Plot a sed file
+#
+# fname: file name
+# gname: graph title 
+# dX: range in columns to plot
+# col: vector of colors to make the color palette
+# shf: shift in the vector of colors 
+#
+plot_sed_image <- function(fname,gname,dX=0,col=0,shf=0)
+  {
+  require(lattice)
+  require(RColorBrewer)
+  if(class(fname)=="matrix") {
+      per <- fname
+    } else {
+      per <-data.matrix(read.table(fname, skip=2,header=F))
+    }
+  
+  if(length(dX)>1) per <- per[,dX]
+  mp = max(per)
+  if(mp<50) {
+    mp = 50
+    seqat = seq( min(per),max(per),(max(per)-min(per))/50)
+  }
+  else
+  {
+    seqat = seq( min(per),mp,5)
+  }
+  if(length(col)==1) col.l <- colorRampPalette(c('white', 'green', 'purple', 'yellow', 'brown'))(mp) 
+  else col.l <- colorRampPalette(col)(mp) 
+  if( shf>0) col.l = col.l[shf:mp]
+  levelplot(per, scales = list(draw = FALSE),xlab =NULL, ylab = NULL,col.regions=col.l,
+            useRaster=T,at=seqat,
+            main=list( gname,cex=1))
+  }
+
+# Generate a banded image with nSp species and side = side
+#
+genBand_image <- function(nSp,side)
+{
+  if( side %% nSp != 0 )
+    stop("Number of species [nSp] must divide [side]")
+  matrix(rep(1:nSp,each=side*side/nSp),nrow=side)
 }

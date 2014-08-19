@@ -1,7 +1,8 @@
+# Compare Dq without repetition the most interesting are 
+# compareTwoCurvesT and KS.test
 
 
 # Modified functions from package statmod to compare curves
-#require(statmod)
 #
 
 # y1 is a matrix with columns mean,sd,n

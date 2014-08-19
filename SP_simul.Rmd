@@ -1,0 +1,206 @@
+# Multifractal analysis of multispecies spatial distributions - Spatial patterns simulations
+
+
+
+I generate different a spatial patterns to compare SRSDq SADdq and SAD
+
+```{r setup, eval=T }
+
+simul  <- F # variable to perform or not the simulations
+
+oldcd <-getwd()
+source("R/Neutral_fun.r")
+
+# Set the location of the binary 
+#
+mfBin <- "~/Dropbox/cpp/SpatialAnalysis/mfsba" # /mfSBA /multiSpeciesSBA
+pmBin <- "~/Dropbox/cpp/SpatialAnalysis/p-model/pmodel" 
+
+
+
+require(pander)
+panderOptions('table.split.table',Inf)
+
+```
+
+# Banded pattern 64 species 256 side
+
+First generate a pattern with  SAR z=1 using simply bands of species z=0.5 because I am using area as Borda-de-Agua instead of side.
+
+```{r simul_z1, eval=T,echo=F,message=F,warning=F}
+setwd("Simul")
+
+
+spa <- genBand_image(64,256)
+plot_sed_image(spa,"Banded 64sp")
+save_matrix_as_sed(spa,"band64_256.sed")
+
+Dq1<- calcDq_multiSBA("band64_256.sed","q.sed 4 512 20 S",mfBin,T)
+Dq1$Type <- "SRS"
+hist(Dq1$R)
+
+spa <- matrix(sample(spa),nrow=256)
+save_matrix_as_sed(spa,"band64_256rnz.sed")
+
+Dq2<- calcDq_multiSBA("band64_256rnz.sed","q.sed 4 512 20 S",mfBin,T)
+Dq2$Type <- "rnzSRS"
+Dq1<- rbind(Dq1,Dq2)
+plotDq(Dq1,"Type")
+
+ggplot(Dq1, aes(x=R.Dq,fill=Type)) + geom_density(alpha=0.2)
+
+plot_sed_image(spa,"Randomized 64sp")
+
+
+
+Dq2<- calcDq_multiSBA("band64_256.sed","q.sed 4 512 20 E",mfBin,T)
+Dq2$Type <- "dqSAD"
+Dq3<- Dq2
+plotDq(Dq3,"Type")
+
+Dq2<- calcDq_multiSBA("band64_256rnz.sed","q.sed 4 512 20 E",mfBin,T)
+Dq2$Type <- "rnzDqSAD"
+Dq3<- rbind(Dq3,Dq2)
+plotDq(Dq3,"Type")
+
+plotDqFit("t.band64_256rnz.sed","q.sed")
+
+# Analizing this last it means that the scaling is broken at side 16
+#  
+
+Dq2<- calcDq_multiSBA("band64_256rnz.sed","q.sed 16 512 20 E",mfBin,T)
+Dq2$Type <- "rnzDqSAD16"
+Dq3<- rbind(Dq3,Dq2)
+plotDq(Dq3,"Type")
+
+
+Dq2<- calcDq_multiSBA("band64_256rnz.sed","q.sed 2 16 20 E",mfBin,T)
+Dq2$Type <- "rnzDqSAD2-16"
+Dq3<- rbind(Dq3,Dq2)
+plotDq(Dq3,"Type")
+
+ggplot(Dq3, aes(x=R.Dq,fill=Type)) + geom_histogram(alpha=0.2,binwidth = 0.1,position="identity")
+# copy pomExp.lin to pomac.lin
+#system("cp pomExp.lin pomac.lin")
+
+# make simulations
+#if(simul) system(paste(neuBin,"sim.par","fishE.inp"),wait=s_wait)
+
+setwd(oldcd)
+```
+
+* For SRS the positive part seems to reflect the equal SAD and the negative the spatial pattern
+
+
+# Banded pattern 64 species 512 side
+
+To see if there is any efect of side 
+
+```{r simul_z1_512, eval=T,echo=F,message=F,warning=F}
+setwd("Simul")
+
+
+spa <- genBand_image(64,512)
+plot_sed_image(spa,"Banded 64sp")
+save_matrix_as_sed(spa,"band64_512.sed")
+
+Dq1<- calcDq_multiSBA("band64_512.sed","q.sed 4 512 20 S",mfBin,T)
+Dq1$Type <- "SRS"
+
+spa <- matrix(sample(spa),nrow=512)
+save_matrix_as_sed(spa,"band64_512rnz.sed")
+
+Dq2<- calcDq_multiSBA("band64_512rnz.sed","q.sed 4 512 20 S",mfBin,T)
+Dq2$Type <- "rnzSRS"
+Dq1<- rbind(Dq1,Dq2)
+plotDq(Dq1,"Type")
+
+ggplot(Dq1, aes(x=R.Dq,fill=Type)) + geom_histogram(alpha=0.2)
+
+plot_sed_image(spa,"Randomized 64sp")
+
+Dq2<- calcDq_multiSBA("band64_512.sed","q.sed 4 512 20 E",mfBin,T)
+Dq2$Type <- "dqSAD"
+Dq3<- Dq2
+
+Dq2<- calcDq_multiSBA("band64_512rnz.sed","q.sed 4 512 20 E",mfBin,T)
+Dq2$Type <- "rnzDqSAD"
+Dq3<- rbind(Dq3,Dq2)
+plotDq(Dq3,"Type")
+
+plotDqFit("t.band64_512rnz.sed","q.sed")
+
+# Analizing this last it means that the scaling is broken at side 16
+#  
+
+Dq2<- calcDq_multiSBA("band64_512rnz.sed","q.sed 16 512 20 E",mfBin,T)
+Dq2$Type <- "rnzDqSAD16-512"
+Dq3<- rbind(Dq3,Dq2)
+
+Dq2<- calcDq_multiSBA("band64_512rnz.sed","q.sed 2 16 20 E",mfBin,T)
+Dq2$Type <- "rnzDqSAD2-16"
+Dq3<- rbind(Dq3,Dq2)
+plotDq(Dq3,"Type")
+
+ggplot(Dq3, aes(x=R.Dq,fill=Type)) + geom_histogram(alpha=0.2,binwidth = 0.1,position="identity")
+
+setwd(oldcd)
+```
+
+Thus DqSAD works in the range 2-16 
+
+# Now simulate an image with logseries SAD for 64 species
+
+* Discrete bands?
+* Random
+
+
+```{r simul_ls_512, eval=T,echo=F,message=F,warning=F}
+setwd("Simul")
+
+require(untb)
+side <- 512
+N <- side*side
+S <- 64 
+repeat {
+  ff<-fisher.ecosystem(N=N,S=S,nmax=N)
+  nsp <- nrow(ff)
+  if(nsp==S) break
+}
+plot(ff)
+N
+spa <- matrix(rep(1:nsp,ff),nrow=side)
+plot_sed_image(spa,"Regular Fisher  64sp")
+save_matrix_as_sed(spa,"fish64_512.sed")
+
+Dq1<- calcDq_multiSBA("fish64_512.sed","q.sed 4 512 20 S",mfBin,T)
+Dq1$Type <- "SRS"
+
+# 
+spa <- matrix(sample(spa),nrow=512)
+save_matrix_as_sed(spa,"fisher64_512rnz.sed")
+plot_sed_image(spa,"Rnz Fisher  64sp",0,64,5)
+
+Dq2<- calcDq_multiSBA("fisher64_512rnz.sed","q.sed 4 512 20 S",mfBin,T)
+Dq2$Type <- "rnzSRS"
+Dq1<- rbind(Dq1,Dq2)
+plotDq(Dq1,"Type")
+
+ggplot(Dq1, aes(x=R.Dq,fill=Type)) + geom_histogram(alpha=0.2)
+
+# Ahora con SAD
+
+Dq3<- calcDq_multiSBA("fish64_512.sed","q.sed 4 512 20 E",mfBin,T)
+Dq3$Type <- "DqSAD"
+#Dq3<- rbind(Dq3,Dq2)
+
+Dq2<- calcDq_multiSBA("fisher64_512rnz.sed","q.sed 4 512 20 E",mfBin,T)
+Dq2$Type <- "rnzDqSAD"
+Dq3<- rbind(Dq3,Dq2)
+
+plotDq(Dq3,"Type")
+
+ggplot(Dq3, aes(x=R.Dq,fill=Type)) + geom_histogram(alpha=0.2)
+Dq3[Dq3$R.Dq<0.6,]
+setwd(oldcd)
+```
