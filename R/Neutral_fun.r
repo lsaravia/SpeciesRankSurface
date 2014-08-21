@@ -561,9 +561,26 @@ plot_sed_image <- function(fname,gname,dX=0,col=0,shf=0)
 
 # Generate a banded image with nSp species and side = side
 #
-genBand_image <- function(nSp,side)
+genUniformSAD_image <- function(nSp,side)
 {
   if( side %% nSp != 0 )
     stop("Number of species [nSp] must divide [side]")
   matrix(rep(1:nSp,each=side*side/nSp),nrow=side)
+}
+
+# Generate a regular image with Fisherian SAD with nsp species and side = side
+# Requires untb package
+#
+genFisherSAD_image <- function(nsp,side)
+{
+  require(untb)
+  N <- side*side
+  repeat {
+    ff<-fisher.ecosystem(N=N,S=nsp,nmax=N)
+    if(nsp==nrow(ff)) {
+      m <- matrix(rep(1:nsp,ff),nrow=side)
+      if(ncol(m)>=side) break
+    }
+  }
+  return(m)
 }

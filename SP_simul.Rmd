@@ -31,7 +31,7 @@ First generate a pattern with  SAR z=1 using simply bands of species z=0.5 becau
 setwd("Simul")
 
 
-spa <- genBand_image(64,256)
+spa <- genUniformSAD_image(64,256)
 plot_sed_image(spa,"Banded 64sp")
 save_matrix_as_sed(spa,"band64_256.sed")
 
@@ -100,7 +100,7 @@ To see if there is any efect of side
 setwd("Simul")
 
 
-spa <- genBand_image(64,512)
+spa <- genUniformSAD_image(64,512)
 plot_sed_image(spa,"Banded 64sp")
 save_matrix_as_sed(spa,"band64_512.sed")
 
@@ -158,19 +158,11 @@ Thus DqSAD works in the range 2-16
 ```{r simul_ls_512, eval=T,echo=F,message=F,warning=F}
 setwd("Simul")
 
-require(untb)
-side <- 512
-N <- side*side
-S <- 64 
-repeat {
-  ff<-fisher.ecosystem(N=N,S=S,nmax=N)
-  nsp <- nrow(ff)
-  if(nsp==S) break
-}
-plot(ff)
-N
-spa <- matrix(rep(1:nsp,ff),nrow=side)
-plot_sed_image(spa,"Regular Fisher  64sp")
+# Generate an image following a logseries distribution with 64 sp 
+# an regular spatial distribution
+spa <- genFisherSAD_image(64,512)
+
+plot_sed_image(spa,"Regular Fisher  64sp",0,64,10)
 save_matrix_as_sed(spa,"fish64_512.sed")
 
 Dq1<- calcDq_multiSBA("fish64_512.sed","q.sed 4 512 20 S",mfBin,T)
