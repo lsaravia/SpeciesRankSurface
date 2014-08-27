@@ -554,9 +554,9 @@ plot_sed_image <- function(fname,gname,dX=0,col=0,shf=0)
   if(length(col)==1) col.l <- colorRampPalette(c('white', 'green', 'purple', 'yellow', 'brown'))(mp) 
   else col.l <- colorRampPalette(col)(mp) 
   if( shf>0) col.l = col.l[shf:mp]
-  levelplot(per, scales = list(draw = FALSE),xlab =NULL, ylab = NULL,col.regions=col.l,
+  print(levelplot(per, scales = list(draw = FALSE),xlab =NULL, ylab = NULL,col.regions=col.l,
             useRaster=T,at=seqat,
-            main=list( gname,cex=1))
+            main=list( gname,cex=1)))
   }
 
 # Generate a banded image with nSp species and side = side
@@ -570,6 +570,7 @@ genUniformSAD_image <- function(nSp,side)
 
 # Generate a regular image with Fisherian SAD with nsp species and side = side
 # Requires untb package
+# Returns a matrix representing the spatial distribution and a vector with proportions of each sp
 #
 genFisherSAD_image <- function(nsp,side)
 {
@@ -582,5 +583,225 @@ genFisherSAD_image <- function(nsp,side)
       if(ncol(m)>=side) break
     }
   }
-  return(m)
+ 
+  prob <- ff/sum(ff)
+  return(list("m"=m,"prob"=prob))
+}
+
+  
+# Generate a Fisher logseries SAD with a regular spatial distribution
+# randomize it and calculates SRS and DqSAD multifractal estimations
+#
+compMethods_FisherSAD <- function(nsp,side,gen=T) {
+
+  if(!exists("mfBin")) stop("Variable mfBin not set (mfSBA binary)")
+
+  fname <- paste0("fisher",nsp,"_",side,".sed")
+  if(file.exists(fname) & gen==F)
+  {
+    spa <- read_sed(fname)
+  } else {
+    spa <- genFisherSAD_image(nsp,side)$m
+    save_matrix_as_sed(spa,fname)
+  }
+
+  plot_sed_image(spa,paste("Regular Fisher",nsp),0,nsp,0)
+
+  Dq1<- calcDq_multiSBA(fname,"q.sed 2 1024 20 S",mfBin,T)
+  Dq1$Type <- "SRS"
+
+  # Randomize the spatial distribution
+  #
+  spa <- matrix(sample(spa),nrow=side)
+  fname1 <- paste0("fisher",nsp,"_",side,"rnz.sed")
+
+  save_matrix_as_sed(spa,fname1)
+  plot_sed_image(spa,paste("Rnz Fisher",nsp),0,nsp,0)
+
+  Dq2<- calcDq_multiSBA(fname1,"q.sed 2 1024 20 S",mfBin,T)
+  Dq2$Type <- "rnzSRS"
+  Dq1<- rbind(Dq1,Dq2)
+  plotDq(Dq1,"Type")
+
+  bin <- range(Dq1$R.Dq)
+  bin <- (bin[2]-bin[1])/10
+  print(ggplot(Dq1, aes(x=R.Dq,fill=Type)) + geom_histogram(alpha=0.2,binwidth = bin))
+
+  # Now calculate DqSAD
+
+  Dq3<- calcDq_multiSBA(fname,"q.sed 2 1024 20 E",mfBin,T)
+  Dq3$Type <- "DqSAD"
+  #Dq3<- rbind(Dq3,Dq2)
+
+  Dq2<- calcDq_multiSBA(fname1,"q.sed 2 1024 20 E",mfBin,T)
+  Dq2$Type <- "rnzDqSAD"
+  Dq3<- rbind(Dq3,Dq2)
+
+  plotDq(Dq3,"Type")
+
+  plotDqFit(paste0("t.", fname1),"q.sed")
+
+  bin <- range(Dq3$R.Dq)
+  bin <- (bin[2]-bin[1])/10
+  print(ggplot(Dq3, aes(x=R.Dq,fill=Type)) + geom_histogram(alpha=0.2,binwidth = bin))
+  
+  #require(pander)
+  #pandoc.table(Dq3[Dq3$R.Dq<0.6,],caption="R2<0.6")
+  
+  Dqt <- rbind(Dq1,Dq3)
+  Dqt$side <-side
+  Dqt$numSp <-nsp
+  Dqt$SAD <- "Logseries"
+
+  return(Dqt)
+}
+
+# Generate a unniform SAD (all spp wiht the same density) with a regular spatial distribution
+# randomize it and calculates SRS and DqSAD multifractal estimations
+#
+compMethods_UniformSAD <- function(nsp,side) {
+
+  if(!exists("mfBin")) stop("Variable mfBin not set (mfSBA binary)")
+
+  spa <- genUniformSAD_image(nsp,side)
+  plot_sed_image(spa,paste("Uniform sp:",nsp," side:",side),0,nsp,0)
+
+  fname <- paste0("unif",nsp,"_",side,".sed")
+  save_matrix_as_sed(spa,fname)
+
+  Dq1<- calcDq_multiSBA(fname,"q.sed 2 1024 20 S",mfBin,T)
+  Dq1$Type <- "SRS"
+
+  spa <- matrix(sample(spa),nrow=side)
+
+  fname1 <- paste0("unif",nsp,"_",side,"rnz.sed")
+  save_matrix_as_sed(spa,fname1)
+
+  Dq2<- calcDq_multiSBA(fname1,"q.sed 2 1024 20 S",mfBin,T)
+  Dq2$Type <- "rnzSRS"
+  Dq1<- rbind(Dq1,Dq2)
+  plotDq(Dq1,"Type")
+
+  bin <- range(Dq1$R.Dq)
+  bin <- (bin[2]-bin[1])/10
+  print(ggplot(Dq1, aes(x=R.Dq,fill=Type)) + geom_histogram(alpha=0.2,binwidth = bin))
+
+  plot_sed_image(spa,paste("Uniform Rnz sp:",nsp," side:",side),0,nsp,0)
+
+  Dq2<- calcDq_multiSBA(fname,"q.sed 2 1024 20 E",mfBin,T)
+  Dq2$Type <- "dqSAD"
+  Dq3<- Dq2
+
+  Dq2<- calcDq_multiSBA(fname1,"q.sed 2 1024 20 E",mfBin,T)
+  Dq2$Type <- "rnzDqSAD"
+  Dq3<- rbind(Dq3,Dq2)
+  plotDq(Dq3,"Type")
+
+  plotDqFit(paste0("t.", fname1),"q.sed")
+
+  bin <- range(Dq3$R.Dq)
+  bin <- (bin[2]-bin[1])/10
+  print(ggplot(Dq3, aes(x=R.Dq,fill=Type)) + geom_histogram(alpha=0.2,binwidth = bin,position="identity"))
+  #print(ggplot(Dq3, aes(x=R.Dq,fill=Type)) + geom_histogram(alpha=0.2,binwidth = 0.1))
+  Dqt <- rbind(Dq1,Dq3)
+  Dqt$side <-side
+  Dqt$numSp <-nsp
+  Dqt$SAD <- "Uniform"
+  return(Dqt)
+}
+
+# Generate a Neutral model with Fisher logseries metacommunity SAD 
+# randomize it and calculates SRS and DqSAD multifractal estimations
+#
+# modType: 3 Hierarchical non saturated (not full of individuals)
+#          4 Hierarchical non saturated (full)
+#
+compMethods_NeutralSAD <- function(nsp,side,simul=T,modType=4) {
+  if(!exists("mfBin")) stop("Variable mfBin not set (mfSBA binary)")
+  if(!exists("neuBin")) stop("Variable neuBin not set (neutral binary)")
+  if(simul){
+    require(untb)
+    N <- side*side
+    alpha <-  fishers.alpha(N, nsp)
+    x <- N/(N + alpha)
+    j <- 1:(nsp)
+    prob <-  alpha * x^j/j  
+    # Normalize
+    prob <- prob/sum(prob)
+
+    genNeutralParms("fishE",side,prob,1,0.2,0.4,0.0001)
+
+    fname <- paste0("fisher",nsp)
+
+    par <- read.table("sim.par",quote="",stringsAsFactors=F)
+    # Change base name
+
+    par[par$V1=="nEvals",]$V2 <- 500
+    par[par$V1=="inter",]$V2 <- 500 # interval to measure Density and Diversity
+    par[par$V1=="init",]$V2 <- 500  # Firs time of measurement = interval
+    par[par$V1=="modType",]$V2 <- modType # Hierarchical saturated
+    par[par$V1=="sa",]$V2 <- "S" # Save a snapshot of the model
+    par[par$V1=="baseName",]$V2 <- fname# Time = 100 
+    par[par$V1=="minBox",]$V2 <- 2
+    par[par$V1=="pomac",]$V2 <- 0 # 0:one set of parms 
+                                  # 1:several simulations with pomac.lin parameters 
+
+    write.table(par, "sim.par",sep="\t",row.names=F,col.names=F,quote=F)
+
+    system(paste(neuBin,"sim.par","fishE.inp"))
+  }
+
+  fname <- paste0("fisher",nsp,"-0500.sed")
+  
+  spa <- read_sed(fname)
+
+  plot_sed_image(spa,paste("Neutral T500",nsp),0,nsp,0)
+
+  Dq1<- calcDq_multiSBA(fname,"q.sed 2 1024 20 S",mfBin,T)
+  Dq1$Type <- "SRS"
+
+  # Randomize the spatial distribution
+  #
+  spa <- matrix(sample(spa),nrow=side)
+  fname1 <- paste0("fisher",nsp,"-500rnz.sed")
+
+  save_matrix_as_sed(spa,fname1)
+  plot_sed_image(spa,paste("Neutral T500 Rnz",nsp),0,nsp,0)
+
+  Dq2<- calcDq_multiSBA(fname1,"q.sed 2 1024 20 S",mfBin,T)
+  Dq2$Type <- "rnzSRS"
+  Dq1<- rbind(Dq1,Dq2)
+  plotDq(Dq1,"Type")
+
+  bin <- range(Dq1$R.Dq)
+  bin <- (bin[2]-bin[1])/10
+  print(ggplot(Dq1, aes(x=R.Dq,fill=Type)) + geom_histogram(alpha=0.2,binwidth = bin))
+
+  # Now calculate DqSAD
+
+  Dq3<- calcDq_multiSBA(fname,"q.sed 2 1024 20 E",mfBin,T)
+  Dq3$Type <- "DqSAD"
+  #Dq3<- rbind(Dq3,Dq2)
+
+  Dq2<- calcDq_multiSBA(fname1,"q.sed 2 1024 20 E",mfBin,T)
+  Dq2$Type <- "rnzDqSAD"
+  Dq3<- rbind(Dq3,Dq2)
+
+  plotDq(Dq3,"Type")
+
+  plotDqFit(paste0("t.", fname1),"q.sed")
+
+  bin <- range(Dq3$R.Dq)
+  bin <- (bin[2]-bin[1])/10
+  print(ggplot(Dq3, aes(x=R.Dq,fill=Type)) + geom_histogram(alpha=0.2,binwidth = bin))
+  
+  #require(pander)
+  #pandoc.table(Dq3[Dq3$R.Dq<0.6,],caption="R2<0.6")
+  
+  Dqt <- rbind(Dq1,Dq3)
+  Dqt$side <-side
+  Dqt$numSp <-nsp
+  Dqt$SAD <- "Neutral"
+
+  return(Dqt)
 }
