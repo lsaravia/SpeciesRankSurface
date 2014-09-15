@@ -16,9 +16,9 @@ Buenos Aires, Argentina.
 
 ## Abstract
 
-Species-area relationships (SAR) are one of the most studied patterns in ecology, due to its application in both theoretical and conservation issues. SARs has been generalized using Hill's diversity index and multifractals. Multifractals were developed for nonlinear systems and they are suitable to capture multiplicative processes that can be observed in ecological systems. They characterize variability in a scale independent way within an experimental range. Another well studied pattern in ecology is the species-abundance distribution (SAD) that characterize rarity and commonness in ecological communities. SADs can be represented and compared in a robust way using rank-abundance diagrams (RAD). Here I introduce a spatial version of RAD: the species-rank surface (SRS) that can be analyzed using multifractals. I use the spectrum of generalized dimensions $D_q$ for multifractal representation and a multispecies spatial explicit model to show the ability of the new method to detect patterns.
+Species-area relationships (SAR) are one of the most studied patterns in ecology, due to its application in both theoretical and conservation issues. SARs has been generalized incorporating abundances using Hill's diversity index and multifractals to study species diversity-area relationships. Multifractals were developed for nonlinear systems and they are suitable to capture multiplicative processes that can be observed in ecological systems. They characterize variability in a scale independent way within an experimental range. Another well studied pattern in ecology is the species-abundance distribution (SAD) that characterize rarity and commonness in ecological communities. SADs can be represented and compared in a robust way using rank-abundance diagrams (RAD). Here I introduce a new way to analyze species diversity-area relationships using spatial version of RAD: the species-rank surface (SRS) that can be analyzed using multifractals. I use the spectrum of generalized dimensions $D_q$ for multifractal representation. To demonstrate the relationship of SRS with species spatial patterns I perform simulations with regular and random patterns and also using a neutral model. Finally I compare the power of the methods to detect different patterns.
 
-Keywords: multifractals, species-rank surface, multi-species patterns,
+Keywords: multifractals, species-rank surface, species-area relationship, multi-species spatial pattern.
 
 
 \newpage
@@ -48,13 +48,13 @@ Here I show that multifractals can be applied to different data sets and models 
 
 ## Multifractal analysis
 
-Several good introductions to multifractal methods applied to ecology are available [@Scheuring1994; @Borda-de-Agua2007] thus I will only give a brief overview. Multifractals analyze the scaling properties of quantities distributed in a space that we assume to be two dimensional (a plane), but multifractal analysis (MFA) can be used with one dimensional (time series) or three dimensional data [@Lopes2009]. A classical way to characterize multifractals is using the generalized dimensions $D_q$ [@Grassberger1983], also called Renyi dimensions [@Renyi1970]. $D_q$ has been used to characterize the probabilistic structure of attractors derived from dynamical systems [@Harte2001]. 
+Extensive reviews of multifractal methods applied to ecology are available [@Seuront2009] and some good introductions are also published [@Scheuring1994; @Borda-de-Agua2007]. Thus I will only give a brief overview. Multifractals analyze the scaling properties of quantities distributed in a space that we assume to be two dimensional (a plane). Multifractasl can mathematically represented using different  ways [@Harte2001], from these the most close to ecology are the generalized dimensions $D_q$ [@Grassberger1983], also called Renyi dimensions [@Renyi1970]. $D_q$ has been used to characterize the probabilistic structure of attractors derived from dynamical systems [@Hentschel1983]. 
 
-To estimate generalized dimensions we used the method of moments based on box-counting (Halsey et al. 1986). The distribution of quantities is covered with a grid, which divided it into $N(\epsilon)$ squares of side  $\epsilon$, allowing us to calculate the quantity $\mu_i(\epsilon)$ in each of them. Then the so called partition function is computed as: 
+To estimate generalized dimensions I used the method of moments based on box-counting [@Halsey1986]. The spatial distribution of quantities $\mu$ is covered with a grid, which divided it into $N(\epsilon)$ boxes of side  $\epsilon$, allowing us to calculate the quantity $\mu_i(\epsilon)$ in each of them. Then the so called partition function is computed as: 
 
  (@e1) $Z_{q}(\epsilon)={\displaystyle \sum_{i}^{N(\epsilon)}} \left(\mu_{i}(\epsilon)\right)^{q}$
 
-Where q is called moment order. The operation is performed for different values of $\epsilon$ and $q$, within a predetermined range. The generalized dimension is calculated as:
+Where $q$ is called moment order. The operation is performed for different values of $\epsilon$ and $q$, within a predetermined range. The generalized dimension is calculated as:
 
  (@e2) $D_{q}=\cfrac{1}{q-1}\underset{\epsilon\to0}{\lim}\cfrac{\log\left(Z_{q}(\epsilon)\right)}{\log\epsilon}$
 
@@ -64,18 +64,25 @@ When $q = 1$, the denominator of the first term in $D_q$ is undefined, so it mus
 
 In practical cases as the limit can not be assessed, the dimensions are estimated as the slope of the $log(Z_q)$ versus $log(\epsilon)$ in equation (@e1) replacing by the numerator in equation (@e3). This is done for different $q$, provided that it is a real number which yields a graphs of $D_q$ in terms of $q$, called the spectrum of generalized dimensions. 
 
-To be an approximate multifractal the relationship $log(Z_q)$ versus $log(\epsilon)$ should be well described by a linear relationship, but also a linear relationship with superimposed oscillations is accepted [@Borda-de-Agua2007]. A range of $q$ and $\epsilon$ is fixed then $D_q$ is estimated using linear regressions.  The coefficient of determination ($R^2$) can be used as a descriptive measure of goodness of fit [@Borda-de-Agua2002]. The source code in C++ to perform the analysis is available at <https://github.com/lsaravia/mfsba> and figshare (DOI:XXX-XXXXX). 
-
-To construct the species-rank surface (SRS) the spatial distribution of species have to be transformed assigning to each species position its rank. First I calculate the rank ordering the species by their abundances from biggest to lowest and assigning a number starting with one. Then the rank is assigned to the spatial position of the individuals of each species forming a surface. This landscape have valleys formed by the most abundant species and peaks determined by the most rare species. Then the standard multifractal analysis can be applied. 
-
-Multifractal analysis is not restricted to sessile species in fact has been applied to snapshots of particles in movement and turbulent fluids and movement paths [@Chappell2001; @Seuront2009]. In this paper I use the term image to represent two dimensional spatial distributions or patterns.
+To be an approximate multifractal the relationship $log(Z_q)$ versus $log(\epsilon)$ should be well described by a linear relationship, but also a linear relationship with superimposed oscillations is accepted [@Borda-de-Agua2007]. A range of $q$ and $\epsilon$ must be established then $D_q$ is estimated using linear regressions. Note that $D_q$ are defined in the limit ${\epsilon\to0}$ (equations @e2 and @e3) thus it is sufficient that there exists a scale below which such linear relationship applies to use the method [@Hentschel1983]. 
 
 
+To analyze species-abundance-area relationships with multifractals as Borda-de-Água [-@Borda-de-Agua2002], the boxes are replaced by species. Thus at each spatial scale $\epsilon$ each species holds the quantity of interest: its own abundance. Thus the partition function is defined as a sum over the species present in an area $S(A)$ and the side of the box $\epsilon$ is replaced by the area:
 
+(@e4) $Z_{q}(A)={\displaystyle \sum_{i}^{S(A)}} \left(\mu_{i}(A)\right)^{q}$
 
-I use the complete $D_q$ to characterize spatial patterns and also two derived indexes: the information dimension $D_1$ and $\Delta D_i$. The information dimension has been used as an spikiness indicator [@Chappell2001], when it approaches two the image is more uniform, when is lower the image has more spikes and variability. The second index is calculated with: $\Delta D_i = D_{-i}-D_i$ for a relatively large $i$. As I estimate $D_q$ spectrum using a range of q from -5 to 5, I use $\Delta D_5$. When this index is large the range of $D_q$ is greater so the fractal sets that compose the multifractal image will be more heterogeneous and the image as a whole will have more richness in shapes and more spatial variability.
+And $D_q$ is defined 
 
-I analyze here the relationship between $D_q$ spectrum with biodiversity. For this I relate $D_1$ and $\Delta D_i$ to the Shannon diversity index (H) and species richness (S) using quantile regression. Quantile regression allows the examination of the maximum response, rather than the mean response, of one variable to a predictor. It can be used for analyzing data with non-constant variance, which is often meaningful for ecological processes in which many unmeasured variables may affect the response [@Cade2003].
+(@e5) $D_{q}=\cfrac{1}{1-q}\underset{A\to\infty}{\lim}\cfrac{\log\left(Z_{q}(A)\right)}{\log A}$
+
+There are some problems are related in how the species-boxes are represented at different scales with averages.
+
+I propose a new way to analyze species-abundance-area using multifractals: the species-rank surface. To construct the species-rank surface (SRS) the spatial distribution of species have to be transformed assigning to each species position its rank. First I calculate the rank ordering the species by their abundances from biggest to lowest and assigning a number starting with one. Then the rank is assigned to the spatial position of the individuals of each species forming a surface. This landscape have valleys formed by the most abundant species and peaks determined by the most rare species. Then the standard multifractal analysis can be applied. 
+The coefficient of determination ($R^2$) can be used as a descriptive measure of goodness of fit [@Borda-de-Agua2002]. The source code in C++ to perform multifractal analysis is available at <https://github.com/lsaravia/mfsba>. 
+
+### Comparison of methods
+
+We should limit the scales to apply the methods to the range where the linear relationships holds.
 
 
 ## Spatially explicit models

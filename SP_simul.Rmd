@@ -16,6 +16,7 @@ mfBin <- "~/Dropbox/cpp/SpatialAnalysis/mfsba" # /mfSBA /multiSpeciesSBA
 
 require(pander)
 panderOptions('table.split.table',Inf)
+options("scipen"=100, "digits"=4)
 
 ```
 
@@ -23,7 +24,7 @@ panderOptions('table.split.table',Inf)
 
 First generate a pattern with  SAR z=1 using simply bands of species z=0.5 because I am using area as Borda-de-Agua instead of side.
 
-```{r simul_z1, eval=T,echo=F,message=F,warning=F}
+```{r simul_z1, eval=F,echo=F,message=F,warning=F}
 setwd("Simul")
 
 DqF <- compMethods_UniformSAD(8,256)
@@ -54,7 +55,7 @@ setwd(oldcd)
 
 To see if there is any efect of side 
 
-```{r simul_z1_512, eval=T,echo=F,message=F,warning=F}
+```{r simul_z1_512, eval=F,echo=F,message=F,warning=F}
 setwd("Simul")
 
 
@@ -71,7 +72,7 @@ Thus DqSAD works in the range 2-8 2-16 2-32 depending on the number of species
 
 # Test logseries SAD side = 256 
 
-```{r simul_ls_256, eval=T,echo=F,message=F,warning=F}
+```{r simul_ls_256, eval=F,echo=F,message=F,warning=F}
 setwd("Simul")
 
 DqF <- rbind(DqF,compMethods_FisherSAD(8,256))
@@ -86,14 +87,14 @@ setwd(oldcd)
 
 # Test logseries SAD side=512 
 
-```{r simul_ls_512b, eval=T,echo=F,message=F,warning=F}
+```{r simul_ls_512b, eval=F,echo=F,message=F,warning=F}
 setwd("Simul")
 
-DqF <- rbind(DqF,compMethods_FisherSAD(8,512,F))
+DqF <- rbind(DqF,compMethods_FisherSAD(8,512))
 
-DqF <- rbind(DqF,compMethods_FisherSAD(64,512,F))
+DqF <- rbind(DqF,compMethods_FisherSAD(64,512))
 
-DqF <- rbind(DqF,compMethods_FisherSAD(256,512,F))
+DqF <- rbind(DqF,compMethods_FisherSAD(256,512))
 
 setwd(oldcd)
 rm(Dq1,Dq2,spa)
@@ -102,20 +103,184 @@ rm(Dq1,Dq2,spa)
 
 # Simulate with logseries and the neutral model
 
-```{r simul_neu_256, eval=T,echo=F,message=F,warning=F}
+```{r simul_neu_256, eval=F,echo=F,message=F,warning=F}
 setwd("Simul")
 
 
-DqF <- rbind(DqF,compMethods_NeutralSAD(8,256,T))
+DqF <- rbind(DqF,compMethods_NeutralSAD(8,256,T)$Dq)
 
 
-DqF <- rbind(DqF,compMethods_NeutralSAD(64,256,T))
+DqF <- rbind(DqF,compMethods_NeutralSAD(64,256,T)$Dq)
 
 
-DqF <- rbind(DqF,compMethods_NeutralSAD(256,256,T))
+DqF <- rbind(DqF,compMethods_NeutralSAD(256,256,T)$Dq)
 setwd(oldcd)
 rm(nsp,side,spa)
+
+save.image()
+```
+
+# Test if at time 500 the model is at steady state
+
+```{r test_neutralTime, eval=F,echo=F,message=F,warning=F}
+setwd("Simul")
+
+simul_NeutralPlotTime(8,256,T,500,"L")
+simul_NeutralPlotTime(64,256,T,500,"L")
+simul_NeutralPlotTime(256,256,T,500,"L")
+
+
+simul_NeutralPlotTime(8,512,T,500,"L")
+simul_NeutralPlotTime(64,512,T,500,"L")
+simul_NeutralPlotTime(256,512,T,500,"L")
+
+
+simul_NeutralPlotTime(8,512,T,500,"U")
+simul_NeutralPlotTime(64,512,T,500,"U")
+simul_NeutralPlotTime(256,512,T,500,"U")
+
+setwd(oldcd)
+
+```
+
+
+Compare Neutral and Logseries using 10 simulations with KS and permutations with side =256
+
+
+```{r test_SAD256, eval=F,echo=F,message=F,warning=F}
+setwd("Simul")
+
+cc <- comp_NeutralLogseries(8,256)
+compGC <-splitFields_comp(cc$comp)
+DqGC   <-cc$Dq
+SadGC  <-cc$SAD
+
+cc <- comp_NeutralLogseries(64,256)
+compGC <-rbind(compGC,splitFields_comp(cc$comp))
+DqGC   <-rbind(DqGC  ,cc$Dq)
+SadGC  <-rbind(SadGC ,cc$SAD)
+
+cc <- comp_NeutralLogseries(256,256)
+compGC <-rbind(compGC,splitFields_comp(cc$comp))
+DqGC   <-rbind(DqGC  ,cc$Dq)
+SadGC  <-rbind(SadGC ,cc$SAD)
+
+setwd(oldcd)
 save.image()
 
 ```
 
+Compare Neutral and Logseries using 10 simulations with KS and permutations with side =512
+
+
+```{r test_SAD512, eval=F,echo=F,message=F,warning=F}
+setwd("Simul")
+
+cc <- comp_NeutralLogseries(8,512)
+compGC <-rbind(compGC,splitFields_comp(cc$comp))
+DqGC   <-rbind(DqGC  ,cc$Dq)
+SadGC  <-rbind(SadGC ,cc$SAD)
+
+cc <- comp_NeutralLogseries(64,512)
+compGC <-rbind(compGC,splitFields_comp(cc$comp))
+DqGC   <-rbind(DqGC  ,cc$Dq)
+SadGC  <-rbind(SadGC ,cc$SAD)
+
+cc <- comp_NeutralLogseries(256,512)
+compGC <-rbind(compGC,splitFields_comp(cc$comp))
+DqGC   <-rbind(DqGC  ,cc$Dq)
+SadGC  <-rbind(SadGC ,cc$SAD)
+
+
+# Simulations with side=512 not done
+#
+#compSP <- rbind(compSP,compKS_NeutralLogseries(8,512))
+#compSP <- rbind(compSP,compKS_NeutralLogseries(64,512))
+#compSP <- rbind(compSP,compKS_NeutralLogseries(256,512))
+rm(cc)
+
+setwd(oldcd)
+save.image()
+```
+
+
+Compare Neutral and Uniform 10 simulations with KS and permutations with side 256 and 512
+
+
+```{r test_SAD256U, eval=F,echo=F,message=F,warning=F}
+setwd("Simul")
+# Agregar una parametro meta (metacommunity) a variables para identificar
+# Agregar comparacion de SAD uniforme con Neutral uniforme por KS
+#
+cc <- comp_NeutralUniform(8,256)
+compUN <-splitFields_comp(cc$comp)
+DqUN   <-cc$Dq
+SadUN  <-cc$SAD
+
+cc <- comp_NeutralUniform(64,256)
+compUN <-rbind(compUN,splitFields_comp(cc$comp))
+DqUN   <-rbind(DqUN  ,cc$Dq)
+SadUN  <-rbind(SadUN ,cc$SAD)
+
+cc <- comp_NeutralUniform(256,256)
+compUN <-rbind(compUN,splitFields_comp(cc$comp))
+DqUN   <-rbind(DqUN  ,cc$Dq)
+SadUN  <-rbind(SadUN ,cc$SAD)
+
+
+cc <- comp_NeutralUniform(8,512)
+compUN <-rbind(compUN,splitFields_comp(cc$comp))
+DqUN   <-rbind(DqUN  ,cc$Dq)
+SadUN  <-rbind(SadUN ,cc$SAD)
+
+cc <- comp_NeutralUniform(64,512)
+compUN <-rbind(compUN,splitFields_comp(cc$comp))
+DqUN   <-rbind(DqUN  ,cc$Dq)
+SadUN  <-rbind(SadUN ,cc$SAD)
+
+cc <- comp_NeutralUniform(256,512)
+compUN <-rbind(compUN,splitFields_comp(cc$comp))
+DqUN   <-rbind(DqUN  ,cc$Dq)
+SadUN  <-rbind(SadUN ,cc$SAD)
+
+rm(cc)
+
+setwd(oldcd)
+# Delete duplicated fields Side2 NmSp2
+compGC <- compGC[,-(6:7)]
+compUN <- compUN[,-(6:7)]
+# merge
+
+compT <- rbind(compGC,compUN)
+# Reorganize 
+compT <- compT[,c(2,3,1,4:10)]
+rm(compGC,compUN)
+
+# merge SAD
+SadT <- rbind(SadGC,SadUN)
+rm(SadGC,SadUN)
+
+# merge Dq
+
+DqT <- rbind(DqGC,DqUN)
+rm(DqGC,DqUN)
+
+save.image()
+
+```
+
+
+```{r power_adtest, eval=T,echo=F,message=F,warning=F}
+
+power <- calcPower_AD(DqT,SadT,8,256)
+power <- rbind(power,calcPower_AD(DqT,SadT,64,256))
+power <- rbind(power,calcPower_AD(DqT,SadT,256,256))
+
+power <- rbind(power,calcPower_AD(DqT,SadT,8,512))
+power <- rbind(power,calcPower_AD(DqT,SadT,64,512))
+power <- rbind(power,calcPower_AD(DqT,SadT,256,512))
+
+# Cada 12 cambia rep(8,12)
+nsp <- c(rep(8,12),rep(64,12),rep(256,12),rep(8,12),rep(64,12),rep(256,12))
+save.image()
+```

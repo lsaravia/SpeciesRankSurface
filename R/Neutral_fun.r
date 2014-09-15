@@ -63,6 +63,21 @@ calcRankSAD  <- function(den)
   ddply(den, .(MortalityRate,DispersalDistance,ColonizationRate,ReplacementRate),hh )
 }
 
+# Calculate Ranks for every parameter combination in columns cols, for variable vv, using data.frame den 
+# to use ggplot2  
+#
+calcRankSAD_by  <- function(den,vv,cols)
+{
+  require(plyr)
+  hh <- function(x) { 
+  x1 <- x[x[[vv]]>0,]
+  x1$parms <- paste(unique(x[,cols]),collapse="_")
+  x1$Rank <- nrow(x1) - rank(x1[[vv]]) +1
+  return(x1)
+  }
+  ddply(den, cols,hh )
+}
+
 # pairwise KS test for all combinations of parameters in denl= density in long format
 # parameters are in columns 1:4
 # 
@@ -87,6 +102,78 @@ pairKS_SAD <- function(denl){
   mks$p.adjust <- p.adjust(mks$p.value, method="hommel")
   return(mks)
 }
+
+# pairwise KS test for all combinations of parameters in variable parms 
+# vv: name of the variable where density or proportion is
+# denl: data.frame with all data
+#
+pairwiseKS_SAD <- function(denl,vv,parms){
+  
+  parms <- unique(parms)
+  combo <- combn(nrow(parms),2)
+  
+  require(plyr)
+  mks <-adply(combo,2, function(x) {
+    p1 <- parms[x[1],]
+    p2 <- parms[x[2],]
+    d1 <- merge(denl,p1)
+    d2 <- merge(denl,p2)
+    ks <- ks.test(d1[,vv],d2[,vv])
+    out <-data.frame(p1,p2,stat=ks$statistic,p.value=ks$p.value,stringsAsFactors=F)
+    ln <-length(names(p1))*2
+    names(out)[1:(ln)]<-c(paste0(abbreviate(names(p1)),1),paste0(abbreviate(names(p1)),2))
+    return(out)      
+  })
+  mks$p.adjust <- p.adjust(mks$p.value, method="hommel")
+  return(mks)
+}
+
+# pairwise Anderson-Darling K test for all combinations of parameters in variable parms 
+# vv: name of the variable where density or proportion is
+# denl: data.frame with all data
+#
+pairwiseAD_SAD <- function(denl,vv,parms){
+  require(kSamples)
+
+  parms <- unique(parms)
+  combo <- combn(nrow(parms),2)
+  
+  require(plyr)
+  mks <-adply(combo,2, function(x) {
+    p1 <- parms[x[1],]
+    p2 <- parms[x[2],]
+    d1 <- merge(denl,p1)
+    d2 <- merge(denl,p2)
+    ks <- ad.test(list(d1[,vv],d2[,vv]),method="simulated",nsim=1000)
+    out <-data.frame(p1,p2,stat=ks$ad[2,2],p.value=ks$ad[2,4],stringsAsFactors=F)
+    ln <-length(names(p1))*2
+    names(out)[1:(ln)]<-c(paste0(abbreviate(names(p1)),1),paste0(abbreviate(names(p1)),2))
+    return(out)      
+  })
+  mks$p.adjust <- p.adjust(mks$p.value, method="hommel")
+  return(mks)
+}
+
+# Calculate the power for AD test
+#
+calcPow_AD <- function(Dq3,vv,parms){
+  
+  pow <- data.frame()
+  c1 <-pairwiseAD_SAD(Dq3,vv,parms)
+  c2 <- with(c1,c1[Type1!=Type2,])
+  nc <- ncol(parms)*2
+
+  if(nrow(c2)>0) {  
+    # calculate the power
+    c3 <- nrow(c2[c2$p.value<0.05,])/nrow(c2)
+    pow <- data.frame(c2[1,2:nc],n=nrow(c2),power=c3)
+  }
+
+  c2 <- with(c1,c1[Type1==Type2,])
+  c3 <- nrow(c2[c2$p.value<0.05,])/nrow(c2)
+  pow <- rbind(pow, data.frame(c2[1,2:nc],n=nrow(c2),power=c3))
+}
+
 
 # pairwise KS test for Dq of all combinations of variable rep
 # 
@@ -163,7 +250,7 @@ meltDensityOut_NT <- function(fname,num_sp){
   
   require(reshape2)
   
-  den1 <- melt(den,id.vars=c("MortalityRate","DispersalDistance","ColonizationRate","ReplacementRate"),measure.vars=c(7:473),variable.name="Species")
+  den1 <- melt(den,id.vars=c("MortalityRate","DispersalDistance","ColonizationRate","ReplacementRate"),measure.vars=c(7:(6+num_sp)),variable.name="Species")
   
 }
 
@@ -561,11 +648,15 @@ plot_sed_image <- function(fname,gname,dX=0,col=0,shf=0)
 
 # Generate a banded image with nSp species and side = side
 #
-genUniformSAD_image <- function(nSp,side)
+genUniformSAD_image <- function(nSp,side,rnd=F)
 {
   if( side %% nSp != 0 )
     stop("Number of species [nSp] must divide [side]")
-  matrix(rep(1:nSp,each=side*side/nSp),nrow=side)
+  if(rnd) {
+    v <- rpois(nSp,side*side/nSp)
+    v[length(v)] <- side*side-sum(v[1:length(v)-1])
+    matrix(rep(1:nSp,times=v),nrow=side)
+    } else matrix(rep(1:nSp,each=side*side/nSp),nrow=side)
 }
 
 # Generate a regular image with Fisherian SAD with nsp species and side = side
@@ -579,6 +670,10 @@ genFisherSAD_image <- function(nsp,side)
   repeat {
     ff<-fisher.ecosystem(N=N,S=nsp,nmax=N)
     if(nsp==nrow(ff)) {
+      if(sum(ff)!=N) {
+        c<- N/sum(ff)
+        ff <- ceiling(ff*c)
+      }
       m <- matrix(rep(1:nsp,ff),nrow=side)
       if(ncol(m)>=side) break
     }
@@ -588,11 +683,42 @@ genFisherSAD_image <- function(nsp,side)
   return(list("m"=m,"prob"=prob))
 }
 
+
+# Generate Logseries SAD with nsp*f species and side = side
+#  The factor f is to compensate losses for use as a metacommunity
+# Requires untb package
+#
+#
+genFisherSAD <- function(nsp,side,f=1.33)
+{
+  require(untb)
+  N <- side*side
+#  alpha <-  fishers.alpha(N, nsp)
+#  x <- N/(N + alpha)
+#  j <- 1:(nsp)
+#  prob <-  alpha * x^j/j  
+  # Normalize
+#  prob <- prob/sum(prob)  
+  nsp <- ceiling(nsp*f)
+  repeat {
+    ff<-fisher.ecosystem(N=N,S=nsp,nmax=N)
+    if(nsp==nrow(ff)) {
+      if(sum(ff)!=N) {
+        c<- N/sum(ff)
+        ff <- ceiling(ff*c)
+      }
+      break
+    }
+  }
+  prob <- ff/sum(ff)
+  return(prob)
+}
+
   
 # Generate a Fisher logseries SAD with a regular spatial distribution
 # randomize it and calculates SRS and DqSAD multifractal estimations
 #
-compMethods_FisherSAD <- function(nsp,side,gen=T) {
+compMethods_FisherSAD <- function(nsp,side,gen=T,graph=T) {
 
   if(!exists("mfBin")) stop("Variable mfBin not set (mfSBA binary)")
 
@@ -605,7 +731,9 @@ compMethods_FisherSAD <- function(nsp,side,gen=T) {
     save_matrix_as_sed(spa,fname)
   }
 
-  plot_sed_image(spa,paste("Regular Fisher",nsp),0,nsp,0)
+  sad1 <- data.frame(table(spa),Type="SAD",Side=side,NumSp=nsp,SAD="Logseries")
+
+  if(graph) plot_sed_image(spa,paste("Regular Fisher",nsp),0,nsp,0)
 
   Dq1<- calcDq_multiSBA(fname,"q.sed 2 1024 20 S",mfBin,T)
   Dq1$Type <- "SRS"
@@ -616,17 +744,17 @@ compMethods_FisherSAD <- function(nsp,side,gen=T) {
   fname1 <- paste0("fisher",nsp,"_",side,"rnz.sed")
 
   save_matrix_as_sed(spa,fname1)
-  plot_sed_image(spa,paste("Rnz Fisher",nsp),0,nsp,0)
+  if(graph) plot_sed_image(spa,paste("Rnz Fisher",nsp),0,nsp,0)
 
   Dq2<- calcDq_multiSBA(fname1,"q.sed 2 1024 20 S",mfBin,T)
   Dq2$Type <- "rnzSRS"
   Dq1<- rbind(Dq1,Dq2)
-  plotDq(Dq1,"Type")
-
-  bin <- range(Dq1$R.Dq)
-  bin <- (bin[2]-bin[1])/10
-  print(ggplot(Dq1, aes(x=R.Dq,fill=Type)) + geom_histogram(alpha=0.2,binwidth = bin))
-
+  if(graph) {
+    plotDq(Dq1,"Type")
+    bin <- range(Dq1$R.Dq)
+    bin <- (bin[2]-bin[1])/10
+    print(ggplot(Dq1, aes(x=R.Dq,fill=Type)) + geom_histogram(alpha=0.2,binwidth = bin))
+  }
   # Now calculate DqSAD
 
   Dq3<- calcDq_multiSBA(fname,"q.sed 2 1024 20 E",mfBin,T)
@@ -636,38 +764,43 @@ compMethods_FisherSAD <- function(nsp,side,gen=T) {
   Dq2<- calcDq_multiSBA(fname1,"q.sed 2 1024 20 E",mfBin,T)
   Dq2$Type <- "rnzDqSAD"
   Dq3<- rbind(Dq3,Dq2)
+  if(graph) {
+    plotDq(Dq3,"Type")
 
-  plotDq(Dq3,"Type")
-
-  plotDqFit(paste0("t.", fname1),"q.sed")
-
-  bin <- range(Dq3$R.Dq)
-  bin <- (bin[2]-bin[1])/10
-  print(ggplot(Dq3, aes(x=R.Dq,fill=Type)) + geom_histogram(alpha=0.2,binwidth = bin))
+    plotDqFit(paste0("t.", fname1),"q.sed")
+    bin <- range(Dq3$R.Dq)
+    bin <- (bin[2]-bin[1])/10
+    print(ggplot(Dq3, aes(x=R.Dq,fill=Type)) + geom_histogram(alpha=0.2,binwidth = bin))
+  }
   
   #require(pander)
   #pandoc.table(Dq3[Dq3$R.Dq<0.6,],caption="R2<0.6")
   
   Dqt <- rbind(Dq1,Dq3)
-  Dqt$side <-side
-  Dqt$numSp <-nsp
+  Dqt$Side <-side
+  Dqt$NumSp <-nsp
   Dqt$SAD <- "Logseries"
 
-  return(Dqt)
+  return(list("Dq"=Dqt,"SAD"=sad1))
 }
 
 # Generate a unniform SAD (all spp wiht the same density) with a regular spatial distribution
 # randomize it and calculates SRS and DqSAD multifractal estimations
 #
-compMethods_UniformSAD <- function(nsp,side) {
+compMethods_UniformSAD <- function(nsp,side,graph=T) {
 
   if(!exists("mfBin")) stop("Variable mfBin not set (mfSBA binary)")
 
-  spa <- genUniformSAD_image(nsp,side)
-  plot_sed_image(spa,paste("Uniform sp:",nsp," side:",side),0,nsp,0)
+  spa <- genUniformSAD_image(nsp,side,T)
+  
+  if(graph) {
+    plot_sed_image(spa,paste("Uniform sp:",nsp," side:",side),0,nsp,0)
+  }
 
   fname <- paste0("unif",nsp,"_",side,".sed")
   save_matrix_as_sed(spa,fname)
+  sad1 <- data.frame(table(spa),Type="SAD",Side=side,NumSp=nsp,SAD="Uniform")
+
 
   Dq1<- calcDq_multiSBA(fname,"q.sed 2 1024 20 S",mfBin,T)
   Dq1$Type <- "SRS"
@@ -680,58 +813,81 @@ compMethods_UniformSAD <- function(nsp,side) {
   Dq2<- calcDq_multiSBA(fname1,"q.sed 2 1024 20 S",mfBin,T)
   Dq2$Type <- "rnzSRS"
   Dq1<- rbind(Dq1,Dq2)
-  plotDq(Dq1,"Type")
+  
+  if(graph) {  
+    plotDq(Dq1,"Type")
 
-  bin <- range(Dq1$R.Dq)
-  bin <- (bin[2]-bin[1])/10
-  print(ggplot(Dq1, aes(x=R.Dq,fill=Type)) + geom_histogram(alpha=0.2,binwidth = bin))
+    bin <- range(Dq1$R.Dq)
+    bin <- (bin[2]-bin[1])/10
+    print(ggplot(Dq1, aes(x=R.Dq,fill=Type)) + geom_histogram(alpha=0.2,binwidth = bin))
 
-  plot_sed_image(spa,paste("Uniform Rnz sp:",nsp," side:",side),0,nsp,0)
+    plot_sed_image(spa,paste("Uniform Rnz sp:",nsp," side:",side),0,nsp,0)
+  }
 
   Dq2<- calcDq_multiSBA(fname,"q.sed 2 1024 20 E",mfBin,T)
-  Dq2$Type <- "dqSAD"
+  Dq2$Type <- "DqSAD"
   Dq3<- Dq2
 
   Dq2<- calcDq_multiSBA(fname1,"q.sed 2 1024 20 E",mfBin,T)
   Dq2$Type <- "rnzDqSAD"
   Dq3<- rbind(Dq3,Dq2)
-  plotDq(Dq3,"Type")
+  if(graph) {  
 
-  plotDqFit(paste0("t.", fname1),"q.sed")
+    plotDq(Dq3,"Type")
 
-  bin <- range(Dq3$R.Dq)
-  bin <- (bin[2]-bin[1])/10
-  print(ggplot(Dq3, aes(x=R.Dq,fill=Type)) + geom_histogram(alpha=0.2,binwidth = bin,position="identity"))
-  #print(ggplot(Dq3, aes(x=R.Dq,fill=Type)) + geom_histogram(alpha=0.2,binwidth = 0.1))
+    plotDqFit(paste0("t.", fname1),"q.sed")
+
+    bin <- range(Dq3$R.Dq)
+    bin <- (bin[2]-bin[1])/10
+    print(ggplot(Dq3, aes(x=R.Dq,fill=Type)) + geom_histogram(alpha=0.2,binwidth = bin,position="identity"))
+    #print(ggplot(Dq3, aes(x=R.Dq,fill=Type)) + geom_histogram(alpha=0.2,binwidth = 0.1))
+  }
+  
   Dqt <- rbind(Dq1,Dq3)
-  Dqt$side <-side
-  Dqt$numSp <-nsp
+  Dqt$Side <-side
+  Dqt$NumSp <-nsp
   Dqt$SAD <- "Uniform"
-  return(Dqt)
+
+  return(list("Dq"=Dqt,"SAD"=sad1))
 }
 
 # Generate a Neutral model with Fisher logseries metacommunity SAD 
 # randomize it and calculates SRS and DqSAD multifractal estimations
+# Neutral model Hierarchical saturated
+# Graph : plot graphs
+# meta: metacommunity "L" logseries, any other uniform
 #
-# modType: 3 Hierarchical non saturated (not full of individuals)
-#          4 Hierarchical non saturated (full)
-#
-compMethods_NeutralSAD <- function(nsp,side,simul=T,modType=4) {
+compMethods_NeutralSAD <- function(nsp,side,simul=T,graph=T,meta="L") {
   if(!exists("mfBin")) stop("Variable mfBin not set (mfSBA binary)")
   if(!exists("neuBin")) stop("Variable neuBin not set (neutral binary)")
+  if(!require(untb))  stop("Untb package not installed")
+
   if(simul){
-    require(untb)
-    N <- side*side
-    alpha <-  fishers.alpha(N, nsp)
-    x <- N/(N + alpha)
-    j <- 1:(nsp)
-    prob <-  alpha * x^j/j  
+
+    #N <- side*side   # The metacommunity have 100 times more individuals
+    #alpha <-  fishers.alpha(N, nsp)
+    #x <- N/(N + alpha)
+    #j <- 1:(nsp)
+    #prob <-  alpha * x^j/j  
     # Normalize
-    prob <- prob/sum(prob)
+    #prob <- prob/sum(prob)
+    if(toupper(meta)=="L") {
+      prob <- genFisherSAD(nsp,side)
+      neuParm <- "fishE"
+      bname <- paste0("neuFish",nsp)
+      sadName <- "Neutral"
+    } else {
+      prob <- rep(1/nsp,nsp)  
+      neuParm <- "unifE"
+      bname <- paste0("neuUnif",nsp)
+      sadName <- "NeuUnif"
+    }
 
-    genNeutralParms("fishE",side,prob,1,0.2,0.4,0.0001)
+    genNeutralParms(neuParm,side,prob,1,0.2,0.4,0.0001)
 
-    fname <- paste0("fisher",nsp)
+
+    # Delete old simulations
+    system(paste0("rm ",bname,"*.txt"))
 
     par <- read.table("sim.par",quote="",stringsAsFactors=F)
     # Change base name
@@ -739,23 +895,27 @@ compMethods_NeutralSAD <- function(nsp,side,simul=T,modType=4) {
     par[par$V1=="nEvals",]$V2 <- 500
     par[par$V1=="inter",]$V2 <- 500 # interval to measure Density and Diversity
     par[par$V1=="init",]$V2 <- 500  # Firs time of measurement = interval
-    par[par$V1=="modType",]$V2 <- modType # Hierarchical saturated
+    par[par$V1=="modType",]$V2 <- 4 # Hierarchical saturated
     par[par$V1=="sa",]$V2 <- "S" # Save a snapshot of the model
-    par[par$V1=="baseName",]$V2 <- fname# Time = 100 
+    par[par$V1=="baseName",]$V2 <- bname# Time = 100 
     par[par$V1=="minBox",]$V2 <- 2
     par[par$V1=="pomac",]$V2 <- 0 # 0:one set of parms 
                                   # 1:several simulations with pomac.lin parameters 
 
     write.table(par, "sim.par",sep="\t",row.names=F,col.names=F,quote=F)
 
-    system(paste(neuBin,"sim.par","fishE.inp"))
+    system(paste(neuBin,"sim.par",paste0(neuParm,".inp")))
   }
+  #fname <- paste0("neuFish",nsp,"Density.txt")
+  #sad1 <- meltDensityOut_NT(fname,nsp)
 
-  fname <- paste0("fisher",nsp,"-0500.sed")
-  
+  fname <- paste0(bname,"-0500.sed")
   spa <- read_sed(fname)
 
-  plot_sed_image(spa,paste("Neutral T500",nsp),0,nsp,0)
+  sad1 <- data.frame(table(spa),Type="SAD",Side=side,NumSp=nsp,SAD=sadName)
+  #sad1$alpha <- fishers.alpha(side*side, nrow(sad1))
+
+  if(graph) plot_sed_image(spa,paste("Neutral T500",nsp),0,nsp,0)
 
   Dq1<- calcDq_multiSBA(fname,"q.sed 2 1024 20 S",mfBin,T)
   Dq1$Type <- "SRS"
@@ -763,20 +923,22 @@ compMethods_NeutralSAD <- function(nsp,side,simul=T,modType=4) {
   # Randomize the spatial distribution
   #
   spa <- matrix(sample(spa),nrow=side)
-  fname1 <- paste0("fisher",nsp,"-500rnz.sed")
+  fname1 <- paste0(bname,"-500rnz.sed")
 
   save_matrix_as_sed(spa,fname1)
-  plot_sed_image(spa,paste("Neutral T500 Rnz",nsp),0,nsp,0)
+  if(graph) plot_sed_image(spa,paste("Neutral T500 Rnz",nsp),0,nsp,0)
 
   Dq2<- calcDq_multiSBA(fname1,"q.sed 2 1024 20 S",mfBin,T)
   Dq2$Type <- "rnzSRS"
   Dq1<- rbind(Dq1,Dq2)
-  plotDq(Dq1,"Type")
+  if(graph) {
+    plotDq(Dq1,"Type")
 
-  bin <- range(Dq1$R.Dq)
-  bin <- (bin[2]-bin[1])/10
-  print(ggplot(Dq1, aes(x=R.Dq,fill=Type)) + geom_histogram(alpha=0.2,binwidth = bin))
-
+    bin <- range(Dq1$R.Dq)
+    bin <- (bin[2]-bin[1])/10
+    print(ggplot(Dq1, aes(x=R.Dq,fill=Type)) + geom_histogram(alpha=0.2,binwidth = bin))
+  }
+  
   # Now calculate DqSAD
 
   Dq3<- calcDq_multiSBA(fname,"q.sed 2 1024 20 E",mfBin,T)
@@ -787,21 +949,437 @@ compMethods_NeutralSAD <- function(nsp,side,simul=T,modType=4) {
   Dq2$Type <- "rnzDqSAD"
   Dq3<- rbind(Dq3,Dq2)
 
-  plotDq(Dq3,"Type")
+  if(graph) {
+    plotDq(Dq3,"Type")
 
-  plotDqFit(paste0("t.", fname1),"q.sed")
+    plotDqFit(paste0("t.", fname1),"q.sed")
 
-  bin <- range(Dq3$R.Dq)
-  bin <- (bin[2]-bin[1])/10
-  print(ggplot(Dq3, aes(x=R.Dq,fill=Type)) + geom_histogram(alpha=0.2,binwidth = bin))
-  
+    bin <- range(Dq3$R.Dq)
+    bin <- (bin[2]-bin[1])/10
+    print(ggplot(Dq3, aes(x=R.Dq,fill=Type)) + geom_histogram(alpha=0.2,binwidth = bin))
+  }  
   #require(pander)
   #pandoc.table(Dq3[Dq3$R.Dq<0.6,],caption="R2<0.6")
   
   Dqt <- rbind(Dq1,Dq3)
-  Dqt$side <-side
-  Dqt$numSp <-nsp
-  Dqt$SAD <- "Neutral"
+  Dqt$Side <-side
+  Dqt$NumSp <-nsp
+  Dqt$SAD <- "NeuUnif" #Neutral with uniform metacommunity
 
-  return(Dqt)
+  return(list("Dq"=Dqt,"SAD"=sad1))
+}
+
+
+
+# Reads Generated Logseries & NEutral SAD compare using KS and compare Dq also using KS.test
+#
+compKS_NeutralLogseries <- function(Dq1,nsp,side) {
+
+  fname <- paste0("neuFish",nsp,"-0500.sed")
+  
+  spa <- read_sed(fname)
+
+  ff <- data.frame(table(spa),Type="SAD",Side=side,NumSp=nsp,SAD="Neutral")
+
+  fname <- paste0("neuFish",nsp,"_",side,".sed")
+
+  spa <- read_sed(fname)
+
+  ff <- rbind(ff,data.frame(table(spa),Type="SAD",Side=side,NumSp=nsp,SAD="Logseries"))
+
+  compSP <- pairwiseKS_SAD(ff,"Freq",ff[,3:6])
+
+
+  den3 <- calcRankSAD_by(ff,"Freq",3:6)
+  print(ggplot(den3,aes(x=Rank,y=log(Freq),colour=SAD)) + geom_line())
+
+  ff <- with(Dq1,Dq1[Side==side & NumSp==nsp & SAD!="Uniform" & Type=="SRS",])
+  ff <- rbind(ff,with(Dq1,Dq1[Side==side & NumSp==nsp & SAD=="Logseries" & Type=="rnzSRS" ,]))
+
+  #ff <- with(ff,ff[q<=10 & q>=-10,])
+  #unique(ff$q)
+  compSP <- rbind(compSP,pairwiseKS_SAD(ff,"Dq",ff[5:8]))
+  plotDq(ff,"SAD")
+
+  
+  ff <- with(Dq1,Dq1[Side==side & NumSp==nsp & Type=="DqSAD",])
+  ff <- rbind(ff,with(Dq1,Dq1[Side==side & NumSp==nsp & SAD=="Logseries" & Type=="rnzDqSAD" ,]))
+
+  plotDq(ff,"SAD")
+
+  compSP <- rbind(compSP,pairwiseKS_SAD(ff,"Dq",ff[5:8]))
+
+  }
+
+# Simulate 10 Logseries & NEutral SAD compare using KS and compare Dq using permutations
+#
+comp_NeutralLogseries <- function(nsp,side,simul=10) {
+  require(ggplot2)
+
+  Dqq <- data.frame()
+  SadF <- data.frame()
+
+  for(i in 1:simul){
+    cc <- compMethods_FisherSAD(nsp,side,T,F)
+    cc$Dq$rep <-i
+    cc$SAD$rep <-i  
+    Dqq <- rbind(Dqq,cc$Dq)
+    SadF <-rbind(SadF,cc$SAD)
+  }
+
+  #Dqq <- Dqq[Dqq$SAD!="Neutral",]
+  #SadF <- SadF[SadF$SAD!="Neutral",]
+
+  for(i in 1:simul){
+    cc <- compMethods_NeutralSAD(nsp,side,T,F)
+    cc$Dq$rep <-i
+    cc$SAD$rep <-i  
+    Dqq <- rbind(Dqq,cc$Dq)
+    SadF <-rbind(SadF,cc$SAD)
+    }
+
+  # have to make averages
+  require(plyr)
+  sad1 <- ddply(SadF,c(3,4,5,6,1),summarise,den=mean(Freq))
+
+  comp <- pairwiseKS_SAD(sad1,"den",sad1[,1:4])
+  den3 <- calcRankSAD_by(sad1,"den",1:4)
+  print(ggplot(den3,aes(x=Rank,y=log(den),colour=SAD)) + geom_line())
+
+  # Rearrange data.frame
+  #
+  comp$Group1 <- do.call(paste, c(comp[,2:5],sep="_"))
+  comp$Group2 <- do.call(paste, c(comp[,6:9],sep="_"))
+  comp <- comp[,c(13:14,10:12)]
+  names(comp)[3:5] <- c( "Stat","P.Value","adj.P.Value")
+
+  # Compare Dq using KS
+  #
+  Dq2 <- ddply(Dqq,c(5:8,1),summarise,mDq=mean(Dq))
+  Dq3 <- with(Dq2,Dq2[grepl("DqSAD",Type) & SAD=="Logseries",])
+  c1 <- pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4])
+
+  Dq3 <- with(Dq2,Dq2[grepl("DqSAD",Type) & SAD=="Neutral",])
+  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
+
+  Dq3 <- with(Dq2,Dq2[Type=="DqSAD" & grepl("Neutral|Logseries",SAD),])
+  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
+
+  Dq3 <- with(Dq2,Dq2[(Type=="DqSAD" & SAD=="Neutral")|(Type=="rnzDqSAD" & SAD=="Logseries"),])
+  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
+
+  Dq3 <- with(Dq2,Dq2[grepl("SRS",Type) & SAD=="Logseries",])
+  Dq3 <- Dq3[Dq3$q!=0,]
+  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
+
+  Dq3 <- with(Dq2,Dq2[grepl("SRS",Type) & SAD=="Neutral",])
+  Dq3 <- Dq3[Dq3$q!=0,]
+  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
+
+  Dq3 <- with(Dq2,Dq2[Type=="SRS" & grepl("Neutral|Logseries",SAD),])
+  Dq3 <- Dq3[Dq3$q!=0,]
+  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
+
+  Dq3 <- with(Dq2,Dq2[(Type=="SRS" & SAD=="Neutral")|(Type=="rnzSRS" & SAD=="Logseries"),])
+  Dq3 <- Dq3[Dq3$q!=0,]
+  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
+
+  # Rearrange data.frame
+  #
+  c1$Group1 <- do.call(paste, c(c1[,2:5],sep="_"))
+  c1$Group2 <- do.call(paste, c(c1[,6:9],sep="_"))
+  c1 <- c1[,c(13:14,10:12)]
+  names(c1)[3:5] <- c( "Stat","P.Value","adj.P.Value")
+
+  comp <- rbind(comp,c1)
+  comp$Method <- "KS"
+
+  # Now compare using permutations
+  #
+  require(statmod)
+  require(reshape2)
+  Dq2 <- Dqq
+  Dq2$factor <- do.call(paste, c(Dqq[,5:8],sep="_"))
+  # Prepare data.frame in wide format 
+  #
+  Dq2 <- melt(Dq2, id.vars=c(1,5:10),measure.var="Dq")
+  Dq2 <- dcast(Dq2, Type+Side+NumSp+SAD+factor+rep~ q)
+    
+  # Compare SRS curves
+  #
+  Dq3 <- with(Dq2,Dq2[grepl("DqSAD",Type) & SAD=="Logseries",])
+  c2 <- compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000)
+
+  Dq3 <- with(Dq2,Dq2[grepl("DqSAD",Type) & SAD=="Neutral",])
+  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
+
+  Dq3 <- with(Dq2,Dq2[Type=="DqSAD" & grepl("Neutral|Logseries",SAD),])
+  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
+
+  Dq3 <- with(Dq2,Dq2[(Type=="DqSAD" & SAD=="Neutral")|(Type=="rnzDqSAD" & SAD=="Logseries"),])
+  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
+
+  Dq3 <- with(Dq2,Dq2[grepl("SRS",Type) & SAD=="Logseries",])
+  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
+
+  Dq3 <- with(Dq2,Dq2[grepl("SRS",Type) & SAD=="Neutral",])
+  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
+
+  Dq3 <- with(Dq2,Dq2[Type=="SRS" & grepl("Neutral|Logseries",SAD),])
+  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
+
+  Dq3 <- with(Dq2,Dq2[(Type=="SRS" & SAD=="Neutral")|(Type=="rnzSRS" & SAD=="Logseries"),])
+  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
+
+  c2$Method <- "Permut"
+  comp <- rbind(comp,c2)
+
+  return(list("Dq"=Dqq,"SAD"=SadF,"comp"=comp))
+  }
+
+splitFields_comp <-function(comp) {
+  require(plyr)
+  c1 <- ldply(with(comp,strsplit(Group1,"_")))
+  c2 <- ldply(with(comp,strsplit(Group2,"_")))
+  names(c1) <- c("Type1","Side1","NmSp1","SAD1" )
+  names(c2) <- c("Type2","Side2","NmSp2","SAD2" )
+  comp <- cbind(c2,comp)
+  comp <- cbind(c1,comp)
+  comp <- comp[,-(9:10)]
+  return(comp)
+}
+
+
+# Simulate 10 Uniform & Neutral SAD compare using KS and compare Dq using permutations
+#
+comp_NeutralUniform <- function(nsp,side,simul=10) {
+  require(ggplot2)
+
+  Dqq <- data.frame()
+  SadF <- data.frame()
+
+  for(i in 1:simul){
+    cc <- compMethods_UniformSAD(nsp,side,F)
+    cc$Dq$rep <-i
+    cc$SAD$rep <-i  
+    Dqq <- rbind(Dqq,cc$Dq)
+    SadF <-rbind(SadF,cc$SAD)
+  }
+
+  #Dqq <- Dqq[Dqq$SAD!="Neutral",]
+  #SadF <- SadF[SadF$SAD!="Neutral",]
+
+  for(i in 1:simul){
+    cc <- compMethods_NeutralSAD(nsp,side,T,F,"U")
+    cc$Dq$rep <-i
+    cc$SAD$rep <-i  
+    Dqq <- rbind(Dqq,cc$Dq)
+    SadF <-rbind(SadF,cc$SAD)
+    }
+
+  # have to make averages
+  require(plyr)
+  sad1 <- ddply(SadF,c(3,4,5,6,1),summarise,den=mean(Freq))
+
+  comp <- pairwiseKS_SAD(sad1,"den",sad1[,1:4])
+  den3 <- calcRankSAD_by(sad1,"den",1:4)
+  print(ggplot(den3,aes(x=Rank,y=log(den),colour=SAD)) + geom_line())
+
+  # Rearrange data.frame
+  #
+  comp$Group1 <- do.call(paste, c(comp[,2:5],sep="_"))
+  comp$Group2 <- do.call(paste, c(comp[,6:9],sep="_"))
+  comp <- comp[,c(13:14,10:12)]
+  names(comp)[3:5] <- c( "Stat","P.Value","adj.P.Value")
+
+  # Compare Dq using KS
+  #
+  Dq2 <- ddply(Dqq,c(5:8,1),summarise,mDq=mean(Dq))
+  Dq3 <- with(Dq2,Dq2[grepl("DqSAD",Type) & SAD=="Uniform",])
+  c1 <- pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4])
+
+  Dq3 <- with(Dq2,Dq2[grepl("DqSAD",Type) & SAD=="NeuUnif",])
+  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
+
+  Dq3 <- with(Dq2,Dq2[Type=="DqSAD" & grepl("NeuUnif|Uniform",SAD),])
+  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
+
+  Dq3 <- with(Dq2,Dq2[(Type=="DqSAD" & SAD=="NeuUnif")|(Type=="rnzDqSAD" & SAD=="Uniform"),])
+  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
+
+  Dq3 <- with(Dq2,Dq2[grepl("SRS",Type) & SAD=="Uniform",])
+  Dq3 <- Dq3[Dq3$q!=0,]
+  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
+
+  Dq3 <- with(Dq2,Dq2[grepl("SRS",Type) & SAD=="NeuUnif",])
+  Dq3 <- Dq3[Dq3$q!=0,]
+  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
+
+  Dq3 <- with(Dq2,Dq2[Type=="SRS" & grepl("NeuUnif|Uniform",SAD),])
+  Dq3 <- Dq3[Dq3$q!=0,]
+  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
+
+  Dq3 <- with(Dq2,Dq2[(Type=="SRS" & SAD=="NeuUnif")|(Type=="rnzSRS" & SAD=="Uniform"),])
+  Dq3 <- Dq3[Dq3$q!=0,]
+  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
+
+  # Rearrange data.frame
+  #
+  c1$Group1 <- do.call(paste, c(c1[,2:5],sep="_"))
+  c1$Group2 <- do.call(paste, c(c1[,6:9],sep="_"))
+  c1 <- c1[,c(13:14,10:12)]
+  names(c1)[3:5] <- c( "Stat","P.Value","adj.P.Value")
+
+  comp <- rbind(comp,c1)
+  comp$Method <- "KS"
+
+  # Now compare using permutations
+  #
+  require(statmod)
+  require(reshape2)
+  Dq2 <- Dqq
+  Dq2$factor <- do.call(paste, c(Dqq[,5:8],sep="_"))
+  # Prepare data.frame in wide format 
+  #
+  Dq2 <- melt(Dq2, id.vars=c(1,5:10),measure.var="Dq")
+  Dq2 <- dcast(Dq2, Type+Side+NumSp+SAD+factor+rep~ q)
+    
+  # Compare SRS curves
+  #
+  Dq3 <- with(Dq2,Dq2[grepl("DqSAD",Type) & SAD=="Uniform",])
+  c2 <- compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000)
+
+  Dq3 <- with(Dq2,Dq2[grepl("DqSAD",Type) & SAD=="NeuUnif",])
+  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
+
+  Dq3 <- with(Dq2,Dq2[Type=="DqSAD" & grepl("NeuUnif|Uniform",SAD),])
+  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
+
+  Dq3 <- with(Dq2,Dq2[(Type=="DqSAD" & SAD=="NeuUnif")|(Type=="rnzDqSAD" & SAD=="Uniform"),])
+  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
+
+  Dq3 <- with(Dq2,Dq2[grepl("SRS",Type) & SAD=="Uniform",])
+  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
+
+  Dq3 <- with(Dq2,Dq2[grepl("SRS",Type) & SAD=="NeuUnif",])
+  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
+
+  Dq3 <- with(Dq2,Dq2[Type=="SRS" & grepl("NeuUnif|Uniform",SAD),])
+  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
+
+  Dq3 <- with(Dq2,Dq2[(Type=="SRS" & SAD=="NeuUnif")|(Type=="rnzSRS" & SAD=="Uniform"),])
+  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
+
+  c2$Method <- "Permut"
+  comp <- rbind(comp,c2)
+
+  return(list("Dq"=Dqq,"SAD"=SadF,"comp"=comp))
+  }
+
+
+simul_NeutralPlotTime <- function(nsp,side,simul=T,time=1000,meta="L") {
+  if(!exists("neuBin")) stop("Variable neuBin not set (neutral binary)")
+  if(!require(untb))  stop("Untb package not installed")
+
+  if(simul){
+
+    #N <- side*side   # The metacommunity have 100 times more individuals
+    #alpha <-  fishers.alpha(N, nsp)
+    #x <- N/(N + alpha)
+    #j <- 1:(nsp)
+    #prob <-  alpha * x^j/j  
+    # Normalize
+    #prob <- prob/sum(prob)
+    if(toupper(meta)=="L") {
+      prob <- genFisherSAD(nsp,side)
+      neuParm <- "fishE"
+      bname <- paste0("neuFish",nsp)
+    } else {
+      prob <- rep(1/nsp,nsp)  
+      neuParm <- "unifE"
+      bname <- paste0("neuUnif",nsp)
+    }
+
+    genNeutralParms(neuParm,side,prob,1,0.2,0.4,0.0001)
+
+
+    # Delete old simulations
+    system(paste0("rm ",bname,"*.txt"))
+
+    par <- read.table("sim.par",quote="",stringsAsFactors=F)
+    # Change base name
+
+    par[par$V1=="nEvals",]$V2 <- time
+    par[par$V1=="inter",]$V2 <- 10 # interval to measure Density and Diversity
+    par[par$V1=="init",]$V2 <- 1  # Firs time of measurement = interval
+    par[par$V1=="modType",]$V2 <- 4 # Hierarchical saturated
+    par[par$V1=="sa",]$V2 <- "N" # Save a snapshot of the model
+    par[par$V1=="baseName",]$V2 <- bname# Time = 100 
+    par[par$V1=="minBox",]$V2 <- 2
+    par[par$V1=="pomac",]$V2 <- 0 # 0:one set of parms 
+                                  # 1:several simulations with pomac.lin parameters 
+
+    write.table(par, "sim.par",sep="\t",row.names=F,col.names=F,quote=F)
+
+    system(paste(neuBin,"sim.par",paste0(neuParm,".inp")))
+    }
+    fname <- paste0(bname,"Density.txt")
+    den <- read.delim(fname)
+    names(den)[1:5]<-c("GrowthRate","MortalityRate","DispersalDistance","ColonizationRate","ReplacementRate")
+    require(ggplot2)
+
+    print(gp <- ggplot(den, aes(x=Time, y=H)) +
+        geom_line() + theme_bw() )
+
+    print(gp <- ggplot(den, aes(x=Time, y=Richness)) +
+        geom_line() + theme_bw()) 
+}
+
+calcPower_AD <- function(Dqq,Sad,nsp,side){
+  Dq3 <- with(Dqq,Dqq[grepl("DqSAD",Type) & SAD=="Logseries" & Side==side & NumSp==nsp,])
+  pow <- calcPow_AD(Dq3,"Dq",Dq3[,c("Type","SAD","rep")])
+
+  Sa3 <- with(Sad,Sad[SAD=="Logseries" & Side==side & NumSp==nsp,])
+  pow <- rbind(pow,calcPow_AD(Sa3,"Freq",Sa3[,c("Type","SAD","rep")]))
+
+  Dq3 <- with(Dqq,Dqq[grepl("SRS",Type) & SAD=="Logseries" & Side==side & NumSp==nsp,])
+  pow <- rbind(pow, calcPow_AD(Dq3,"Dq",Dq3[,c("Type","SAD","rep")]))
+
+  Dq3 <- with(Dqq,Dqq[grepl("DqSAD",Type) & SAD=="Neutral" & Side==side & NumSp==nsp,])
+  pow <- rbind(pow, calcPow_AD(Dq3,"Dq",Dq3[,c("Type","SAD","rep")]))
+
+  Dq3 <- with(Dqq,Dqq[grepl("SRS",Type) & SAD=="Neutral" & Side==side & NumSp==nsp,])
+  pow <- rbind(pow, calcPow_AD(Dq3,"Dq",Dq3[,c("Type","SAD","rep")]))
+
+  Dq3 <- with(Dqq,Dqq[((Type=="SRS" & SAD=="Neutral")|(Type=="rnzSRS" & SAD=="Logseries")) & Side==side & NumSp==nsp,])
+  pow <- rbind(pow, calcPow_AD(Dq3,"Dq",Dq3[,c("Type","SAD","rep")]))
+
+  Sa3 <- with(Sad,Sad[SAD=="Neutral" & Side==side & NumSp==nsp ,])
+  pow <- rbind(pow,calcPow_AD(Sa3,"Freq",Sa3[,c("Type","SAD","rep")]))
+
+  ###
+
+  Dq3 <- with(Dqq,Dqq[grepl("DqSAD",Type) & SAD=="Uniform" & Side==side & NumSp==nsp,])
+  pow <- calcPow_AD(Dq3,"Dq",Dq3[,c("Type","SAD","rep")])
+
+  Sa3 <- with(Sad,Sad[SAD=="Uniform" & Side==side & NumSp==nsp,])
+  pow <- rbind(pow,calcPow_AD(Sa3,"Freq",Sa3[,c("Type","SAD","rep")]))
+
+  Dq3 <- with(Dqq,Dqq[grepl("SRS",Type) & SAD=="Uniform" & Side==side & NumSp==nsp,])
+  pow <- rbind(pow, calcPow_AD(Dq3,"Dq",Dq3[,c("Type","SAD","rep")]))
+
+  Dq3 <- with(Dqq,Dqq[grepl("DqSAD",Type) & SAD=="NeuUnif" & Side==side & NumSp==nsp,])
+  pow <- rbind(pow, calcPow_AD(Dq3,"Dq",Dq3[,c("Type","SAD","rep")]))
+
+  Dq3 <- with(Dqq,Dqq[grepl("SRS",Type) & SAD=="NeuUnif" & Side==side & NumSp==nsp,])
+  pow <- rbind(pow, calcPow_AD(Dq3,"Dq",Dq3[,c("Type","SAD","rep")]))
+
+  Dq3 <- with(Dqq,Dqq[((Type=="SRS" & SAD=="NeuUnif")|(Type=="rnzSRS" & SAD=="Uniform")) & Side==side & NumSp==nsp,])
+  pow <- rbind(pow, calcPow_AD(Dq3,"Dq",Dq3[,c("Type","SAD","rep")]))
+
+  Sa3 <- with(Sad,Sad[SAD=="NeuUnif" & Side==side & NumSp==nsp ,])
+  pow <- rbind(pow,calcPow_AD(Sa3,"Freq",Sa3[,c("Type","SAD","rep")]))
+  pow$Side <- side
+  pow$NumSp <- nsp
+  return(pow)
 }

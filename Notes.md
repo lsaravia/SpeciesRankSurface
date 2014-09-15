@@ -111,3 +111,7 @@ mentioned above applied the standard version of this analysis,
 which deals with the spatial distribution of a single measure (e.g.
 biomass or stem density).
 
+1. Hentschel HGE, Procaccia I (1983) The infinite number of generalized dimensions of fractals and strange attractors. Phys D 8: 435–444.
+
+We note that not all fractals belong to this rescaling class. However, since all the generalized dimensions of interest are defined in the limit b ~ 0 (of. eqs. (1.1)-(1.4)), it is sufficient that there exists a length scale 1o below which such self similarity exists.
+
