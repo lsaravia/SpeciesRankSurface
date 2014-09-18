@@ -115,3 +115,6 @@ biomass or stem density).
 
 We note that not all fractals belong to this rescaling class. However, since all the generalized dimensions of interest are defined in the limit b ~ 0 (of. eqs. (1.1)-(1.4)), it is sufficient that there exists a length scale 1o below which such self similarity exists.
 
+1. Beck C (1990) Upper and lower bounds on the Renyi dimensions and the uniformity of multifractals. Phys D Nonlinear Phenom 41: 67–78. doi:10.1016/0167-2789(90)90028-N.
+
+These quantities describe the scaling behaviour of the regions in phase space where the measure is most concentrated (D(+infinit)) or most rarified (D(-infinit)).

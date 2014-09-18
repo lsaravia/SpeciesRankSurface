@@ -64,18 +64,17 @@ When $q = 1$, the denominator of the first term in $D_q$ is undefined, so it mus
 
 In practical cases as the limit can not be assessed, the dimensions are estimated as the slope of the $log(Z_q)$ versus $log(\epsilon)$ in equation (@e1) replacing by the numerator in equation (@e3). This is done for different $q$, provided that it is a real number which yields a graphs of $D_q$ in terms of $q$, called the spectrum of generalized dimensions. 
 
-To be an approximate multifractal the relationship $log(Z_q)$ versus $log(\epsilon)$ should be well described by a linear relationship, but also a linear relationship with superimposed oscillations is accepted [@Borda-de-Agua2007]. A range of $q$ and $\epsilon$ must be established then $D_q$ is estimated using linear regressions. Note that $D_q$ are defined in the limit ${\epsilon\to0}$ (equations @e2 and @e3) thus it is sufficient that there exists a scale below which such linear relationship applies to use the method [@Hentschel1983]. 
+To be an approximate multifractal the relationship $log(Z_q)$ versus $log(\epsilon)$ should be well described by a linear relationship, but also a linear relationship with superimposed oscillations is accepted [@Borda-de-Agua2007]. A range of $q$ and $\epsilon$ must be established, then $D_q$ is estimated using linear regressions. Note that $D_q$ are defined in the limit ${\epsilon\to0}$ (equations @e2 and @e3) thus it is sufficient that there exists a scale below which such linear relationship applies to use the method [@Hentschel1983]. 
 
-
-To analyze species-abundance-area relationships with multifractals as Borda-de-Água [-@Borda-de-Agua2002], the boxes are replaced by species. Thus at each spatial scale $\epsilon$ each species holds the quantity of interest: its own abundance. Thus the partition function is defined as a sum over the species present in an area $S(A)$ and the side of the box $\epsilon$ is replaced by the area:
+To analyze species-abundance-area relationships with multifractals as Borda-de-Água [-@Borda-de-Agua2002], the boxes are replaced by species. Thus at each spatial scale $\epsilon$ each species holds the quantity of interest: its own abundance. Then the partition function is defined as a sum over the species present $S(A)$ in an area $A$ and the side ofthe box $\epsilon$ is replaced by the area:
 
 (@e4) $Z_{q}(A)={\displaystyle \sum_{i}^{S(A)}} \left(\mu_{i}(A)\right)^{q}$
 
-And $D_q$ is defined 
+Where $\mu_{i}(A)$ is the abundance of species $i$ in an area $A$. And $D_q$ is defined as:
 
 (@e5) $D_{q}=\cfrac{1}{1-q}\underset{A\to\infty}{\lim}\cfrac{\log\left(Z_{q}(A)\right)}{\log A}$
 
-There are some problems are related in how the species-boxes are represented at different scales with averages.
+Theoretically $D_q$ must be a non-increasing function of $q$ [@Hentschel1983].	re are some problems are related in how the species-boxes are represented at different scales with averages.
 
 I propose a new way to analyze species-abundance-area using multifractals: the species-rank surface. To construct the species-rank surface (SRS) the spatial distribution of species have to be transformed assigning to each species position its rank. First I calculate the rank ordering the species by their abundances from biggest to lowest and assigning a number starting with one. Then the rank is assigned to the spatial position of the individuals of each species forming a surface. This landscape have valleys formed by the most abundant species and peaks determined by the most rare species. Then the standard multifractal analysis can be applied. 
 The coefficient of determination ($R^2$) can be used as a descriptive measure of goodness of fit [@Borda-de-Agua2002]. The source code in C++ to perform multifractal analysis is available at <https://github.com/lsaravia/mfsba>. 

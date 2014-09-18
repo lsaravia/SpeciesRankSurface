@@ -144,117 +144,40 @@ setwd(oldcd)
 ```
 
 
-Compare Neutral and Logseries using 10 simulations with KS and permutations with side =256
-
-
-```{r test_SAD256, eval=F,echo=F,message=F,warning=F}
-setwd("Simul")
-
-cc <- comp_NeutralLogseries(8,256)
-compGC <-splitFields_comp(cc$comp)
-DqGC   <-cc$Dq
-SadGC  <-cc$SAD
-
-cc <- comp_NeutralLogseries(64,256)
-compGC <-rbind(compGC,splitFields_comp(cc$comp))
-DqGC   <-rbind(DqGC  ,cc$Dq)
-SadGC  <-rbind(SadGC ,cc$SAD)
-
-cc <- comp_NeutralLogseries(256,256)
-compGC <-rbind(compGC,splitFields_comp(cc$comp))
-DqGC   <-rbind(DqGC  ,cc$Dq)
-SadGC  <-rbind(SadGC ,cc$SAD)
-
-setwd(oldcd)
-save.image()
-
-```
-
-Compare Neutral and Logseries using 10 simulations with KS and permutations with side =512
-
-
-```{r test_SAD512, eval=F,echo=F,message=F,warning=F}
-setwd("Simul")
-
-cc <- comp_NeutralLogseries(8,512)
-compGC <-rbind(compGC,splitFields_comp(cc$comp))
-DqGC   <-rbind(DqGC  ,cc$Dq)
-SadGC  <-rbind(SadGC ,cc$SAD)
-
-cc <- comp_NeutralLogseries(64,512)
-compGC <-rbind(compGC,splitFields_comp(cc$comp))
-DqGC   <-rbind(DqGC  ,cc$Dq)
-SadGC  <-rbind(SadGC ,cc$SAD)
-
-cc <- comp_NeutralLogseries(256,512)
-compGC <-rbind(compGC,splitFields_comp(cc$comp))
-DqGC   <-rbind(DqGC  ,cc$Dq)
-SadGC  <-rbind(SadGC ,cc$SAD)
-
-
-# Simulations with side=512 not done
-#
-#compSP <- rbind(compSP,compKS_NeutralLogseries(8,512))
-#compSP <- rbind(compSP,compKS_NeutralLogseries(64,512))
-#compSP <- rbind(compSP,compKS_NeutralLogseries(256,512))
-rm(cc)
-
-setwd(oldcd)
-save.image()
-```
-
-
-Compare Neutral and Uniform 10 simulations with KS and permutations with side 256 and 512
+Perform Neutral with metaccomunity uniform and Uniform, 10 simulations with side 256 and 512
 
 
 ```{r test_SAD256U, eval=F,echo=F,message=F,warning=F}
 setwd("Simul")
-# Agregar una parametro meta (metacommunity) a variables para identificar
-# Agregar comparacion de SAD uniforme con Neutral uniforme por KS
-#
+
 cc <- comp_NeutralUniform(8,256)
-compUN <-splitFields_comp(cc$comp)
 DqUN   <-cc$Dq
 SadUN  <-cc$SAD
 
 cc <- comp_NeutralUniform(64,256)
-compUN <-rbind(compUN,splitFields_comp(cc$comp))
 DqUN   <-rbind(DqUN  ,cc$Dq)
 SadUN  <-rbind(SadUN ,cc$SAD)
 
 cc <- comp_NeutralUniform(256,256)
-compUN <-rbind(compUN,splitFields_comp(cc$comp))
 DqUN   <-rbind(DqUN  ,cc$Dq)
 SadUN  <-rbind(SadUN ,cc$SAD)
 
 
 cc <- comp_NeutralUniform(8,512)
-compUN <-rbind(compUN,splitFields_comp(cc$comp))
 DqUN   <-rbind(DqUN  ,cc$Dq)
 SadUN  <-rbind(SadUN ,cc$SAD)
 
 cc <- comp_NeutralUniform(64,512)
-compUN <-rbind(compUN,splitFields_comp(cc$comp))
 DqUN   <-rbind(DqUN  ,cc$Dq)
 SadUN  <-rbind(SadUN ,cc$SAD)
 
 cc <- comp_NeutralUniform(256,512)
-compUN <-rbind(compUN,splitFields_comp(cc$comp))
 DqUN   <-rbind(DqUN  ,cc$Dq)
 SadUN  <-rbind(SadUN ,cc$SAD)
 
 rm(cc)
 
-setwd(oldcd)
-# Delete duplicated fields Side2 NmSp2
-compGC <- compGC[,-(6:7)]
-compUN <- compUN[,-(6:7)]
-# merge
 
-compT <- rbind(compGC,compUN)
-# Reorganize 
-compT <- compT[,c(2,3,1,4:10)]
-rm(compGC,compUN)
 
 # merge SAD
 SadT <- rbind(SadGC,SadUN)
@@ -265,22 +188,110 @@ rm(SadGC,SadUN)
 DqT <- rbind(DqGC,DqUN)
 rm(DqGC,DqUN)
 
+setwd(oldcd)
 save.image()
+
+
+#compT <- rbind(compT,compUN)
+#SadT <- rbind(SadT,SadUN)
+#DqT  <- rbind(DqT,DqUN)
 
 ```
 
+
+Perform Neutral with metacommunity logseries and Logseries, 10 simulations with side =256/512
+
+
+```{r test_SAD256, eval=T,echo=F,message=F,warning=F}
+setwd("Simul")
+
+cc <- comp_NeutralLogseries(8,256)
+DqT   <-rbind(DqT,cc$Dq)
+SadT  <-rbind(SadT ,cc$SAD)
+
+cc <- comp_NeutralLogseries(64,256)
+DqT   <-rbind(DqT  ,cc$Dq)
+SadT  <-rbind(SadT ,cc$SAD)
+
+cc <- comp_NeutralLogseries(256,256)
+DqT   <-rbind(DqT  ,cc$Dq)
+SadT  <-rbind(SadT ,cc$SAD)
+
+cc <- comp_NeutralLogseries(8,512)
+DqT   <-rbind(DqT  ,cc$Dq)
+SadT  <-rbind(SadT ,cc$SAD)
+
+cc <- comp_NeutralLogseries(64,512)
+DqT   <-rbind(DqT  ,cc$Dq)
+SadT  <-rbind(SadT ,cc$SAD)
+
+cc <- comp_NeutralLogseries(256,512)
+DqT   <-rbind(DqT  ,cc$Dq)
+SadT  <-rbind(SadT ,cc$SAD)
+
+
+# Simulations with side=512 not done
+#
+#compSP <- rbind(compSP,compKS_NeutralLogseries(8,512))
+#compSP <- rbind(compSP,compKS_NeutralLogseries(64,512))
+#compSP <- rbind(compSP,compKS_NeutralLogseries(256,512))
+rm(cc)
+
+
+setwd(oldcd)
+save.image()
+```
+
+Now check if all simulations are done a make power calculations
+
+```{r power_adtest, eval=T,echo=F,message=F,warning=F}
+# Check all simulations are present
+require(plyr)
+ddply(SadT,3:6,summarize, max(rep))
+ddply(DqT,5:8,summarize, max(rep),min(rep))
+powad <- data.frame()
+
+powad <- rbind(powad,calcPower_AD(DqT,SadT,8,256))
+powad <- rbind(powad,calcPower_AD(DqT,SadT,64,256))
+powad <- rbind(powad,calcPower_AD(DqT,SadT,256,256))
+
+powad <- rbind(powad,calcPower_AD(DqT,SadT,8,512))
+powad <- rbind(powad,calcPower_AD(DqT,SadT,64,512))
+powad <- rbind(powad,calcPower_AD(DqT,SadT,256,512))
+
+save.image()
+```
+
+Make plots of power and type I error 
 
 ```{r power_adtest, eval=T,echo=F,message=F,warning=F}
 
-power <- calcPower_AD(DqT,SadT,8,256)
-power <- rbind(power,calcPower_AD(DqT,SadT,64,256))
-power <- rbind(power,calcPower_AD(DqT,SadT,256,256))
+plot_DqPowerTypeI <- function(pp,tit){
+  require(ggplot2)
+  pp$Type2[pp$Type2=="SRS"] <- "DqSRS" 
+  pp$Type2[grepl("rnz",pp$Type2)] <- "Power"
+  pp$Type2[grepl("Dq",pp$Type2)] <- "Type I"
 
-power <- rbind(power,calcPower_AD(DqT,SadT,8,512))
-power <- rbind(power,calcPower_AD(DqT,SadT,64,512))
-power <- rbind(power,calcPower_AD(DqT,SadT,256,512))
+  g <-ggplot(pp, aes(factor(NumSp), power, colour = as.factor(Side))) +
+    geom_point(aes(shape=as.factor(Side)),size=4) + ggtitle(tit) + theme_bw() +
+    facet_grid(Type1~Type2) + scale_colour_discrete(name="Size") +
+    scale_shape_discrete(name="Size") + scale_x_discrete(name="Number of Species")
+  print(g)
+}
+#powad <- power
+p1 <- with(powad, powad[grepl("^DqSAD|^SRS",Type1) & SAD1==SAD2 & SAD1=="Uniform" ,])
+plot_DqPowerTypeI(p1,"Uniform")
 
-# Cada 12 cambia rep(8,12)
-nsp <- c(rep(8,12),rep(64,12),rep(256,12),rep(8,12),rep(64,12),rep(256,12))
-save.image()
+
+p1 <- with(powad, powad[grepl("^DqSAD|^SRS",Type1) & SAD1==SAD2 & SAD1=="NeuUnif" ,])
+plot_DqPowerTypeI(p1,"NeuUnif")
+
+p1 <- with(powad, powad[grepl("^DqSAD|^SRS",Type1) & SAD1==SAD2 & SAD1=="Logseries" ,])
+plot_DqPowerTypeI(p1,"Logseries")
+
+p1 <- with(powad, powad[grepl("^DqSAD|^SRS",Type1) & SAD1==SAD2 & SAD1=="Neutral" ,])
+plot_DqPowerTypeI(p1,"Neutral")
+
+
 ```
+

@@ -49,6 +49,26 @@ mergePairSAD <- function(eks, den1){
   
 }
 
+# Merge data from 2 simulations 
+# 
+# eks: 1 row data.frame with 2 sets of parms for which ks.test was done (fixed TIME)
+# den1: full data in long format
+#
+mergePairSadRank <- function(eks, den1,vv,cols=1:4){
+  # eks <- mks[61,]
+  
+  den2 <-merge(den1,eks,by.x=cols,by.y=cols)[,1:(length(cols)+2)]
+  den2$parms <-paste(eks[,cols],collapse="_")
+  den2$Rank <- nrow(den2) - rank(den2[[vv]]) +1
+  
+  cols1 <- cols+length(cols)
+  den3 <-merge(den1,eks,by.x=cols,by.y=cols1)[,1:(length(cols)+2)]
+  den3$parms <-paste(eks[,cols1],collapse="_")
+  den3$Rank <- nrow(den3) - rank(den3[[vv]]) +1
+  den2 <- rbind(den2,den3)
+  
+}
+
 # Calculate Ranks for every parameter combination, for ggplot2  
 #
 calcRankSAD  <- function(den)
@@ -154,6 +174,37 @@ pairwiseAD_SAD <- function(denl,vv,parms){
   return(mks)
 }
 
+
+# pairwise Anderson-Darling K test for all combinations of 
+# parameters in variable parms with repetitions, BEWARE last variable in parms must be 
+# the repetition
+# 
+# vv: name of the variable where density or proportion is
+# denl: data.frame with all data
+#
+pairwiseAD_Dif <- function(denl,vv,parms){
+  require(kSamples)
+
+  parms <- unique(parms)
+  combo <- combn(nrow(parms),2)
+  nc <- ncol(parms)-1
+  require(plyr)
+  mks <-adply(combo,2, function(x) {
+    p1 <- parms[x[1],]
+    p2 <- parms[x[2],]
+    if(sum(p1[,1:nc]==p2[,1:nc])<nc) {
+      d1 <- merge(denl,p1)
+      d2 <- merge(denl,p2)
+      ks <- ad.test(list(d1[,vv],d2[,vv]),method="simulated",nsim=1000)
+      out <-data.frame(p1,p2,stat=ks$ad[2,2],p.value=ks$ad[2,4],stringsAsFactors=F)
+      ln <-length(names(p1))*2
+      names(out)[1:(ln)]<-c(paste0(abbreviate(names(p1)),1),paste0(abbreviate(names(p1)),2))
+    } else { out<-NULL}
+    return(out)      
+  })
+  mks$p.adjust <- p.adjust(mks$p.value, method="hommel")
+  return(mks)
+}
 # Calculate the power for AD test
 #
 calcPow_AD <- function(Dq3,vv,parms){
@@ -247,11 +298,15 @@ meltDensityOut_NT <- function(fname,num_sp){
   # from 7 to 473 there are species densities
   # Put simpler names to variables to identify species
   names(den)[7:(6+num_sp)]<-as.character(1:num_sp)
+
+  require(plyr)
+  
+  den <- ddply(den, 1:5, function(x){ i <- c(1:nrow(x)); data.frame(x,rep=i)})
   
   require(reshape2)
   
-  den1 <- melt(den,id.vars=c("MortalityRate","DispersalDistance","ColonizationRate","ReplacementRate"),measure.vars=c(7:(6+num_sp)),variable.name="Species")
-  
+  den1 <- melt(den,id.vars=c("MortalityRate","DispersalDistance","ColonizationRate","ReplacementRate","rep"),measure.vars=c(7:(6+num_sp)),variable.name="Species")
+  den1 <- den1[den1$value!=0,] 
 }
 
 # Read simulation output and set variable names in wide format 
@@ -653,9 +708,13 @@ genUniformSAD_image <- function(nSp,side,rnd=F)
   if( side %% nSp != 0 )
     stop("Number of species [nSp] must divide [side]")
   if(rnd) {
-    v <- rpois(nSp,side*side/nSp)
-    v[length(v)] <- side*side-sum(v[1:length(v)-1])
-    matrix(rep(1:nSp,times=v),nrow=side)
+    repeat {
+      v <- rpois(nSp,side*side/nSp)
+      if(side*side>sum(v[1:nSp-1])) break
+    }
+    v[nSp] <- side*side-sum(v[1:nSp-1])
+    vv <- rep(1:nSp,times=v)
+    matrix(vv,nrow=side)
     } else matrix(rep(1:nSp,each=side*side/nSp),nrow=side)
 }
 
@@ -964,7 +1023,7 @@ compMethods_NeutralSAD <- function(nsp,side,simul=T,graph=T,meta="L") {
   Dqt <- rbind(Dq1,Dq3)
   Dqt$Side <-side
   Dqt$NumSp <-nsp
-  Dqt$SAD <- "NeuUnif" #Neutral with uniform metacommunity
+  Dqt$SAD <- sadName #Neutral with uniform metacommunity
 
   return(list("Dq"=Dqt,"SAD"=sad1))
 }
@@ -1044,97 +1103,10 @@ comp_NeutralLogseries <- function(nsp,side,simul=10) {
 
   comp <- pairwiseKS_SAD(sad1,"den",sad1[,1:4])
   den3 <- calcRankSAD_by(sad1,"den",1:4)
-  print(ggplot(den3,aes(x=Rank,y=log(den),colour=SAD)) + geom_line())
+  print(ggplot(den3,aes(x=Rank,y=log(den),colour=SAD)) + geom_line() + ggtitle(comp$p.value))
 
-  # Rearrange data.frame
-  #
-  comp$Group1 <- do.call(paste, c(comp[,2:5],sep="_"))
-  comp$Group2 <- do.call(paste, c(comp[,6:9],sep="_"))
-  comp <- comp[,c(13:14,10:12)]
-  names(comp)[3:5] <- c( "Stat","P.Value","adj.P.Value")
 
-  # Compare Dq using KS
-  #
-  Dq2 <- ddply(Dqq,c(5:8,1),summarise,mDq=mean(Dq))
-  Dq3 <- with(Dq2,Dq2[grepl("DqSAD",Type) & SAD=="Logseries",])
-  c1 <- pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4])
-
-  Dq3 <- with(Dq2,Dq2[grepl("DqSAD",Type) & SAD=="Neutral",])
-  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
-
-  Dq3 <- with(Dq2,Dq2[Type=="DqSAD" & grepl("Neutral|Logseries",SAD),])
-  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
-
-  Dq3 <- with(Dq2,Dq2[(Type=="DqSAD" & SAD=="Neutral")|(Type=="rnzDqSAD" & SAD=="Logseries"),])
-  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
-
-  Dq3 <- with(Dq2,Dq2[grepl("SRS",Type) & SAD=="Logseries",])
-  Dq3 <- Dq3[Dq3$q!=0,]
-  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
-
-  Dq3 <- with(Dq2,Dq2[grepl("SRS",Type) & SAD=="Neutral",])
-  Dq3 <- Dq3[Dq3$q!=0,]
-  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
-
-  Dq3 <- with(Dq2,Dq2[Type=="SRS" & grepl("Neutral|Logseries",SAD),])
-  Dq3 <- Dq3[Dq3$q!=0,]
-  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
-
-  Dq3 <- with(Dq2,Dq2[(Type=="SRS" & SAD=="Neutral")|(Type=="rnzSRS" & SAD=="Logseries"),])
-  Dq3 <- Dq3[Dq3$q!=0,]
-  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
-
-  # Rearrange data.frame
-  #
-  c1$Group1 <- do.call(paste, c(c1[,2:5],sep="_"))
-  c1$Group2 <- do.call(paste, c(c1[,6:9],sep="_"))
-  c1 <- c1[,c(13:14,10:12)]
-  names(c1)[3:5] <- c( "Stat","P.Value","adj.P.Value")
-
-  comp <- rbind(comp,c1)
-  comp$Method <- "KS"
-
-  # Now compare using permutations
-  #
-  require(statmod)
-  require(reshape2)
-  Dq2 <- Dqq
-  Dq2$factor <- do.call(paste, c(Dqq[,5:8],sep="_"))
-  # Prepare data.frame in wide format 
-  #
-  Dq2 <- melt(Dq2, id.vars=c(1,5:10),measure.var="Dq")
-  Dq2 <- dcast(Dq2, Type+Side+NumSp+SAD+factor+rep~ q)
-    
-  # Compare SRS curves
-  #
-  Dq3 <- with(Dq2,Dq2[grepl("DqSAD",Type) & SAD=="Logseries",])
-  c2 <- compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000)
-
-  Dq3 <- with(Dq2,Dq2[grepl("DqSAD",Type) & SAD=="Neutral",])
-  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
-
-  Dq3 <- with(Dq2,Dq2[Type=="DqSAD" & grepl("Neutral|Logseries",SAD),])
-  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
-
-  Dq3 <- with(Dq2,Dq2[(Type=="DqSAD" & SAD=="Neutral")|(Type=="rnzDqSAD" & SAD=="Logseries"),])
-  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
-
-  Dq3 <- with(Dq2,Dq2[grepl("SRS",Type) & SAD=="Logseries",])
-  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
-
-  Dq3 <- with(Dq2,Dq2[grepl("SRS",Type) & SAD=="Neutral",])
-  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
-
-  Dq3 <- with(Dq2,Dq2[Type=="SRS" & grepl("Neutral|Logseries",SAD),])
-  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
-
-  Dq3 <- with(Dq2,Dq2[(Type=="SRS" & SAD=="Neutral")|(Type=="rnzSRS" & SAD=="Logseries"),])
-  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
-
-  c2$Method <- "Permut"
-  comp <- rbind(comp,c2)
-
-  return(list("Dq"=Dqq,"SAD"=SadF,"comp"=comp))
+  return(list("Dq"=Dqq,"SAD"=SadF))
   }
 
 splitFields_comp <-function(comp) {
@@ -1183,97 +1155,104 @@ comp_NeutralUniform <- function(nsp,side,simul=10) {
 
   comp <- pairwiseKS_SAD(sad1,"den",sad1[,1:4])
   den3 <- calcRankSAD_by(sad1,"den",1:4)
-  print(ggplot(den3,aes(x=Rank,y=log(den),colour=SAD)) + geom_line())
+  print(ggplot(den3,aes(x=Rank,y=log(den),colour=SAD)) + geom_line() + ggtitle(comp$p.value))
 
   # Rearrange data.frame
   #
-  comp$Group1 <- do.call(paste, c(comp[,2:5],sep="_"))
-  comp$Group2 <- do.call(paste, c(comp[,6:9],sep="_"))
-  comp <- comp[,c(13:14,10:12)]
-  names(comp)[3:5] <- c( "Stat","P.Value","adj.P.Value")
+#  comp$Group1 <- do.call(paste, c(comp[,2:5],sep="_"))
+#  comp$Group2 <- do.call(paste, c(comp[,6:9],sep="_"))
+#  comp <- comp[,c(13:14,10:12)]
+#  names(comp)[3:5] <- c( "Stat","P.Value","adj.P.Value")
 
   # Compare Dq using KS
   #
-  Dq2 <- ddply(Dqq,c(5:8,1),summarise,mDq=mean(Dq))
-  Dq3 <- with(Dq2,Dq2[grepl("DqSAD",Type) & SAD=="Uniform",])
-  c1 <- pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4])
+#  Dq2 <- ddply(Dqq,c(5:8,1),summarise,mDq=mean(Dq))
+#  Dq3 <- with(Dq2,Dq2[grepl("DqSAD",Type) & SAD=="Uniform",])
+#  c1 <- pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4])
 
-  Dq3 <- with(Dq2,Dq2[grepl("DqSAD",Type) & SAD=="NeuUnif",])
-  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
+#  Dq3 <- with(Dq2,Dq2[grepl("DqSAD",Type) & SAD=="NeuUnif",])
+#  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
 
-  Dq3 <- with(Dq2,Dq2[Type=="DqSAD" & grepl("NeuUnif|Uniform",SAD),])
-  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
+#  Dq3 <- with(Dq2,Dq2[Type=="DqSAD" & grepl("NeuUnif|Uniform",SAD),])
+#  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
 
-  Dq3 <- with(Dq2,Dq2[(Type=="DqSAD" & SAD=="NeuUnif")|(Type=="rnzDqSAD" & SAD=="Uniform"),])
-  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
+#  Dq3 <- with(Dq2,Dq2[(Type=="DqSAD" & SAD=="NeuUnif")|(Type=="rnzDqSAD" & SAD=="Uniform"),])
+#  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
 
-  Dq3 <- with(Dq2,Dq2[grepl("SRS",Type) & SAD=="Uniform",])
-  Dq3 <- Dq3[Dq3$q!=0,]
-  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
+#  Dq3 <- with(Dq2,Dq2[grepl("SRS",Type) & SAD=="Uniform",])
+#  Dq3 <- Dq3[Dq3$q!=0,]
+#  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
 
-  Dq3 <- with(Dq2,Dq2[grepl("SRS",Type) & SAD=="NeuUnif",])
-  Dq3 <- Dq3[Dq3$q!=0,]
-  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
+#  Dq3 <- with(Dq2,Dq2[grepl("SRS",Type) & SAD=="NeuUnif",])
+#  Dq3 <- Dq3[Dq3$q!=0,]
+#  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
 
-  Dq3 <- with(Dq2,Dq2[Type=="SRS" & grepl("NeuUnif|Uniform",SAD),])
-  Dq3 <- Dq3[Dq3$q!=0,]
-  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
+#  Dq3 <- with(Dq2,Dq2[Type=="SRS" & grepl("NeuUnif|Uniform",SAD),])
+#  Dq3 <- Dq3[Dq3$q!=0,]
+#  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
 
-  Dq3 <- with(Dq2,Dq2[(Type=="SRS" & SAD=="NeuUnif")|(Type=="rnzSRS" & SAD=="Uniform"),])
-  Dq3 <- Dq3[Dq3$q!=0,]
-  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
+#  Dq3 <- with(Dq2,Dq2[(Type=="SRS" & SAD=="NeuUnif")|(Type=="rnzSRS" & SAD=="Uniform"),])
+#  Dq3 <- Dq3[Dq3$q!=0,]
+#  c1 <- rbind(c1,pairwiseKS_SAD(Dq3,"mDq",Dq3[,1:4]))
 
   # Rearrange data.frame
   #
-  c1$Group1 <- do.call(paste, c(c1[,2:5],sep="_"))
-  c1$Group2 <- do.call(paste, c(c1[,6:9],sep="_"))
-  c1 <- c1[,c(13:14,10:12)]
-  names(c1)[3:5] <- c( "Stat","P.Value","adj.P.Value")
+#  c1$Group1 <- do.call(paste, c(c1[,2:5],sep="_"))
+#  c1$Group2 <- do.call(paste, c(c1[,6:9],sep="_"))
+#  c1 <- c1[,c(13:14,10:12)]
+#  names(c1)[3:5] <- c( "Stat","P.Value","adj.P.Value")
 
-  comp <- rbind(comp,c1)
-  comp$Method <- "KS"
+#  comp <- rbind(comp,c1)
+#  comp$Method <- "KS"
 
   # Now compare using permutations
   #
-  require(statmod)
-  require(reshape2)
-  Dq2 <- Dqq
-  Dq2$factor <- do.call(paste, c(Dqq[,5:8],sep="_"))
+#  require(statmod)
+#  require(reshape2)
+#  Dq2 <- Dqq
+#  Dq2$factor <- do.call(paste, c(Dqq[,5:8],sep="_"))
   # Prepare data.frame in wide format 
   #
-  Dq2 <- melt(Dq2, id.vars=c(1,5:10),measure.var="Dq")
-  Dq2 <- dcast(Dq2, Type+Side+NumSp+SAD+factor+rep~ q)
+#  Dq2 <- melt(Dq2, id.vars=c(1,5:10),measure.var="Dq")
+#  Dq2 <- dcast(Dq2, Type+Side+NumSp+SAD+factor+rep~ q)
     
   # Compare SRS curves
   #
-  Dq3 <- with(Dq2,Dq2[grepl("DqSAD",Type) & SAD=="Uniform",])
-  c2 <- compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000)
+#  Dq3 <- with(Dq2,Dq2[grepl("DqSAD",Type) & SAD=="Uniform",])
+#  c2 <- compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000)
 
-  Dq3 <- with(Dq2,Dq2[grepl("DqSAD",Type) & SAD=="NeuUnif",])
-  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
+#  Dq3 <- with(Dq2,Dq2[grepl("DqSAD",Type) & SAD=="NeuUnif",])
+#  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
 
-  Dq3 <- with(Dq2,Dq2[Type=="DqSAD" & grepl("NeuUnif|Uniform",SAD),])
-  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
+#  Dq3 <- with(Dq2,Dq2[Type=="DqSAD" & grepl("NeuUnif|Uniform",SAD),])
+#  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
 
-  Dq3 <- with(Dq2,Dq2[(Type=="DqSAD" & SAD=="NeuUnif")|(Type=="rnzDqSAD" & SAD=="Uniform"),])
-  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
+#  Dq3 <- with(Dq2,Dq2[(Type=="DqSAD" & SAD=="NeuUnif")|(Type=="rnzDqSAD" & SAD=="Uniform"),])
+#  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
 
-  Dq3 <- with(Dq2,Dq2[grepl("SRS",Type) & SAD=="Uniform",])
-  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
+#  Dq3 <- with(Dq2,Dq2[grepl("SRS",Type) & SAD=="Uniform",])
+#  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
 
-  Dq3 <- with(Dq2,Dq2[grepl("SRS",Type) & SAD=="NeuUnif",])
-  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
+#  Dq3 <- with(Dq2,Dq2[grepl("SRS",Type) & SAD=="NeuUnif",])
+#  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
 
-  Dq3 <- with(Dq2,Dq2[Type=="SRS" & grepl("NeuUnif|Uniform",SAD),])
-  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
+#  Dq3 <- with(Dq2,Dq2[Type=="SRS" & grepl("NeuUnif|Uniform",SAD),])
+#  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
 
-  Dq3 <- with(Dq2,Dq2[(Type=="SRS" & SAD=="NeuUnif")|(Type=="rnzSRS" & SAD=="Uniform"),])
-  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
+#  Dq3 <- with(Dq2,Dq2[(Type=="SRS" & SAD=="NeuUnif")|(Type=="rnzSRS" & SAD=="Uniform"),])
+#  c2 <- rbind(c2,compareGrowthCurves(Dq3$factor,Dq3[,7:41],nsim=1000))
 
-  c2$Method <- "Permut"
-  comp <- rbind(comp,c2)
+#  c2$Method <- "Permut"
 
-  return(list("Dq"=Dqq,"SAD"=SadF,"comp"=comp))
+#  comp <- rbind(comp,c2)
+#  comp <- splitFields_comp(cc$comp)
+  # remove duplicated fields & reorganize
+#  comp <- comp[,-(6:7)]
+#  comp <- comp[,c(2,3,1,4:10)]
+
+#  return(list("Dq"=Dqq,"SAD"=SadF,"comp"=comp))
+  return(list("Dq"=Dqq,"SAD"=SadF))
+
   }
 
 
@@ -1360,7 +1339,7 @@ calcPower_AD <- function(Dqq,Sad,nsp,side){
   ###
 
   Dq3 <- with(Dqq,Dqq[grepl("DqSAD",Type) & SAD=="Uniform" & Side==side & NumSp==nsp,])
-  pow <- calcPow_AD(Dq3,"Dq",Dq3[,c("Type","SAD","rep")])
+  pow <- rbind(pow,calcPow_AD(Dq3,"Dq",Dq3[,c("Type","SAD","rep")]))
 
   Sa3 <- with(Sad,Sad[SAD=="Uniform" & Side==side & NumSp==nsp,])
   pow <- rbind(pow,calcPow_AD(Sa3,"Freq",Sa3[,c("Type","SAD","rep")]))
@@ -1382,4 +1361,86 @@ calcPower_AD <- function(Dqq,Sad,nsp,side){
   pow$Side <- side
   pow$NumSp <- nsp
   return(pow)
+}
+
+compNeutral_Time <- function(bName,Time,spMeta) 
+{
+  # Read all simulations and change to long format
+  fname <- paste0(bName,"T",Time,"Density.txt")
+
+  den1 <- meltDensityOut_NT(fname,spMeta)
+
+  # Select a subset to test the procedure !
+  #
+  #den1 <- den1[den1$MortalityRate==.2 & den1$DispersalDistance==0.04 & den1$ColonizationRate==0.001, ]
+  
+  # have to make averages
+  require(plyr)
+  den2 <- ddply(den1,.(MortalityRate,DispersalDistance,ColonizationRate,ReplacementRate,Species),summarise,den=mean(value))
+
+  # Test pairwise diferences in SAD
+  #
+  mKS <- pairwiseAD_SAD(den2)
+
+  # Build data.frame with proportions
+  #
+
+  compM <- data.frame(time=Time,notdif=propNotDiffSAD(mKS),method="SAD")
+
+  # Leer Dq SRS
+  #
+  fname <- paste0(bName,"T",Time,"mfOrd.txt")
+  Dq1 <- readNeutral_calcDq(fname)
+
+  # Subset for testing
+  #Dq1 <- with(Dq1,Dq1[MortalityRate==.2 & DispersalDistance==0.04 & ColonizationRate==0.001, ])
+
+  # Testing pairwise differences
+  #
+  c2 <- compDq_frame(Dq1,35)
+
+  # Add to data.frame with proportions
+  #
+  compM <- rbind(compM, data.frame(time=Time,notdif=propNotDiffSRS(c2),method="SRS"))
+
+  # Build Data frame with complete set of p-values
+  #
+  c2$method <- "SRS"
+  c3 <- c2                    
+
+  #
+  # Leer Dq SAD
+  #
+  fname <- paste0(bName,"T",Time,"mfSAD.txt")
+  Dq1 <- readNeutral_calcDq(fname)
+
+  # Subset for testing
+  #Dq1 <- with(Dq1,Dq1[MortalityRate==.2 & DispersalDistance==0.04 & ColonizationRate==0.001, ])
+
+  # Testing pairwise differences
+  #
+  c2 <- compDq_frame(Dq1,35)
+
+  # Add to data.frame with proportions
+  #
+  compM <- rbind(compM, data.frame(time=Time,notdif=propNotDiffSRS(c2),method="DqSAD"))
+
+  # Add to Data frame with complete set of p-values
+  #
+  c2$method <- "DqSAD"
+  c3 <- rbind(c3,c2)                    
+
+  # Change to match different data.frames
+  #
+  cc3 <- cbind(ldply(strsplit(as.character(c3$Group1),"_")),ldply(strsplit(as.character(c3$Group2),"_")))
+  nn3 <- abbreviate(names(Dq1)[1:4])
+  names(cc3) <- c(paste0(nn3,1),paste0(nn3,2))
+  cc3 <- cbind(cc3,c3)[,c(1:8,11:14)]
+  names(cc3)[9:11] <-c("stat","p.value","p.adjust")
+  mKS <- mKS[,2:12]
+  mKS$method <- "SAD"
+  c3 <- rbind(cc3,mKS)
+  c3$time <- Time
+  
+  return(list("compM"=compM,"mPval"=c3))
 }
