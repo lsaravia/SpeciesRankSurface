@@ -184,15 +184,18 @@ pairwiseAD_SAD <- function(denl,vv,parms){
 #
 pairwiseAD_Dif <- function(denl,vv,parms){
   require(kSamples)
-
   parms <- unique(parms)
   combo <- combn(nrow(parms),2)
-  nc <- ncol(parms)-1
+  nc <- ncol(parms)-2
+  pb <- txtProgressBar(min = 0, max = ncol(combo), style = 3)
+  i <- 0
   require(plyr)
   mks <-adply(combo,2, function(x) {
     p1 <- parms[x[1],]
     p2 <- parms[x[2],]
-    if(sum(p1[,1:nc]==p2[,1:nc])<nc) {
+    i <<- i+1 
+    setTxtProgressBar(pb, i)
+    if(sum(p1[,1:nc]==p2[,1:nc])==nc) {
       d1 <- merge(denl,p1)
       d2 <- merge(denl,p2)
       ks <- ad.test(list(d1[,vv],d2[,vv]),method="simulated",nsim=1000)
@@ -202,6 +205,7 @@ pairwiseAD_Dif <- function(denl,vv,parms){
     } else { out<-NULL}
     return(out)      
   })
+  close(pb)
   mks$p.adjust <- p.adjust(mks$p.value, method="hommel")
   return(mks)
 }
@@ -1363,84 +1367,201 @@ calcPower_AD <- function(Dqq,Sad,nsp,side){
   return(pow)
 }
 
-compNeutral_Time <- function(bName,Time,spMeta) 
+simulNeutral_1Time<- function(nsp,side,time,meta="L",rep=10)
 {
-  # Read all simulations and change to long format
-  fname <- paste0(bName,"T",Time,"Density.txt")
+
+  if(toupper(meta)=="L") {
+    prob <- genFisherSAD(nsp,side)
+    neuParm <- "fishE"
+    bname <- paste0("neuFish",nsp,"_",side)
+    sadName <- "Neutral"
+  } else {
+    prob <- rep(1/nsp,nsp)  
+    neuParm <- "unifE"
+    bname <- paste0("neuUnif",nsp,"_",side)
+    sadName <- "NeuUnif"
+  }
+
+  # Parameters
+  #
+  # Mortality = 0.2 - 0.4
+  # Mean Dispersal distance 25  -> Exponential kernel parm  0.04
+  #                         2.5 -> 0.4
+  # Colonization = 0.001 -0.0001
+  # Replacement  = 0 - 1
+  spMeta <- length(prob)
+  # First generate de inp file with species and metacommunity parameters 
+  genNeutralParms(neuParm,side,prob,1,0.2,0.04,0.0001)
+
+  # Delete old simulations
+  system(paste0("rm ",bname,"*.txt"))
+
+
+  # we need the par file with the simulations parameters
+  par <- read.table("sim.par",quote="",stringsAsFactors=F)
+
+
+  # Number of time steps 
+  par[par$V1=="nEvals",]$V2 <- time
+  par[par$V1=="inter",]$V2 <- time # interval to measure Density and Diversity
+  par[par$V1=="init",]$V2 <- time  # Firs time of measurement = interval
+  par[par$V1=="modType",]$V2 <- 4 # Hierarchical saturated
+  par[par$V1=="sa",]$V2 <- "N" # Save a snapshot of the model
+  par[par$V1=="baseName",]$V2 <- paste0(bname ,"T", time ) 
+  par[par$V1=="pomac",]$V2 <- 1 # 0:one set of parms 
+                                # 1:several simulations with pomac.lin parameters 
+
+  write.table(par, "sim.par",sep="\t",row.names=F,col.names=F,quote=F)
+
+  # Then pomac.lin to simulate a range of parmeters and repetitions.
+  #
+  # Generates pomac.lin for multiple simulations exponential dispersal to compare hierarchical and neutral communities  
+  # and see when they have similar H and compare if they have similar SAD
+
+  #genPomacParms("pomExp",1,c(0.2),c(0.04),c(0.0001),c(0,0.001),3)
+
+  genPomacParms("pomExp",1,c(0.2,0.4),c(0.04,0.4),c(0.001,0.0001),c(0,0.001,0.01,0.1,1),rep)
+
+  # copy pomExp.lin to pomac.lin
+  system("cp pomExp.lin pomac.lin")
+  s <- system("uname -a",intern=T)
+  if(grepl("i386",s)) {
+    system(paste(neuBin,"sim.par",paste0(neuParm,".inp")))
+  } else {
+    system(paste(neuBin64,"sim.par",paste0(neuParm,".inp")))
+  }
+  return(data.frame(nsp,side,time,meta,spMeta,rep))
+}
+
+# Compare neutral simulations
+#
+powerNeutral_1Time <- function(pSimul,graph=T) 
+{
+  if( nrow(pSimul)>1)
+    stop("Only one row of parameters")
+
+  meta <- pSimul$meta
+  nsp <- pSimul$nsp
+  time <- pSimul$time
+  spMeta <- pSimul$spMeta
+  side <- pSimul$side
+
+  if(toupper(meta)=="L") {
+#    prob <- genFisherSAD(nsp,side)
+    neuParm <- "fishE"
+    bname <- paste0("neuFish",nsp,"_",side)
+    sadName <- "Neutral"
+  } else {
+#    prob <- rep(1/nsp,nsp)  
+    neuParm <- "unifE"
+    bname <- paste0("neuUnif",nsp,"_",side)
+    sadName <- "NeuUnif"
+  }
+
+  # Desde aca function compNeutral_Time  
+  #
+  fname <- paste0(bname,"T",time,"Density.txt")
 
   den1 <- meltDensityOut_NT(fname,spMeta)
 
-  # Select a subset to test the procedure !
-  #
-  #den1 <- den1[den1$MortalityRate==.2 & den1$DispersalDistance==0.04 & den1$ColonizationRate==0.001, ]
-  
-  # have to make averages
-  require(plyr)
-  den2 <- ddply(den1,.(MortalityRate,DispersalDistance,ColonizationRate,ReplacementRate,Species),summarise,den=mean(value))
-
   # Test pairwise diferences in SAD
   #
-  mKS <- pairwiseAD_SAD(den2)
+  # subset to test!
+  #den1 <- den1[den1$MortalityRate==.2 & den1$DispersalDistance==0.04 & den1$ColonizationRate==0.001, ]
 
+  mKS <- pairwiseAD_Dif(den1,"value",den1[,1:5])
+
+  #  
+  # Plot the first pairs not different 
+  #
+  
+  if(graph) {
+    mks <- mKS[mKS$p.value<0.05,2:ncol(mKS)]
+    psa <- mergePairSadRank(mks[1,],den1,"value",1:5)
+    mks <- mKS[mKS$p.value>0.05,2:ncol(mKS)]
+    psa <- rbind(psa,mergePairSadRank(mks[nrow(mks),],den1,"value",1:5))
+    require(ggplot2)
+    print(g <- ggplot(psa,aes(x=Rank,y=log(value),colour=parms)) + geom_line() + ggtitle("SAD dif/equal"))
+  }
+
+  # Select the H0 == H1 to calculate typeI error and power
   # Build data.frame with proportions
   #
+  m_nsp <-mean(ddply(den1,1:5,function(x){ data.frame(nsp=nrow(x))})$nsp)
 
-  compM <- data.frame(time=Time,notdif=propNotDiffSAD(mKS),method="SAD")
-
-  # Leer Dq SRS
+  pp  <- calcPower_fromFrame(mKS)
+  pow_AD <- data.frame(Side=side,NumSp=nsp,MeanSp=m_nsp,Time=time,Type="SAD",nPower=pp$nPower,
+                       power=pp$power,nTypeI=pp$nTypeI,typeI=pp$typeI,stringsAsFactors = F)
+  #nrow(with(mKS,mKS[RplR1==RplR2 & rep1==rep2,]))
+  # Calc power DqSRS 
   #
-  fname <- paste0(bName,"T",Time,"mfOrd.txt")
+  qNumber <- 35
+  fname <- paste0(bname,"T",time,"mfOrd.txt")
   Dq1 <- readNeutral_calcDq(fname)
+  # subset to test
+  #Dq1 <- with(Dq1,Dq1[MortalityRate==.2 & DispersalDistance==0.04 & ColonizationRate==0.001,])
 
-  # Subset for testing
-  #Dq1 <- with(Dq1,Dq1[MortalityRate==.2 & DispersalDistance==0.04 & ColonizationRate==0.001, ])
+  simbyrep <- nrow(Dq1)/pSimul$rep
 
-  # Testing pairwise differences
-  #
-  c2 <- compDq_frame(Dq1,35)
+  Dq1$rep <- rep( 1:pSimul$rep,each=simbyrep)
 
-  # Add to data.frame with proportions
-  #
-  compM <- rbind(compM, data.frame(time=Time,notdif=propNotDiffSRS(c2),method="SRS"))
+  #rep( 1:(nrow(Dq1)/qNumber),each=qNumber)
 
-  # Build Data frame with complete set of p-values
-  #
-  c2$method <- "SRS"
-  c3 <- c2                    
+  mKS1 <- pairwiseAD_Dif(Dq1,"Dq",Dq1[,c(1:4,10)])   #### TEST THIS!
 
+  pp  <- calcPower_fromFrame(mKS1)
+  pow_AD  <- rbind(pow_AD,c(side,nsp,m_nsp,time,Type="DqSRS",pp$nPower,pp$power,pp$nTypeI,pp$typeI))
+ 
+
+  #merge(mks1,mks,by=c(1:10))
   #
-  # Leer Dq SAD
+
+  # Calc power DqSAD
   #
-  fname <- paste0(bName,"T",Time,"mfSAD.txt")
+  fname <- paste0(bname,"T",time,"mfSAD.txt")
   Dq1 <- readNeutral_calcDq(fname)
+  # subset to test
+  #Dq1 <- with(Dq1,Dq1[MortalityRate==.2 & DispersalDistance==0.04 & ColonizationRate==0.001,])
 
-  # Subset for testing
-  #Dq1 <- with(Dq1,Dq1[MortalityRate==.2 & DispersalDistance==0.04 & ColonizationRate==0.001, ])
+  simbyrep <- nrow(Dq1)/pSimul$rep
 
-  # Testing pairwise differences
-  #
-  c2 <- compDq_frame(Dq1,35)
+  Dq1$rep <- rep( 1:pSimul$rep,each=simbyrep)
 
-  # Add to data.frame with proportions
-  #
-  compM <- rbind(compM, data.frame(time=Time,notdif=propNotDiffSRS(c2),method="DqSAD"))
-
-  # Add to Data frame with complete set of p-values
-  #
-  c2$method <- "DqSAD"
-  c3 <- rbind(c3,c2)                    
-
-  # Change to match different data.frames
-  #
-  cc3 <- cbind(ldply(strsplit(as.character(c3$Group1),"_")),ldply(strsplit(as.character(c3$Group2),"_")))
-  nn3 <- abbreviate(names(Dq1)[1:4])
-  names(cc3) <- c(paste0(nn3,1),paste0(nn3,2))
-  cc3 <- cbind(cc3,c3)[,c(1:8,11:14)]
-  names(cc3)[9:11] <-c("stat","p.value","p.adjust")
-  mKS <- mKS[,2:12]
-  mKS$method <- "SAD"
-  c3 <- rbind(cc3,mKS)
-  c3$time <- Time
+  mKS2 <- pairwiseAD_Dif(Dq1,"Dq",Dq1[,c(1:4,10)])   #### TEST THIS!
   
-  return(list("compM"=compM,"mPval"=c3))
+  pp  <- calcPower_fromFrame(mKS2)
+  pow_AD  <- rbind(pow_AD,c(side,nsp,m_nsp,time,Type="DqSAS",pp$nPower,pp$power,pp$nTypeI,pp$typeI))
+
+  mKS <- mKS[,2:ncol(mKS)]
+  mKS$Side <- side
+  mKS$NumSp <- nsp
+  mKS$Time  <- time
+  mKS$Type <- "SAD"
+  
+  mKS1 <- mKS1[,2:ncol(mKS1)]
+  mKS1$Side <- side
+  mKS1$NumSp <- nsp
+  mKS1$Time  <- time
+  mKS1$Type <- "DqSRS"
+
+  mKS2 <- mKS2[,2:ncol(mKS2)]
+  mKS2$Side <- side
+  mKS2$NumSp <- nsp
+  mKS2$Time  <- time
+  mKS2$Type <- "DqSAD"
+
+  mKS <- rbind(mKS,mKS1,mKS2)
+  return(list("comp_AD"=mKS,"pow_AD"=pow_AD))
+}
+
+calcPower_fromFrame <-function(mKA) {
+  cc <-mKA[,2:5]==mKA[,7:10]
+  mks <- mKA[apply(cc,1,sum)==4,]
+  
+  nTypeI <- nrow(mks)
+  typeI <- nrow(mks[mks$p.value<0.05,])/nrow(mks)
+
+  mks <- mKA[apply(cc,1,sum)!=4,2:ncol(mKA)]
+  powr <-  nrow(mks[mks$p.value<0.05,])/nrow(mks)
+  return(data.frame(nPower=nrow(mks),power=powr,nTypeI=nTypeI,typeI=typeI,stringsAsFactors = F))
 }

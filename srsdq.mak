@@ -1,6 +1,6 @@
 all:srsdq.pdf
 
-srsdq.bib:
+srsdq.bib: srsdq.md
 	cp "/home/leonardo/BibTeX/Manuscritos-SAD vs SRS-Dq.bib" srsdq.bib
 
 srsdq.pdf: srsdq.md margins.sty srsdq.bib srsdq.mak

@@ -66,7 +66,7 @@ In practical cases as the limit can not be assessed, the dimensions are estimate
 
 To be an approximate multifractal the relationship $log(Z_q)$ versus $log(\epsilon)$ should be well described by a linear relationship, but also a linear relationship with superimposed oscillations is accepted [@Borda-de-Agua2007]. A range of $q$ and $\epsilon$ must be established, then $D_q$ is estimated using linear regressions. Note that $D_q$ are defined in the limit ${\epsilon\to0}$ (equations @e2 and @e3) thus it is sufficient that there exists a scale below which such linear relationship applies to use the method [@Hentschel1983]. 
 
-To analyze species-abundance-area relationships with multifractals as Borda-de-Água [-@Borda-de-Agua2002], the boxes are replaced by species. Thus at each spatial scale $\epsilon$ each species holds the quantity of interest: its own abundance. Then the partition function is defined as a sum over the species present $S(A)$ in an area $A$ and the side ofthe box $\epsilon$ is replaced by the area:
+To analyze species-abundance-area relationships with multifractals as Borda-de-Água [-@Borda-de-Agua2002], the boxes are replaced by species. Thus at each spatial scale $\epsilon$ each species holds the quantity of interest: its own abundance. Then the partition function is defined as a sum over the species present $S(A)$ in an area $A$ and the side of the box $\epsilon$ is replaced by the area:
 
 (@e4) $Z_{q}(A)={\displaystyle \sum_{i}^{S(A)}} \left(\mu_{i}(A)\right)^{q}$
 
@@ -74,12 +74,28 @@ Where $\mu_{i}(A)$ is the abundance of species $i$ in an area $A$. And $D_q$ is 
 
 (@e5) $D_{q}=\cfrac{1}{1-q}\underset{A\to\infty}{\lim}\cfrac{\log\left(Z_{q}(A)\right)}{\log A}$
 
-Theoretically $D_q$ must be a non-increasing function of $q$ [@Hentschel1983].	re are some problems are related in how the species-boxes are represented at different scales with averages.
+I call $D_q$ calculated from species abundances $D_qSAD$ to differentiate it f rom the standard $D_q$.
 
-I propose a new way to analyze species-abundance-area using multifractals: the species-rank surface. To construct the species-rank surface (SRS) the spatial distribution of species have to be transformed assigning to each species position its rank. First I calculate the rank ordering the species by their abundances from biggest to lowest and assigning a number starting with one. Then the rank is assigned to the spatial position of the individuals of each species forming a surface. This landscape have valleys formed by the most abundant species and peaks determined by the most rare species. Then the standard multifractal analysis can be applied. 
-The coefficient of determination ($R^2$) can be used as a descriptive measure of goodness of fit [@Borda-de-Agua2002]. The source code in C++ to perform multifractal analysis is available at <https://github.com/lsaravia/mfsba>. 
+Theoretically $D_q$ must be a non-increasing function of $q$ [@Hentschel1983], but several studies showed small violations to this property for $D_qSAD$ [@Borda-de-Agua2002; @Zhang2006]. These violations are be related to the way that $DqSAD$ is defined: the summation of equation @e4 is over species and the summation of equation @e1 is over boxes, this changes the way in which the mathematical limits are taken and also the way of computation of $D_qSAD$. A partial solution has been proposed [@Yakimov2014] but the anomalies observed may be related to the mathematical assumptions needed for $D_q$ to be non-increasing, a new mathematical proof should be developed for $D_qSAD$. Thus as long as the linear relationship is reasonable I take $D_qSAD$ as a useful technique of analysis. 
+
+I propose a new way to analyze species-abundance-area using multifractals that fits more closely to the original definitions of equations @e1-@e3: the species-rank surface [@Saravia2014]. To construct the species-rank surface (SRS) the spatial distribution of species have to be transformed assigning to each species position its rank. First I use the species abundances, at the whole plot level, to calculate the rank ordering the species from biggest to lowest and assigning a number starting with one. Then the rank is assigned to the spatial position of the individuals of each species forming a surface. This landscape have valleys formed by the most abundant species and peaks determined by the most rare species. Finally the standard multifractal analysis is applied. If sampling was made in quadrats without taking the spatial position of individuals, the sum of the ranks of the species in the smallest quadrats can be used to form the SRS. 
+
+I use the coefficient of determination ($R^2$) as a descriptive measure of goodness of fit [@Borda-de-Agua2002]. The source code in C++ to perform multifractal analysis is available at <https://github.com/lsaravia/mfsba>. 
+
+As I will compare the two different $D_q$ defined previously, I call $D_q$ calculated from species abundances $D_qSAD$ an $D_q$ calculated from SRS $D_qSRS$.
+
+
+### $D_q$ relation with different spatial patterns and different SAD
+
+I simulated different spatial patterns and SAD's to demonstrate how $D_q$ is related to them. The first SAD I used is a uniform SAD, this has the same number of individuals for all species, I distributed them in bands over a spatial grid so they form a regular spatial pattern. Each position of the grid is occupied by one individual and I choose the number of species to exactly divide the side of the grid so all species are strips of the same width.
+I used square grids with sides of 256 and 512 sites which contain 65536 and 262144 individuals respectively, and 8,64, and 256 species. I calculated both $D_q$ then I randomized the positions of species to compare $D_q$ obtained with these two extreme cases.
+The second SAD I used is a Logseries [@Fisher1943] with the same number of species as previously and the same sides. I also fill the grids with strips of species to build a regular pattern but as species have different abundances the widths for each species are different. Then I calculate $D_q$ for the regular and randomized patterns.
+
+To simulate more realistic patterns of species-abundance-area relationships I use a stochastic spatially explicit model. I developed a model that can switch between a  neutral or hierarchical competition representing a continuum between niche and neutral communities [@Gravel2006]. In a neutral model individuals do not interact, and have all the same mortality and colonization rates, in spite of these gross simplifications neutral models are capable of predicting several real community patterns [@Rosindell2011]. In a hierachical competition model a species are different and these differences result in a competitive hierarchy in which some species are always better than others, then they speed competitive exclusion [@Chave2002] (CAMBIARFRASEIGUAL)
 
 ### Comparison of methods
+
+
 
 We should limit the scales to apply the methods to the range where the linear relationships holds.
 

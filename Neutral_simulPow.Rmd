@@ -4,8 +4,8 @@ I generate parameter files for the simulation of neutral/hierarchical model usin
 
 
 ```{r setup, eval=T }
-
-simul  <- F # variable to perform or not the simulations
+load(".RData")
+#simul  <- F # variable to perform or not the simulations
 
 oldcd <-getwd()
 source("R/Neutral_fun.r")
@@ -13,6 +13,7 @@ source("R/Neutral_fun.r")
 # Set the location of the binary 
 #
 neuBin <- "~/Dropbox/cpp/CaNew/Neutral/ipsNeutralExp"
+neuBin64<- "~/Dropbox/cpp/CaNew/Neutral/ipsNeutralE64"
 
 
 require(pander)
@@ -25,330 +26,83 @@ options("scipen"=100, "digits"=4)
 Now I will simulate the model to Time=500 with a full set of parameters 
 Replacement = 0,0.001,0.01,0.1,1 and ten repetitions 
 
-
-
-```{r simul_LogSerParms, eval=T,echo=F,message=F,warning=F}
+```{r simul256_LogSerParms, eval=F,echo=F,message=F,warning=F}
 setwd("Simul")
-
-time <- 500
-meta <- "L"
-side <- 256
-nsp  <- 64
-
-if(toupper(meta)=="L") {
-  prob <- genFisherSAD(nsp,side)
-  neuParm <- "fishE"
-  bname <- paste0("neuFish",nsp)
-  sadName <- "Neutral"
-} else {
-  prob <- rep(1/nsp,nsp)  
-  neuParm <- "unifE"
-  bname <- paste0("neuUnif",nsp)
-  sadName <- "NeuUnif"
-}
-
-# Parameters
-#
-# Mortality = 0.2 - 0.4
-# Mean Dispersal distance 25  -> Exponential kernel parm  0.04
-#                         2.5 -> 0.4
-# Colonization = 0.001 -0.0001
-# Replacement  = 0 - 1
-spMeta <- length(prob)
-# First generate de inp file with species and metacommunity parameters 
-genNeutralParms(neuParm,side,prob,1,0.2,0.04,0.0001)
-
-# Delete old simulations
-system(paste0("rm ",bname,"*.txt"))
-
-
-# we need the par file with the simulations parameters
-par <- read.table("sim.par",quote="",stringsAsFactors=F)
-
-
-# Number of time steps 
-par[par$V1=="nEvals",]$V2 <- time
-par[par$V1=="inter",]$V2 <- time # interval to measure Density and Diversity
-par[par$V1=="init",]$V2 <- time  # Firs time of measurement = interval
-par[par$V1=="modType",]$V2 <- 4 # Hierarchical saturated
-par[par$V1=="sa",]$V2 <- "N" # Save a snapshot of the model
-par[par$V1=="baseName",]$V2 <- paste0(bName ,"T", time ) 
-par[par$V1=="pomac",]$V2 <- 1 # 0:one set of parms 
-                              # 1:several simulations with pomac.lin parameters 
-
-write.table(par, "sim.par",sep="\t",row.names=F,col.names=F,quote=F)
-
-# Then pomac.lin to simulate a range of parmeters and repetitions.
-#
-# Generates pomac.lin for multiple simulations exponential dispersal to compare hierarchical and neutral communities  
-# and see when they have similar H and compare if they have similar SAD
-
-genPomacParms("pomExp",1,c(0.2),c(0.04),c(0.0001),c(0,0.001),3)
-
-#genPomacParms("pomExp",1,c(0.2,0.4),c(0.04,0.4),c(0.001,0.0001),c(0,0.001,0.01,0.1,1),10)
-
-# copy pomExp.lin to pomac.lin
-system("cp pomExp.lin pomac.lin")
-
-system(paste(neuBin,"sim.par",paste0(neuParm,".inp")))
-
-
-# Desde aca function compNeutral_Time  
-#
-fname <- paste0(bname,"T",time,"Density.txt")
-
-den1 <- meltDensityOut_NT(fname,spMeta)
-
-# Test pairwise diferences in SAD
-#
-mKS <- pairwiseAD_Dif(den1,"value",den1[,1:5])
-
-# Plot the first pairs not different 
-#
-mks <- mKS[mKS$p.value>0.05,2:ncol(mKS)]
-psa <- mergePairSadRank(mks[1,],den1,"value",1:5)
-psa <- rbind(psa,mergePairSadRank(mks[nrow(mks),],den1,"value",1:5))
-require(ggplot2)
-(g <- ggplot(psa,aes(x=Rank,y=log(value),colour=parms)) + geom_line() + ggtitle("SAD not dif"))
-
-# Build data.frame with proportions
-#
-#compM <- data.frame(time=Time,notdif=propNotDiffSAD(mKS),method="SAD")
-
-
-######################### HAY QUE VER DE LOS QUE SON IGUALES si dan distintos con DqSAD /SRS
-qNumber <- 35
-fname <- paste0(bname,"T",time,"mfOrd.txt")
-Dq1 <- readNeutral_calcDq(fname)
-Dq1$rep <- rep( 1:(nrow(Dq1)/qNumber),each=qNumber)
-
-mKS1 <- pairwiseAD_Dif(Dq1,"Dq",den1[,c(1:4,10])   #### TEST THIS!
-
-#
+#simul <- data.frame()
+simul <- rbind(simul,simulNeutral_1Time(8,256,500))
+simul <- rbind(simul,simulNeutral_1Time(64,256,500))
+simul <- rbind(simul,simulNeutral_1Time(256,256,500))
 
 setwd(oldcd)
-rm(Dq1,den1)
-rm(den1,den,mks1,mks,mks100)
 save.image()
 
 ```
 
-## Simulations at Time=500
-
-
-```{r simul_pomac467_T500, eval=T,echo=F,message=F,warning=F }
-load(".RData")
-
+```{r simul512_LogSerParms, eval=F,echo=F,message=F,warning=F}
 setwd("Simul")
 
-# read par file with simulations parameters
-if(simul)
+simul <- rbind(simul,simulNeutral_1Time(8,512,500))
+simul <- rbind(simul,simulNeutral_1Time(64,512,500))
+simul <- rbind(simul,simulNeutral_1Time(256,512,500))
+
+# rename s/'64'/'64_512'/ *neuFish64*.txt 
+
+setwd(oldcd)
+save.image()
+
+```
+
+Calculate power of DqSAD DqSRS
+
+```{r power_LogSerParms, eval=T,echo=F,message=F,warning=F}
+setwd("Simul")
+
+# Testing
+#simul <- data.frame()
+#sim1 <- rbind(simul,simulNeutral_1Time(65,256,100,"L",3))
+#sim1 <- data.frame(nsp=65,side=256,time=100,meta="L",spMeta=87,rep=3)
+#cc <- powerNeutral_1Time(sim1)
+
+require(doParallel)
+cl <- makeCluster(2)
+registerDoParallel(cl)
+require(foreach)
+
+pow_AD <- data.frame()
+comp_AD<- data.frame()
+foreach(i=1:nrow(simul)) %dopar%
 {
-  # Delete old simulations
-  system("rm Exp467T500*")
-    
-  par <- read.table("sim.par",quote="",stringsAsFactors=F)
-  
-  # Number of time steps 
-  par[par$V1=="nEvals",]$V2 <- 500
-  par[par$V1=="inter",]$V2 <- 500 # interval to measure Density and Diversity
-  par[par$V1=="init",]$V2 <- 500  # Firs time of measurement = interval
-  par[par$V1=="modType",]$V2 <- 4 # Hierarchical saturated
-  par[par$V1=="sa",]$V2 <- "N" # Save a snapshot of the model
-  par[par$V1=="baseName",]$V2 <- paste0("Exp",spMeta,"T500")
-  par[par$V1=="pomac",]$V2 <- 1 # 0:one set of parms 
-                                # 1:several simulations with pomac.lin parameters 
-  
-  write.table(par, "sim.par",sep="\t",row.names=F,col.names=F,quote=F)
-  
-  # I will not delete old simulations
-  # system("rm Exp467*")
-  
-  # I have to modify pomExp.lin to make different simulations
-  
-  genPomacParms("pomExp",1,c(0.2,0.4),c(0.04,0.4),c(0.001,0.0001),c(0,0.001,0.01,0.1,1),10)
-  
-  # copy pomExp.lin to pomac.lin
-  system("cp pomExp.lin pomac.lin")
-  
-  s <- paste(neuBin,"sim.par","fishE.inp")
-  s
-  system(s,wait=F)
+  cc <- powerNeutral_1Time(simul[i,])
 }
-
-m <- compMethods_Time(bName,500,spMeta) 
-
-
-compM <- rbind(compM,m$compM)
-
-pander(compM,caption="Proportion of not different")
-
-
-mks1 <- m$mPval
-mks1 <- mks1[mks1$method=="DqSAD" & mks1$p.adjust>0.05,]
-pander(mks1,caption="DqSAD not different T=500")
-
-Dq1 <- readNeutral_calcDq(paste0(bName,"T500mfSAD.txt"))
-
-mergePair_plotDq(mks1[1,],Dq1,"DqSAD not different T=500")
-
-mPval <- rbind(mPval,m$mPval)
-
-mks1 <- mPval[mPval$method=="DqSAD" & mPval$p.adjust>0.05,]
-
-
+for(i in 1:nrow(simul)) {
+pow_AD <- rbind(pow_AD, cc[[i]]$pow_AD)
+comp_AD<- rbind(comp_AD,cc[[i]]$comp_AD)
+}
+rm(cc)
 setwd(oldcd)
-rm(Dq1,m,mks1)
 save.image()
-
 ```
 
-Now the same set of simulations for T=1000
+Calculate power by number of species
 
-```{r simul_pomac467_T1000, eval=T,echo=F,message=F,warning=F}
 
-# Load data if run only one chunk 
-#load(".RData")
-
+```{r power_LogSer1, eval=F,echo=T,message=T,warning=T}
 setwd("Simul")
 
-if(simul)
-{
-  # Delete old simulations
-  system("rm Exp467T1000*")
-    
-  # read par file with simulations parameters
 
-  par <- read.table("sim.par",quote="",stringsAsFactors=F)
-
-  # Number of time steps 
-  par[par$V1=="nEvals",]$V2 <- 1000
-  par[par$V1=="inter",]$V2 <- 1000 # interval to measure Density and Diversity
-  par[par$V1=="init",]$V2 <- 1000  # Firs time of measurement = interval
-  par[par$V1=="modType",]$V2 <- 4 # Hierarchical saturated
-  par[par$V1=="sa",]$V2 <- "N" # Save a snapshot of the model
-  par[par$V1=="baseName",]$V2 <- paste0("Exp",spMeta,"T1000")
-  par[par$V1=="pomac",]$V2 <- 1 # 0:one set of parms 
-                                # 1:several simulations with pomac.lin parameters 
-
-  write.table(par, "sim.par",sep="\t",row.names=F,col.names=F,quote=F)
-
-  # I have to modify pomExp.lin to make different simulations
-
-  genPomacParms("pomExp",1,c(0.2,0.4),c(0.04,0.4),c(0.001,0.0001),c(0,0.001,0.01,0.1,1),10)
-
-  # copy pomExp.lin to pomac.lin
-  system("cp pomExp.lin pomac.lin")
-
-  s <- paste(neuBin,"sim.par","fishE.inp")
-  s
-  if(simul) system(s,wait=F)
+hh <-function(x) {
+  t <- nrow(x)
+  s <- nrow(x[x$p.value<0.05,])
+  data.frame(power=s/t,n=t)
 }
-
-m <- compMethods_Time(bName,1000,spMeta) 
-
-compM <- rbind(compM,m$compM)
-
-pander(compM,caption="Proportion of not different")
-
-
-mks1 <- m$mPval
-mks1 <- mks1[mks1$method=="DqSAD" & mks1$p.adjust>0.05,]
-pander(mks1,caption="DqSAD not different T1000")
-
-mPval <- rbind(mPval,m$mPval)
-
-setwd(oldcd)
-rm(m,mks1)
-save.image()
-
-
-``` 
-
-The the proportion of different SAD is constant from T=500 it seems we reach steady state. I have to compare now using H and Dq, for that I should do repeated simulations
-of each combination.
-
-```{r plot_Time_pomac467,eval=T,echo=F,message=F,warning=F}
-
-setwd("Simul")
-
-# Plot different SAD with time
-
-# Plot different Dq SRS with time
-
-Dq1 <- readNeutral_calcDq(paste0(bName,"T100mfOrd.txt"))
-Dq1 <- rbind(Dq1,readNeutral_calcDq(paste0(bName,"T500mfOrd.txt")))
-Dq1 <- rbind(Dq1,readNeutral_calcDq(paste0(bName,"T1000mfOrd.txt")))
-
-mks1 <- mPval[mPval$method=="SRS" & mPval$p.adjust>0.05,]
-
-mergePair_plotDq(mks1[1,],Dq1,"SRS not different")
-
-mks1 <- mPval[mPval$method=="SRS" & mPval$p.adjust<=0.05,]
-
-mergePair_plotDq(mks1[4,],Dq1,"SRS different")
-
-
-# Plot different Dq SAD with time
-
-
-Dq1 <- readNeutral_calcDq(paste0(bName,"T100mfSAD.txt"))
-Dq1 <- rbind(Dq1,readNeutral_calcDq(paste0(bName,"T500mfSAD.txt")))
-Dq1 <- rbind(Dq1,readNeutral_calcDq(paste0(bName,"T1000mfSAD.txt")))
-
-mks1 <- mPval[mPval$method=="DqSAD" & mPval$p.adjust>0.05,]
-
-mergePair_plotDq(mks1[1,],Dq1,"DqSAD not different")
-
-mks1 <- mPval[mPval$method=="DqSAD" & mPval$p.adjust<=0.05,]
-
-mergePair_plotDq(mks1[4,],Dq1,"DqSAD different")
-
-
-
-setwd(oldcd)
-
-```
-
-```{r compKS_pomac467,eval=T,echo=F,message=F,warning=F}
-source("R/Neutral_fun.r")
-
-setwd("Simul")
-
-m <- compMethod_DqKS_Time(bName,100,spMeta) 
-
-compM <- rbind(compM,m$compM)
-
-pander(compM,caption="Proportion of not different")
-
-mPval <- rbind(mPval,m$mPval)
-
-
-m <- compMethod_DqKS_Time(bName,500,spMeta) 
-compM <- rbind(compM,m$compM)
-pander(compM,caption="Proportion of not different")
-mPval <- rbind(mPval,m$mPval)
-
-
-m <- compMethod_DqKS_Time(bName,1000,spMeta) 
-compM <- rbind(compM,m$compM)
-pander(compM,caption="Proportion of not different")
-mPval <- rbind(mPval,m$mPval)
-
-setwd(oldcd)
-
-rm(m)
-
-compM
-
-save.image()
-
-names(mPval)
-unique(mPval$method)
-m <- with(mPval,mPval[method=="DqSADKS" & time==100,])
-propNotDiffSAD(m)
-
-
+require(plyr)
+c1 <- ddply(comp_AD,.(Type,NumSp),hh)
+c1 <- with(comp_AD,comp_AD[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2,])
+c1 <- with(comp_AD,comp_AD[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR1==RplR2,])
+c2 <- ddply(c1,.(Type,NumSp),hh)
+unique(c1$MrtR1)
+unique(c1$DspD1)
+unique(c1$ClnR1)
 
 ```
 
