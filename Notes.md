@@ -118,3 +118,10 @@ We note that not all fractals belong to this rescaling class. However, since all
 1. Beck C (1990) Upper and lower bounds on the Renyi dimensions and the uniformity of multifractals. Phys D Nonlinear Phenom 41: 67–78. doi:10.1016/0167-2789(90)90028-N.
 
 These quantities describe the scaling behaviour of the regions in phase space where the measure is most concentrated (D(+infinit)) or most rarified (D(-infinit)).
+
+
+1. Hurlbert AH (2004) Species–energy relationships and habitat complexity in bird communities. Ecol Lett 7: 714–720. doi:10.1111/j.1461-0248.2004.00630.x.
+
+In this paper, my objective is twofold. First, I test the
+
+Spatial autocorrelation is necessarily present in these geographic data, and some believe that it leads to inflated estimates of the number of degrees of freedom in significance tests. However, the statistically significant relationships presented in this study would remain significant at P < 0.01 if only 1% of the observations were statistically independent. Thus, the probability of an increased type I error rate due to spatial autocorrelation appears to be negligible for the relationships reported here.

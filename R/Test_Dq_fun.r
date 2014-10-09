@@ -123,7 +123,7 @@ compareTwoCurvesMC <- function (group, y, sd,nsim = 1000)
 #
 compareTwoCurvesT <- function (group, y, sd,n) 
 {
-  group <- as.vector(group)
+#  group <- as.vector(group)
   g <- unique(group)
   if (length(g) != 2) 
     stop("Must be exactly 2 groups")
@@ -135,9 +135,11 @@ compareTwoCurvesT <- function (group, y, sd,n)
   sd2 <- sd2*sd2
   stat <- (y1-y2)/sqrt((sd1/n)+(sd2/n))
   df <- (sd1/n+sd2/n)^2/( (sd1/n)^2 / (n-1) + (sd2/n)^2 / (n-1)) 
-  p <- p.adjust(pt(stat,df),method="hommel")
+  #p.adjust <- p.adjust(pt(stat,df),method="hommel")
+  p <- pt(stat,df)
   #print(ks.test(y1,y2))
   #print(t.test(y1-y2,mu=0))
+  return(list("stat"=stat,"p"=p))
 }
 
 # Fisher procedure to combine p.value from multiple T test in one p.value

@@ -52,57 +52,429 @@ save.image()
 
 ```
 
-Calculate power of DqSAD DqSRS
+## Calculate power of SAD DqSAD DqSRS for parameters
 
-```{r power_LogSerParms, eval=T,echo=F,message=F,warning=F}
+Mortality=0.2
+Dispersal=0.04
+Colonization=0.001
+
+```{r power_LogSerParms, eval=F,echo=F,message=F,warning=F}
 setwd("Simul")
 
 # Testing
 #simul <- data.frame()
 #sim1 <- rbind(simul,simulNeutral_1Time(65,256,100,"L",3))
 #sim1 <- data.frame(nsp=65,side=256,time=100,meta="L",spMeta=87,rep=3)
-#cc <- powerNeutral_1Time(sim1)
+#cc <- powerNeutral_1Time(simul[4,])
 
 require(doParallel)
-cl <- makeCluster(2)
+cn <-detectCores()
+cl <- makeCluster(cn)
 registerDoParallel(cl)
 require(foreach)
 
 pow_AD <- data.frame()
 comp_AD<- data.frame()
-foreach(i=1:nrow(simul)) %dopar%
+cc <- foreach(i=1:nrow(simul)) %dopar%
 {
-  cc <- powerNeutral_1Time(simul[i,])
+    powerNeutral_1Time(simul[i,],0.2, 0.04, 0.001) # Mortality,Dispersal,Colonization
 }
+
 for(i in 1:nrow(simul)) {
 pow_AD <- rbind(pow_AD, cc[[i]]$pow_AD)
 comp_AD<- rbind(comp_AD,cc[[i]]$comp_AD)
 }
 rm(cc)
+pow_AD$MrtR <- 0.2
+pow_AD$DspD <- 0.04
+pow_AD$ClnR <- 0.001
+
+stopCluster(cl)
+
 setwd(oldcd)
 save.image()
 ```
 
-Calculate power by number of species
+
+## Calculate power of SAD DqSAD DqSRS for parameters
+
+Mortality=0.2
+Dispersal=0.4
+Colonization=0.001
 
 
-```{r power_LogSer1, eval=F,echo=T,message=T,warning=T}
+```{r power_LogSerParms1, eval=F,echo=F,message=T,warning=T}
 setwd("Simul")
 
+#cc <- powerNeutral_1TimeParms(simul,0.2,0.4,0.001)
 
+#pow_AD <- rbind(pow_AD,cc$pow_AD)
+#comp_AD<- rbind(comp_AD,cc$comp_AD)
+#rm(cc)
+
+mm <- 0.2
+dd <- 0.4
+co <- 0.001
+
+require(doParallel)
+cn <-detectCores()
+cl <- makeCluster(cn)
+registerDoParallel(cl)
+require(foreach)
+
+cc <- foreach(i=1:nrow(simul)) %dopar%
+{
+    powerNeutral_1Time(simul[i,],mm, dd, co) # Mortality,Dispersal,Colonization
+}
+p_AD <- data.frame()
+
+for(i in 1:nrow(simul)) {
+	p_AD <- rbind(p_AD, cc[[i]]$pow_AD)
+	comp_AD<- rbind(comp_AD,cc[[i]]$comp_AD)
+}
+rm(cc)
+p_AD$MrtR <- mm
+p_AD$DspD <- dd
+p_AD$ClnR <- co
+
+pow_AD <- rbind(pow_AD, p_AD)
+
+
+stopCluster(cl)
+
+setwd(oldcd)
+save.image()
+```
+
+
+## Calculate power of SAD DqSAD DqSRS for parameters
+
+Mortality=0.4
+Dispersal=0.04
+Colonization=0.001
+
+```{r power_LogSerParms2, eval=F,echo=F,message=T,warning=T}
+setwd("Simul")
+
+mm <- 0.4
+dd <- 0.04
+co <- 0.001
+
+require(doParallel)
+cn <-detectCores()
+cl <- makeCluster(cn)
+registerDoParallel(cl)
+require(foreach)
+
+cc <- foreach(i=1:nrow(simul)) %dopar%
+{
+    powerNeutral_1Time(simul[i,],mm, dd, co) # Mortality,Dispersal,Colonization
+}
+p_AD <- data.frame()
+
+for(i in 1:nrow(simul)) {
+  	p_AD <- rbind(p_AD, cc[[i]]$pow_AD)
+	comp_AD<- rbind(comp_AD,cc[[i]]$comp_AD)
+}
+rm(cc)
+p_AD$MrtR <- mm
+p_AD$DspD <- dd
+p_AD$ClnR <- co
+
+pow_AD <- rbind(pow_AD, p_AD)
+
+
+stopCluster(cl)
+
+setwd(oldcd)
+save.image()
+```
+
+
+## Calculate power of SAD DqSAD DqSRS for parameters
+
+Mortality=0.4
+Dispersal=0.4
+Colonization=0.001
+
+
+```{r power_LogSerParms3, eval=F,echo=F,message=T,warning=T}
+setwd("Simul")
+
+mm <- 0.4
+dd <- 0.4
+co <- 0.001
+
+require(doParallel)
+cn <-detectCores()
+cl <- makeCluster(cn)
+registerDoParallel(cl)
+require(foreach)
+
+cc <- foreach(i=1:nrow(simul)) %dopar%
+{
+    powerNeutral_1Time(simul[i,],mm, dd, co) # Mortality,Dispersal,Colonization
+}
+p_AD <- data.frame()
+
+for(i in 1:nrow(simul)) {
+    p_AD <- rbind(p_AD, cc[[i]]$pow_AD)
+	comp_AD<- rbind(comp_AD,cc[[i]]$comp_AD)
+}
+rm(cc)
+p_AD$MrtR <- mm
+p_AD$DspD <- dd
+p_AD$ClnR <- co
+
+pow_AD <- rbind(pow_AD, p_AD)
+
+
+stopCluster(cl)
+rm(p_AD)
+setwd(oldcd)
+save.image()
+```
+# Make plots of power!
+
+I do not use simulations with ColonizationRate = 0.0001
+
+Replace NumSp with spMeta=number of species in metacommunity
+
+```{r power_PlotAD, eval=F,echo=F,message=T,warning=T}
+
+require(ggplot2)
+pow_AD$MeanSp <- as.numeric(pow_AD$MeanSp)
+pow_AD$power <- as.numeric(pow_AD$power)
+pow_AD$typeI <- as.numeric(pow_AD$typeI)
+
+# Add field with combination of dispersal & mortality 
+pow_AD$DspMrt <- with(pow_AD,paste0(DspD," - ",MrtR))
+
+# Add number of species in the metacommunity
+pow_AD$spMeta <- ceiling(as.numeric(pow_AD$NumSp)*1.33)
+
+g <- ggplot(pow_AD,aes(x=spMeta,y=power)) + geom_point(shape=19,aes(size=typeI,colour=DspMrt)) + facet_grid(Side ~ Type)
+g+theme_bw()
+
+g <- ggplot(pow_AD,aes(x=MeanSp,y=typeI)) + geom_point(shape=19,aes(size=power,colour=DspMrt)) + facet_grid(Side ~ Type)
+g+theme_bw()
+
+
+# Recalculate power from comp_AD
+#
+require(plyr)
 hh <-function(x) {
   t <- nrow(x)
   s <- nrow(x[x$p.value<0.05,])
   data.frame(power=s/t,n=t)
 }
-require(plyr)
-c1 <- ddply(comp_AD,.(Type,NumSp),hh)
-c1 <- with(comp_AD,comp_AD[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2,])
-c1 <- with(comp_AD,comp_AD[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR1==RplR2,])
-c2 <- ddply(c1,.(Type,NumSp),hh)
-unique(c1$MrtR1)
-unique(c1$DspD1)
-unique(c1$ClnR1)
+
+# Calculate power in fuction of replacement rate difference
+# Falta cambiar NumSp por 
+c1 <- with(comp_AD,comp_AD[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2!=RplR1,])
+c1$DifR <- with(c1,abs(RplR2-RplR1))
+c2 <- ddply(c1,.(NumSp,Type,DifR),hh)
+#ggsave("power_DifReplacement.png", width=6,height=6,units="in",dpi=600)
+
+g <- ggplot(c2,aes(x=DifR,y=power)) + geom_point(shape=19,position = position_jitter(height = .05),aes(colour=as.factor(Type))) + facet_grid( NumSp ~ .)
+g+ scale_x_log10(breaks=c(0.001,0.01,0.09,1))+theme_bw()
+
+# Calculate TypeI error in fuction of replacement rate
+c1 <- with(comp_AD,comp_AD[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2==RplR1,])
+c3 <- ddply(c1,.(NumSp,Type,RplR2),hh)
+names(c3)[4]<-"typeI"
+g <- ggplot(c3,aes(x=RplR2,y=typeI)) + geom_point(shape=19,aes(colour=as.factor(Type))) + facet_grid( NumSp ~ .)
+g+theme_bw()
+
+rm(c1,c2,c3)
 
 ```
 
+
+DqSAD have higher power but also a very high type I error rate.
+DqSRS have lower power and a lower type I error.
+SAD have low power with a small number of species and a low type I error rate.
+
+
+The power of the AD or KS test Depends on the number of points used so for SAD the number of species compared change the number of points used for the test, but for DqSRS and DqSAD the number of points is always q=35 thus so we could calculate more dimensions to raise the power of the test.
+
+# Test usign glm whic factors influence power
+
+```{r testAD_factors, eval=F,echo=F,message=T,warning=T}
+require(plyr)
+hh <-function(x) {
+  t <- nrow(x)
+  s <- nrow(x[x$p.value<0.05,])
+  data.frame(count=s,power=s/t,n=t)
+}
+# Calculate power
+c1 <- with(comp_AD,comp_AD[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2!=RplR1,])
+c1$DifR <- with(c1,abs(RplR2-RplR1))
+c2 <- ddply(c1,.(NumSp,Side,Type,MrtR1,DspD1,DifR),hh)
+#require(dplyr)
+#c2 <- tbl_df(c1)
+#c3 <- c2 %>% 
+#  group_by(NumSp,Side,Type,MrtR1,DspD1,DifR) %>% 
+#  filter(p.value<0.05) %>% 
+#  summarize(tot=n()) %>% 
+#  summarize(pgt5=n()) 
+model1 <-glm(count~NumSp*Side*Type*MrtR1*DspD1*DifR,poisson,data=c2)
+summary(model1)
+plot(model1)
+
+# HAVE TO USE BINOMIAL !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+
+
+```
+
+
+# Use the information dimension t-test with sd from   
+
+Fractal dimensions have several problems of estimation (Halley) so we use information dimension with sd estimated by the regression
+
+```{r infoDim_Ttest, eval=F,echo=F,message=T,warning=T}
+setwd("Simul")
+#sim1 <- data.frame(nsp=65,side=256,time=100,meta="L",spMeta=87,rep=3)
+# 256 = 7 points for Dq
+#
+#cc <- powerNeutral_1T_D1(sim1,7,1)
+# 
+# Dq1 <- readNeutral_calcDq("neuFish65_256T100mfOrd.txt")
+# 
+# D1 <- DqT[DqT$q==1,]
+# dd <- D1[121:122,]
+# 
+# compareTwoCurvesT(dd$Type,dd$Dq,dd$SD.Dq,5)
+# 
+# dd <- D1[c(41,45),]
+# 
+# compareTwoCurvesT(dd$rep,dd$Dq,dd$SD.Dq,5)
+
+require(doParallel)
+cn <-detectCores()
+cl <- makeCluster(cn)
+registerDoParallel(cl)
+require(foreach)
+
+cc <- foreach(i=1:nrow(simul)) %dopar%
+{
+    powerNeutral_1T_D1(simul[i,],log2(simul$side)-1,1,0,0,0.001)
+}
+pow_TD1 <- data.frame()
+comp_TD1<- data.frame()
+
+for(i in 1:nrow(simul)) {
+  pow_TD1 <- rbind(pow_TD1, cc[[i]]$pow_AD)
+  comp_TD1<- rbind(comp_TD1,cc[[i]]$comp_AD)
+}
+rm(cc)
+
+stopCluster(cl)
+
+setwd(oldcd)
+save.image()
+
+
+```
+
+The power of D1 is around .5 too low
+
+Lets check
+
+```{r power_PlotD1T, eval=F,echo=F,message=T,warning=T}
+
+require(ggplot2)
+pow_AD$MeanSp <- as.numeric(pow_AD$MeanSp)
+pow_AD$power <- as.numeric(pow_AD$power)
+pow_AD$typeI <- as.numeric(pow_AD$typeI)
+
+# Add field with combination of dispersal & mortality 
+pow_AD$DspMrt <- with(pow_AD,paste0(DspD," - ",MrtR))
+
+# En vez de hacer merge fijarse donde genero parametros de simulacion!!!!!!!!
+pad <- merge(pow_AD,simul,by.x=c("Side","NumSp"),by.y=c("side","nsp") )
+
+g <- ggplot(pad,aes(x=spMeta,y=power)) + geom_point(shape=19,aes(size=typeI,colour=DspMrt)) + facet_grid(Side ~ Type)
+g+theme_bw()
+
+g <- ggplot(pow_AD,aes(x=MeanSp,y=typeI)) + geom_point(shape=19,aes(size=power,colour=DspMrt)) + facet_grid(Side ~ Type)
+g+theme_bw()
+
+
+# Recalculate power from comp_AD
+#
+require(plyr)
+hh <-function(x) {
+  t <- nrow(x)
+  s <- nrow(x[x$p.value<0.05,])
+  data.frame(power=s/t,n=t)
+}
+
+# Calculate power in fuction of replacement rate difference
+# Falta cambiar NumSp por 
+c1 <- with(comp_AD,comp_AD[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2!=RplR1,])
+c1$DifR <- with(c1,abs(RplR2-RplR1))
+c2 <- ddply(c1,.(NumSp,Type,DifR),hh)
+#ggsave("power_DifReplacement.png", width=6,height=6,units="in",dpi=600)
+
+g <- ggplot(c2,aes(x=DifR,y=power)) + geom_point(shape=19,position = position_jitter(height = .05),aes(colour=as.factor(Type))) + facet_grid( NumSp ~ .)
+g+ scale_x_log10(breaks=c(0.001,0.01,0.09,1))+theme_bw()
+
+# Calculate TypeI error in fuction of replacement rate
+c1 <- with(comp_AD,comp_AD[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2==RplR1,])
+c3 <- ddply(c1,.(NumSp,Type,RplR2),hh)
+names(c3)[4]<-"typeI"
+g <- ggplot(c3,aes(x=RplR2,y=typeI)) + geom_point(shape=19,aes(colour=as.factor(Type))) + facet_grid( NumSp ~ .)
+g+theme_bw()
+
+rm(c1,c2,c3)
+
+```
+
+
+
+```{r power_GCtest, eval=F,echo=F,message=T,warning=T}
+setwd("Simul")
+# sim1 <- data.frame(nsp=65,side=256,time=100,meta="L",spMeta=87,rep=3)
+#
+#cc <- powerNeutral_1T_GC(simul[1,],3,0,0,0.001)
+
+# Error en
+# [1] "0.2_0.04_0.0001_1_1 4 0.2_0.04_0.0001_0.1_0 3"
+
+require(doParallel)
+cn <-detectCores()
+cl <- makeCluster(cn)
+registerDoParallel(cl)
+require(foreach)
+
+cc <- foreach(i=1:nrow(simul)) %dopar%
+{
+    powerNeutral_1T_GC(simul[i,],3,0,0,0.001)
+}
+pow_GC1 <- data.frame()
+comp_GC1<- data.frame()
+
+for(i in 1:nrow(simul)) {
+
+  pow_GC1 <- rbind(pow_GC1, cc[[i]]$pow_AD)
+  comp_GC1<- rbind(comp_GC1,cc[[i]]$comp_AD)
+  }
+
+setwd(oldcd)
+save.image()
+```
+
+More simulations to do comparisons with GC
+
+```{r more_simul512_LogSerParms, eval=T,echo=F,message=F,warning=F}
+setwd("Simul")
+
+simul <- rbind(simul,simulNeutral_1Time(8,512,500,"L",20,F))
+simul <- rbind(simul,simulNeutral_1Time(64,512,500,"L",20,F))
+simul <- rbind(simul,simulNeutral_1Time(256,512,500,"L",20,F))
+
+# rename s/'64'/'64_512'/ *neuFish64*.txt 
+
+setwd(oldcd)
+save.image()

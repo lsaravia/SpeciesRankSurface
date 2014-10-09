@@ -74,15 +74,15 @@ Where $\mu_{i}(A)$ is the abundance of species $i$ in an area $A$. And $D_q$ is 
 
 (@e5) $D_{q}=\cfrac{1}{1-q}\underset{A\to\infty}{\lim}\cfrac{\log\left(Z_{q}(A)\right)}{\log A}$
 
-I call $D_q$ calculated from species abundances $D_qSAD$ to differentiate it f rom the standard $D_q$.
+I call $D_q$ calculated from species abundances $D_qSAD$ and $D_q$ calculated from SRS $D_qSRS$to differentiate it from the standard $D_q$.
 
 Theoretically $D_q$ must be a non-increasing function of $q$ [@Hentschel1983], but several studies showed small violations to this property for $D_qSAD$ [@Borda-de-Agua2002; @Zhang2006]. These violations are be related to the way that $DqSAD$ is defined: the summation of equation @e4 is over species and the summation of equation @e1 is over boxes, this changes the way in which the mathematical limits are taken and also the way of computation of $D_qSAD$. A partial solution has been proposed [@Yakimov2014] but the anomalies observed may be related to the mathematical assumptions needed for $D_q$ to be non-increasing, a new mathematical proof should be developed for $D_qSAD$. Thus as long as the linear relationship is reasonable I take $D_qSAD$ as a useful technique of analysis. 
 
-I propose a new way to analyze species-abundance-area using multifractals that fits more closely to the original definitions of equations @e1-@e3: the species-rank surface [@Saravia2014]. To construct the species-rank surface (SRS) the spatial distribution of species have to be transformed assigning to each species position its rank. First I use the species abundances, at the whole plot level, to calculate the rank ordering the species from biggest to lowest and assigning a number starting with one. Then the rank is assigned to the spatial position of the individuals of each species forming a surface. This landscape have valleys formed by the most abundant species and peaks determined by the most rare species. Finally the standard multifractal analysis is applied. If sampling was made in quadrats without taking the spatial position of individuals, the sum of the ranks of the species in the smallest quadrats can be used to form the SRS. 
+I proposed a new way to analyze species-abundance-area using multifractals that fits more closely to the original definitions of equations @e1-@e3: the species-rank surface [@Saravia2014]. To construct the species-rank surface (SRS) the spatial distribution of species have to be transformed assigning to each species position its rank. First I use the species abundances, at the whole plot level, to calculate the rank ordering the species from biggest to lowest and assigning a number starting with one. Then the rank is assigned to the spatial position of the individuals of each species forming a surface. This landscape have valleys formed by the most abundant species and peaks determined by the most rare species. Finally the standard multifractal analysis is applied. If sampling was made in quadrats without taking the spatial position of individuals, the sum of the ranks of the species in the smallest quadrats could be used to form the SRS. 
 
 I use the coefficient of determination ($R^2$) as a descriptive measure of goodness of fit [@Borda-de-Agua2002]. The source code in C++ to perform multifractal analysis is available at <https://github.com/lsaravia/mfsba>. 
 
-As I will compare the two different $D_q$ defined previously, I call $D_q$ calculated from species abundances $D_qSAD$ an $D_q$ calculated from SRS $D_qSRS$.
+As I will compare the two different $D_q$ defined previously, I call $D_q$ calculated from species abundances $D_qSAD$ .
 
 
 ### $D_q$ relation with different spatial patterns and different SAD
@@ -91,7 +91,28 @@ I simulated different spatial patterns and SAD's to demonstrate how $D_q$ is rel
 I used square grids with sides of 256 and 512 sites which contain 65536 and 262144 individuals respectively, and 8,64, and 256 species. I calculated both $D_q$ then I randomized the positions of species to compare $D_q$ obtained with these two extreme cases.
 The second SAD I used is a Logseries [@Fisher1943] with the same number of species as previously and the same sides. I also fill the grids with strips of species to build a regular pattern but as species have different abundances the widths for each species are different. Then I calculate $D_q$ for the regular and randomized patterns.
 
-To simulate more realistic patterns of species-abundance-area relationships I use a stochastic spatially explicit model. I developed a model that can switch between a  neutral or hierarchical competition representing a continuum between niche and neutral communities [@Gravel2006]. In a neutral model individuals do not interact, and have all the same mortality and colonization rates, in spite of these gross simplifications neutral models are capable of predicting several real community patterns [@Rosindell2011]. In a hierachical competition model a species are different and these differences result in a competitive hierarchy in which some species are always better than others, then they speed competitive exclusion [@Chave2002] (CAMBIARFRASEIGUAL)
+To simulate more realistic patterns of species-abundance-area relationships I use a stochastic spatially explicit model. I developed a stochastic cellular automata [@Molofsky2004] that can switch between a neutral or hierarchical competition representing a continuum between niche and neutral communities [@Gravel2006]. In a neutral model individuals do not interact, and have all the same mortality, colonization rates and dispersal distances. In spite of these gross simplifications neutral models are capable of predict several real community patterns [@Rosindell2011]. At the other end of the continuum are niche communities represented by a hierarchical competition model [@Tilman1994]. In this case species have differences that imply a competitive hierarchy in which some species are always better than others, then they produce competitive exclusion [@Chave2002]. Basically I added to the neutral model a probability of replacement $\rho$. When $\rho=1$ more competitive species always replace less competitive and the model behaves as pure hierarchical. When $\rho=0$, there is no replacement of species and the model is completely neutral. A more thorough description of the model is given in appendix A and the C++ source code of the model is available at <https://github/lasaravia/neutral> and figshare <http://dx.doi.org/10.6084/m9.figshare.969692>. 
+
+The model assume a metacommunity: a regionall collection of communities, from which migration occurs at a rate $m$. Species can also disperse locally and I assume an exponential dispersal kernel with average dispersal distance $d$. Other model parameters are the mortality rate $\mu$, the number of species in the metacommunity and also the size of the community, this last is represented as the *side* of the grid used in the simulations. I use a logseries SAD for the metacommunity, defined by the maximun number of individuals (*side x side*) and the number of species [@Fisher1943].  
+
+I performed simulations 10 simulations for each combination of parameters given in Table 1, the total number of simulations was . varying mainly the parameter $\rho=0$ because this produces communities with different SAD to compare.  
+
+
++------+-------------+-------+-----+--------+--------+
+| Side | No. Species | $\mu$ | $d$ |  $m$   | $\rho$ |
++======+=============+=======+=====+========+========+
+|  256 |          11 |   0.2 | 2.5 |  0.001 |      1 |
++------+-------------+-------+-----+--------+--------+
+|  512 |          86 |   0.4 |  25 |        |    0.1 |
++------+-------------+-------+-----+--------+--------+
+|      |         341 |       |     |        |   0.01 |
++------+-------------+-------+-----+--------+--------+
+|      |             |       |     |        |  0.001 |
++------+-------------+-------+-----+--------+--------+
+|      |             |       |     |        |      0 |
++------+-------------+-------+-----+--------+--------+
+
+Table: 
 
 ### Comparison of methods
 

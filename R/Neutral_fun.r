@@ -187,25 +187,31 @@ pairwiseAD_Dif <- function(denl,vv,parms){
   parms <- unique(parms)
   combo <- combn(nrow(parms),2)
   nc <- ncol(parms)-2
-  pb <- txtProgressBar(min = 0, max = ncol(combo), style = 3)
-  i <- 0
+  #pb <- txtProgressBar(min = 0, max = ncol(combo), style = 3)
+  #i <- 0
   require(plyr)
   mks <-adply(combo,2, function(x) {
+    
     p1 <- parms[x[1],]
     p2 <- parms[x[2],]
-    i <<- i+1 
-    setTxtProgressBar(pb, i)
+    out<-NULL
+    #i <<- i+1 
+    #setTxtProgressBar(pb, i)
+    # test the error!!!!!!!!!
+    print(paste(paste(p1,collapse="_"),nrow(d1),paste(p2,collapse="_"),nrow(d2)))
     if(sum(p1[,1:nc]==p2[,1:nc])==nc) {
       d1 <- merge(denl,p1)
       d2 <- merge(denl,p2)
-      ks <- ad.test(list(d1[,vv],d2[,vv]),method="simulated",nsim=1000)
-      out <-data.frame(p1,p2,stat=ks$ad[2,2],p.value=ks$ad[2,4],stringsAsFactors=F)
-      ln <-length(names(p1))*2
-      names(out)[1:(ln)]<-c(paste0(abbreviate(names(p1)),1),paste0(abbreviate(names(p1)),2))
-    } else { out<-NULL}
+      if(nrow(d1)>2 & nrow(d2)>2) {
+        ks <- ad.test(list(d1[,vv],d2[,vv]),method="simulated",Nsim=1000)
+        out <-data.frame(p1,p2,stat=ks$ad[2,2],p.value=ks$ad[2,4],stringsAsFactors=F)
+        ln <-length(names(p1))*2
+        names(out)[1:(ln)]<-c(paste0(abbreviate(names(p1)),1),paste0(abbreviate(names(p1)),2))
+      }
+    }
     return(out)      
   })
-  close(pb)
+  #close(pb)
   mks$p.adjust <- p.adjust(mks$p.value, method="hommel")
   return(mks)
 }
@@ -1367,7 +1373,7 @@ calcPower_AD <- function(Dqq,Sad,nsp,side){
   return(pow)
 }
 
-simulNeutral_1Time<- function(nsp,side,time,meta="L",rep=10)
+simulNeutral_1Time<- function(nsp,side,time,meta="L",rep=10,delo=T)
 {
 
   if(toupper(meta)=="L") {
@@ -1394,7 +1400,8 @@ simulNeutral_1Time<- function(nsp,side,time,meta="L",rep=10)
   genNeutralParms(neuParm,side,prob,1,0.2,0.04,0.0001)
 
   # Delete old simulations
-  system(paste0("rm ",bname,"*.txt"))
+  if(delo)
+    system(paste0("rm ",bname,"*.txt"))
 
 
   # we need the par file with the simulations parameters
@@ -1420,8 +1427,9 @@ simulNeutral_1Time<- function(nsp,side,time,meta="L",rep=10)
 
   #genPomacParms("pomExp",1,c(0.2),c(0.04),c(0.0001),c(0,0.001),3)
 
-  genPomacParms("pomExp",1,c(0.2,0.4),c(0.04,0.4),c(0.001,0.0001),c(0,0.001,0.01,0.1,1),rep)
-
+  #genPomacParms("pomExp",1,c(0.2,0.4),c(0.04,0.4),c(0.001,0.0001),c(0,0.001,0.01,0.1,1),rep)
+  genPomacParms("pomExp",1,c(0.2,0.4),c(0.04,0.4),c(0.001),c(0,0.001,0.01,0.1,1),rep)
+  
   # copy pomExp.lin to pomac.lin
   system("cp pomExp.lin pomac.lin")
   s <- system("uname -a",intern=T)
@@ -1433,9 +1441,9 @@ simulNeutral_1Time<- function(nsp,side,time,meta="L",rep=10)
   return(data.frame(nsp,side,time,meta,spMeta,rep))
 }
 
-# Compare neutral simulations
+# Compare neutral simulations using anderson-darling test and calculate power
 #
-powerNeutral_1Time <- function(pSimul,graph=T) 
+powerNeutral_1Time <- function(pSimul,mr=0,dd=0,cr=0,graph=F) 
 {
   if( nrow(pSimul)>1)
     stop("Only one row of parameters")
@@ -1458,7 +1466,6 @@ powerNeutral_1Time <- function(pSimul,graph=T)
     sadName <- "NeuUnif"
   }
 
-  # Desde aca function compNeutral_Time  
   #
   fname <- paste0(bname,"T",time,"Density.txt")
 
@@ -1466,9 +1473,13 @@ powerNeutral_1Time <- function(pSimul,graph=T)
 
   # Test pairwise diferences in SAD
   #
-  # subset to test!
-  #den1 <- den1[den1$MortalityRate==.2 & den1$DispersalDistance==0.04 & den1$ColonizationRate==0.001, ]
-
+  # subset 
+  if(mr!=0 & dd!=0 & cr!=0) # .2, .04, 0.001
+  {
+    den1 <- den1[den1$MortalityRate==mr & den1$DispersalDistance==dd & den1$ColonizationRate==cr, ]
+    if(nrow(den1)==0) stop("Subset with 0 rows")   
+  }
+ 
   mKS <- pairwiseAD_Dif(den1,"value",den1[,1:5])
 
   #  
@@ -1498,8 +1509,14 @@ powerNeutral_1Time <- function(pSimul,graph=T)
   qNumber <- 35
   fname <- paste0(bname,"T",time,"mfOrd.txt")
   Dq1 <- readNeutral_calcDq(fname)
-  # subset to test
-  #Dq1 <- with(Dq1,Dq1[MortalityRate==.2 & DispersalDistance==0.04 & ColonizationRate==0.001,])
+
+  # subset
+  #  
+  if(mr!=0 & dd!=0 & cr!=0) # .2, .04, 0.001
+  {
+    Dq1 <- with(Dq1,Dq1[MortalityRate==mr & DispersalDistance==dd & ColonizationRate==cr,])
+    if(nrow(Dq1)==0) stop("Subset with 0 rows")   
+  }
 
   simbyrep <- nrow(Dq1)/pSimul$rep
 
@@ -1513,24 +1530,24 @@ powerNeutral_1Time <- function(pSimul,graph=T)
   pow_AD  <- rbind(pow_AD,c(side,nsp,m_nsp,time,Type="DqSRS",pp$nPower,pp$power,pp$nTypeI,pp$typeI))
  
 
-  #merge(mks1,mks,by=c(1:10))
-  #
-
   # Calc power DqSAD
   #
   fname <- paste0(bname,"T",time,"mfSAD.txt")
   Dq1 <- readNeutral_calcDq(fname)
-  # subset to test
-  #Dq1 <- with(Dq1,Dq1[MortalityRate==.2 & DispersalDistance==0.04 & ColonizationRate==0.001,])
+  if(mr!=0 & dd!=0 & cr!=0) # .2, .04, 0.001
+  {
+    Dq1 <- with(Dq1,Dq1[MortalityRate==mr & DispersalDistance==dd & ColonizationRate==cr,])
+    if(nrow(Dq1)==0) stop("Subset with 0 rows")   
+  }
 
   simbyrep <- nrow(Dq1)/pSimul$rep
 
   Dq1$rep <- rep( 1:pSimul$rep,each=simbyrep)
 
-  mKS2 <- pairwiseAD_Dif(Dq1,"Dq",Dq1[,c(1:4,10)])   #### TEST THIS!
+  mKS2 <- pairwiseAD_Dif(Dq1,"Dq",Dq1[,c(1:4,10)])  
   
   pp  <- calcPower_fromFrame(mKS2)
-  pow_AD  <- rbind(pow_AD,c(side,nsp,m_nsp,time,Type="DqSAS",pp$nPower,pp$power,pp$nTypeI,pp$typeI))
+  pow_AD  <- rbind(pow_AD,c(side,nsp,m_nsp,time,Type="DqSAD",pp$nPower,pp$power,pp$nTypeI,pp$typeI))
 
   mKS <- mKS[,2:ncol(mKS)]
   mKS$Side <- side
@@ -1564,4 +1581,350 @@ calcPower_fromFrame <-function(mKA) {
   mks <- mKA[apply(cc,1,sum)!=4,2:ncol(mKA)]
   powr <-  nrow(mks[mks$p.value<0.05,])/nrow(mks)
   return(data.frame(nPower=nrow(mks),power=powr,nTypeI=nTypeI,typeI=typeI,stringsAsFactors = F))
+}
+
+# Compare neutral simulations using information dimention & t-test and calculate power
+# n = number of points used for estimate Dq
+# q = q we will compare 
+#     if q = 0 it uses a Fisher.test to combine all q in one p (Almost ALLWAYS SIGNIFICATIVE)
+#  
+powerNeutral_1T_D1 <- function(pSimul,n,q=NULL,mr=0,dd=0,cr=0) 
+{
+  if( nrow(pSimul)>1)
+    stop("Only one row of parameters")
+
+  meta <- pSimul$meta
+  nsp <- pSimul$nsp
+  time <- pSimul$time
+  spMeta <- pSimul$spMeta
+  side <- pSimul$side
+
+  if(toupper(meta)=="L") {
+#    prob <- genFisherSAD(nsp,side)
+    neuParm <- "fishE"
+    bname <- paste0("neuFish",nsp,"_",side)
+    sadName <- "Neutral"
+  } else {
+#    prob <- rep(1/nsp,nsp)  
+    neuParm <- "unifE"
+    bname <- paste0("neuUnif",nsp,"_",side)
+    sadName <- "NeuUnif"
+  }
+
+  # Calc power DqSRS 
+  #
+  qNumber <- 35
+  fname <- paste0(bname,"T",time,"mfOrd.txt")
+  Dq1 <- readNeutral_calcDq(fname)
+
+  # subset
+  #  
+  if(mr!=0 & dd!=0 & cr!=0) # .2, .04, 0.001
+  {
+    Dq1 <- with(Dq1,Dq1[MortalityRate==mr & DispersalDistance==dd & ColonizationRate==cr,])
+    if(nrow(Dq1)==0) stop("Subset with 0 rows")   
+  } else if(cr!=0) {
+    Dq1 <- with(Dq1,Dq1[ColonizationRate==cr,])
+  }
+
+  simbyrep <- nrow(Dq1)/pSimul$rep
+
+  Dq1$rep <- rep( 1:pSimul$rep,each=simbyrep)
+  if(!is.null(q)){
+    Dq1 <-Dq1[Dq1$q==q,]
+  }
+  mKS1 <- pairwiseTD1_Dif(Dq1,"Dq",Dq1[,c(1:4,10)],n)   
+  
+  pp  <- calcPower_fromFrame(mKS1)
+
+  pow_AD <- data.frame(Side=side,NumSp=nsp,MeanSp=spMeta,Time=time,Type="DqSRS",nPower=pp$nPower,
+                       power=pp$power,nTypeI=pp$nTypeI,typeI=pp$typeI,stringsAsFactors = F)
+ 
+  #pow_AD  <- rbind(pow_AD,c(side,nsp,m_nsp,time,Type="DqSRS",pp$nPower,pp$power,pp$nTypeI,pp$typeI))
+ 
+
+  # Calc power DqSAD
+  #
+  fname <- paste0(bname,"T",time,"mfSAD.txt")
+  Dq1 <- readNeutral_calcDq(fname)
+  if(mr!=0 & dd!=0 & cr!=0) # .2, .04, 0.001
+  {
+    Dq1 <- with(Dq1,Dq1[MortalityRate==mr & DispersalDistance==dd & ColonizationRate==cr,])
+    if(nrow(Dq1)==0) stop("Subset with 0 rows")   
+  } else if(cr!=0) {
+    Dq1 <- with(Dq1,Dq1[ColonizationRate==cr,])
+  }
+
+  simbyrep <- nrow(Dq1)/pSimul$rep
+
+  Dq1$rep <- rep( 1:pSimul$rep,each=simbyrep)
+  if(!is.null(q)){
+    Dq1 <-Dq1[Dq1$q==q,]
+  }
+  
+  mKS2 <- pairwiseTD1_Dif(Dq1,"Dq",Dq1[,c(1:4,10)],n)  
+  
+  pp  <- calcPower_fromFrame(mKS2)
+  pow_AD  <- rbind(pow_AD,c(side,nsp,spMeta,time,Type="DqSAD",pp$nPower,pp$power,pp$nTypeI,pp$typeI))
+
+  
+  mKS1 <- mKS1[,2:ncol(mKS1)]
+  mKS1$Side <- side
+  mKS1$NumSp <- nsp
+  mKS1$Time  <- time
+  mKS1$Type <- "DqSRS"
+
+  mKS2 <- mKS2[,2:ncol(mKS2)]
+  mKS2$Side <- side
+  mKS2$NumSp <- nsp
+  mKS2$Time  <- time
+  mKS2$Type <- "DqSAD"
+
+  mKS <- rbind(mKS1,mKS2)
+  return(list("comp_AD"=mKS,"pow_AD"=pow_AD))
+}
+
+# Pairwise T-test using D1
+# 
+# denl:framework with Dq
+# vv: name of Dq variable
+# parms: variables defining combinations (factors)
+# n: number of points used to obtain Dq.
+#
+# If there are more than one Dq it use the Fisher.test
+# to combine multiple p into one.
+#
+pairwiseTD1_Dif <- function(denl,vv,parms,n){
+  parms <- unique(parms)
+  combo <- combn(nrow(parms),2)
+  nc <- ncol(parms)-2
+  #pb <- txtProgressBar(min = 0, max = ncol(combo), style = 3)
+  #i <- 0
+  require(plyr)
+  mks <-adply(combo,2, function(x) {
+    
+    p1 <- parms[x[1],]
+    p2 <- parms[x[2],]
+    out<-NULL
+    #i <<- i+1 
+    #setTxtProgressBar(pb, i)
+    if(sum(p1[,1:nc]==p2[,1:nc])==nc) {
+      d1 <- merge(denl,p1)
+      d2 <- merge(denl,p2)
+      d1$grp <- 1
+      d2$grp <- 2
+      dd <- rbind(d1,d2) 
+      ks <- compareTwoCurvesT(dd$grp,dd[,vv],dd$SD.Dq,n) 
+      if(length(ks$p)>1) {
+        p.adj <- na.omit(p.adjust(ks$p,method="hommel"))
+        fi <- Fisher.test(p.adj)
+        stat <- fi[1]
+        p <- fi[2]
+      } else {
+        stat <- ks$stat
+        p <- ks$p
+      }
+        
+      out <-data.frame(p1,p2,stat=stat,p.value=p,stringsAsFactors=F)
+      ln <-length(names(p1))*2
+      names(out)[1:(ln)]<-c(paste0(abbreviate(names(p1)),1),paste0(abbreviate(names(p1)),2))
+      
+    }
+    return(out)      
+  })
+  #close(pb)
+  mks$p.adjust <- p.adjust(mks$p.value, method="hommel")
+  return(mks)
+}
+
+# Comparing two curves with SD for each point with multiple T-tests 
+# using Hommel procedure to adjust p
+# 
+#
+compareTwoCurvesT <- function (group, y, sd,n) 
+{
+#  group <- as.vector(group)
+  g <- unique(group)
+  if (length(g) != 2) 
+    stop("Must be exactly 2 groups")
+  y1 <- y[group == g[1]]
+  y2 <- y[group == g[2]]
+  sd1 <-sd[group == g[1]]
+  sd2 <-sd[group == g[2]]
+  sd1 <- sd1*sd1
+  sd2 <- sd2*sd2
+  stat <- (y1-y2)/sqrt((sd1/n)+(sd2/n))
+  df <- (sd1/n+sd2/n)^2/( (sd1/n)^2 / (n-1) + (sd2/n)^2 / (n-1)) 
+  #p.adjust <- p.adjust(pt(stat,df),method="hommel")
+  p <- pt(stat,df)
+  #print(ks.test(y1,y2))
+  #print(t.test(y1-y2,mu=0))
+  return(list("p"=p,"stat"=stat))
+}
+
+# Fisher procedure to combine p.value from multiple T test in one p.value
+#
+Fisher.test <- function(p) {
+  Xsq <- -2*sum(log(p))
+  p.val <- 1-pchisq(Xsq, df = 2*length(p))
+  return(c(Xsq = Xsq, p.value = p.val))
+}
+
+# Test pairwise differences in Dq using permutations 
+# with function compareTwoGrowthCurves
+#
+#
+pairwiseGC_Dif <- function(denl,vv,parms,numRep){
+  if( !require(statmod) & !require(reshape2) & !require(plyr))
+    stop("required statmod and reshape2 and plyr")
+  parms <- unique(parms)
+  combo <- combn(nrow(parms),2)
+  nc <- ncol(parms)-2
+  #pb <- txtProgressBar(min = 0, max = ncol(combo), style = 3)
+  #i <- 0
+
+  # Prepare data.frame in wide format 
+  #
+  f <- as.formula(paste(paste(names(parms),collapse="+"),"q",sep="~"))
+  Dq2 <- melt(denl, id.vars=c("q",names(parms)),measure.var=vv)
+  Dq2 <- dcast(Dq2, f)
+
+  # Make groups with numRep repetitions
+  #
+  if(numRep==max(parms$rep) && numRep==0){
+    parms <- parms[,1:ncol(parms)-1]
+    parms <- unique(parms)
+    combo <- combn(nrow(parms),2)
+  } else {
+    Dq2$rep <- Dq2$rep %% numRep
+    parms$rep <- parms$rep %% numRep
+    parms <- unique(parms)
+    combo <- combn(nrow(parms),2)
+  }
+  # 
+  mks <-adply(combo,2, function(x) {
+    
+    p1 <- parms[x[1],]
+    p2 <- parms[x[2],]
+    out<-NULL
+    #i <<- i+1 
+    #setTxtProgressBar(pb, i)
+    if(sum(p1[,1:nc]==p2[,1:nc])==nc) {
+      d1 <- merge(Dq2,p1)
+      d2 <- merge(Dq2,p2)
+      #print(paste(paste(p1,collapse="_"),nrow(d1),paste(p2,collapse="_"),nrow(d2)))
+      if( nrow(d1)>2 && nrow(d2)>2)
+      {
+        d1$grp <- 1
+        d2$grp <- 2
+        dd <- rbind(d1,d2) 
+        ks <- compareTwoGrowthCurves(dd$grp,dd[,(nc+3):(ncol(dd)-1)],nsim=1000)
+        stat <- ks$stat
+        p <- ks$p
+      
+        out <-data.frame(p1,p2,stat=stat,p.value=p,stringsAsFactors=F)
+        ln <-length(names(p1))*2
+        names(out)[1:(ln)]<-c(paste0(abbreviate(names(p1)),1),paste0(abbreviate(names(p1)),2))
+      }
+    }
+    return(out)      
+  })
+
+  mks$p.adjust <- p.adjust(mks$p.value, method="hommel")
+  return(mks)
+}
+
+
+# Compare neutral simulations using Dq compareTwoGrowthCurves 
+# numRep: number of repetitions used for each comparison
+# 
+powerNeutral_1T_GC <- function(pSimul,numRep,mr=0,dd=0,cr=0) 
+{
+  if( nrow(pSimul)>1)
+    stop("Only one row of parameters")
+
+  meta <- pSimul$meta
+  nsp <- pSimul$nsp
+  time <- pSimul$time
+  spMeta <- pSimul$spMeta
+  side <- pSimul$side
+
+  if(toupper(meta)=="L") {
+#    prob <- genFisherSAD(nsp,side)
+    neuParm <- "fishE"
+    bname <- paste0("neuFish",nsp,"_",side)
+    sadName <- "Neutral"
+  } else {
+#    prob <- rep(1/nsp,nsp)  
+    neuParm <- "unifE"
+    bname <- paste0("neuUnif",nsp,"_",side)
+    sadName <- "NeuUnif"
+  }
+
+  # Calc power DqSRS 
+  #
+  qNumber <- 35
+  fname <- paste0(bname,"T",time,"mfOrd.txt")
+  Dq1 <- readNeutral_calcDq(fname)
+
+  # subset
+  #  
+  if(mr!=0 & dd!=0 & cr!=0) # .2, .04, 0.001
+  {
+    Dq1 <- with(Dq1,Dq1[MortalityRate==mr & DispersalDistance==dd & ColonizationRate==cr,])
+    if(nrow(Dq1)==0) stop("Subset with 0 rows")   
+  } else if(cr!=0) {
+    Dq1 <- with(Dq1,Dq1[ColonizationRate==cr,])
+  }
+
+  simbyrep <- nrow(Dq1)/pSimul$rep
+
+  Dq1$rep <- rep( 1:pSimul$rep,each=simbyrep)
+
+  mKS1 <- pairwiseGC_Dif(Dq1,"Dq",Dq1[,c(1:4,10)],numRep)   #### TEST THIS!
+
+  pp  <- calcPower_fromFrame(mKS1)
+
+  pow_AD <- data.frame(Side=side,NumSp=nsp,MeanSp=spMeta,Time=time,Type="DqSRS",nPower=pp$nPower,
+                       power=pp$power,nTypeI=pp$nTypeI,typeI=pp$typeI,stringsAsFactors = F)
+ 
+  #pow_AD  <- rbind(pow_AD,c(side,nsp,m_nsp,time,Type="DqSRS",pp$nPower,pp$power,pp$nTypeI,pp$typeI))
+ 
+
+  # Calc power DqSAD
+  #
+  fname <- paste0(bname,"T",time,"mfSAD.txt")
+  Dq1 <- readNeutral_calcDq(fname)
+  if(mr!=0 & dd!=0 & cr!=0) # .2, .04, 0.001
+  {
+    Dq1 <- with(Dq1,Dq1[MortalityRate==mr & DispersalDistance==dd & ColonizationRate==cr,])
+    if(nrow(Dq1)==0) stop("Subset with 0 rows")   
+  } else if(cr!=0) {
+    Dq1 <- with(Dq1,Dq1[ColonizationRate==cr,])
+  }
+
+  simbyrep <- nrow(Dq1)/pSimul$rep
+
+  Dq1$rep <- rep( 1:pSimul$rep,each=simbyrep)
+  
+  mKS2 <- pairwiseGC_Dif(Dq1,"Dq",Dq1[,c(1:4,10)],numRep)  
+  
+  pp  <- calcPower_fromFrame(mKS2)
+  pow_AD  <- rbind(pow_AD,c(side,nsp,spMeta,time,Type="DqSAD",pp$nPower,pp$power,pp$nTypeI,pp$typeI))
+
+  
+  mKS1 <- mKS1[,2:ncol(mKS1)]
+  mKS1$Side <- side
+  mKS1$NumSp <- nsp
+  mKS1$Time  <- time
+  mKS1$Type <- "DqSRS"
+
+  mKS2 <- mKS2[,2:ncol(mKS2)]
+  mKS2$Side <- side
+  mKS2$NumSp <- nsp
+  mKS2$Time  <- time
+  mKS2$Type <- "DqSAD"
+
+  mKS <- rbind(mKS1,mKS2)
+  return(list("comp_AD"=mKS,"pow_AD"=pow_AD))
 }
