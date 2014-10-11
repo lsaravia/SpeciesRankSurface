@@ -1838,7 +1838,7 @@ pairwiseGC_Dif <- function(denl,vv,parms,numRep){
 # Compare neutral simulations using Dq compareTwoGrowthCurves 
 # numRep: number of repetitions used for each comparison
 # 
-powerNeutral_1T_GC <- function(pSimul,numRep,mr=0,dd=0,cr=0) 
+powerNeutral_1T_GC <- function(pSimul,numRep,mr=0,dd=0,cr=0,q=NULL) 
 {
   if( nrow(pSimul)>1)
     stop("Only one row of parameters")
@@ -1881,6 +1881,10 @@ powerNeutral_1T_GC <- function(pSimul,numRep,mr=0,dd=0,cr=0)
 
   Dq1$rep <- rep( 1:pSimul$rep,each=simbyrep)
 
+  if(!is.null(q)){
+    Dq1 <-Dq1[abs(Dq1$q)<=q,]
+  }
+
   mKS1 <- pairwiseGC_Dif(Dq1,"Dq",Dq1[,c(1:4,10)],numRep)   #### TEST THIS!
 
   pp  <- calcPower_fromFrame(mKS1)
@@ -1906,7 +1910,11 @@ powerNeutral_1T_GC <- function(pSimul,numRep,mr=0,dd=0,cr=0)
   simbyrep <- nrow(Dq1)/pSimul$rep
 
   Dq1$rep <- rep( 1:pSimul$rep,each=simbyrep)
-  
+
+  if(!is.null(q)){
+    Dq1 <-Dq1[abs(Dq1$q)<=q,]
+  }
+
   mKS2 <- pairwiseGC_Dif(Dq1,"Dq",Dq1[,c(1:4,10)],numRep)  
   
   pp  <- calcPower_fromFrame(mKS2)

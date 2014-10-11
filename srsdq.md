@@ -116,6 +116,20 @@ Table:
 
 ### Comparison of methods
 
+### Simulation methods
+
+The significance level to reject the null hypothesis was set a priori at $\alpha$ = 0.05 in all cases, and the rejection rate of each test was calculated as the proportion of P values (out of the 1000 simulated data sets) that were less than or equal to a. I also calculate the "Type I error" the probability to reject a true $H_0$ (false positive)
+
+The rate of type I error is computed as the proportion
+of rejection of the null hypothesis when the data con-
+form to it. In our simulations, H0 is true if the environ-
+mental (E) and response (R) variables are not linked by
+the transfer parameter b. A test can be said to have
+correct rate of type I error if, across the simulations,
+the rejection rate is approximately equal to the signifi-
+cance level a used to make the statistical decision.
+
+
 
 
 We should limit the scales to apply the methods to the range where the linear relationships holds.

@@ -125,3 +125,35 @@ These quantities describe the scaling behaviour of the regions in phase space wh
 In this paper, my objective is twofold. First, I test the
 
 Spatial autocorrelation is necessarily present in these geographic data, and some believe that it leads to inflated estimates of the number of degrees of freedom in significance tests. However, the statistically significant relationships presented in this study would remain significant at P < 0.01 if only 1% of the observations were statistically independent. Thus, the probability of an increased type I error rate due to spatial autocorrelation appears to be negligible for the relationships reported here.
+
+
+1. Legendre P, Dale MRT, Fortin MJ, Gurevitch J, Hohn M, et al. (2002) The consequences of spatial structure for the design and analysis of ecological field surveys. Ecography (Cop) 25: 601–615.
+
+Simulations have been performed to check the type I
+error and estimate the power of the tests of significance
+in the presence of different types of sampling designs
+and spatial structures. Type I error occurs when the
+null hypothesis is rejected while the data conform to
+H0. A test of statistical significance is valid if the
+rejection rate is not larger than the significance level a,
+for any value of a, when the null hypothesis is true
+(Edgington 1995). A test of significance should also be
+able to reject the null hypothesis in most instances
+when H0 is false. The ability to reject H0 in these
+circumstances is referred to as the power of the test. In
+the present study, power is the empirical rate of rejec-
+tion of the null hypothesis when H0 is false by con-
+struct. High power is a desirable property. When two
+or more procedures are available (sampling designs or
+tests of statistical significance), one should use the
+procedure that has the highest power.
+
+
+The rate of type I error is computed as the proportion
+of rejection of the null hypothesis when the data con-
+form to it. In our simulations, H0 is true if the environ-
+mental (E) and response (R) variables are not linked by
+the transfer parameter b. A test can be said to have
+correct rate of type I error if, across the simulations,
+the rejection rate is approximately equal to the signifi-
+cance level a used to make the statistical decision.

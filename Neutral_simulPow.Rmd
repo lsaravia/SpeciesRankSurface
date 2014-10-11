@@ -253,8 +253,14 @@ pow_AD$DspMrt <- with(pow_AD,paste0(DspD," - ",MrtR))
 # Add number of species in the metacommunity
 pow_AD$spMeta <- ceiling(as.numeric(pow_AD$NumSp)*1.33)
 
-g <- ggplot(pow_AD,aes(x=spMeta,y=power)) + geom_point(shape=19,aes(size=typeI,colour=DspMrt)) + facet_grid(Side ~ Type)
+g <- ggplot(pow_AD,aes(x=spMeta,y=power)) + geom_point(shape=19,aes(size=typeI,colour=DspMrt)) + facet_grid(Side ~ Type) +
+  ylab(bquote("Rejection Rate of"~H[0]~"(" ~alpha~"= 0.05)")) +
+  xlab("Metacommunity species number") +
+  scale_size_continuous(name="Type I error") +
+  scale_colour_discrete(name="Disp - Mort") 
+
 g+theme_bw()
+ggsave("powAD_spMeta_Side.png", width=6,height=6,units="in",dpi=600)
 
 g <- ggplot(pow_AD,aes(x=MeanSp,y=typeI)) + geom_point(shape=19,aes(size=power,colour=DspMrt)) + facet_grid(Side ~ Type)
 g+theme_bw()
@@ -269,15 +275,27 @@ hh <-function(x) {
   data.frame(power=s/t,n=t)
 }
 
+comp_AD$spMeta <- ceiling(as.numeric(comp_AD$NumSp)*1.33)
+
 # Calculate power in fuction of replacement rate difference
 # Falta cambiar NumSp por 
 c1 <- with(comp_AD,comp_AD[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2!=RplR1,])
 c1$DifR <- with(c1,abs(RplR2-RplR1))
 c2 <- ddply(c1,.(NumSp,Type,DifR),hh)
-#ggsave("power_DifReplacement.png", width=6,height=6,units="in",dpi=600)
 
-g <- ggplot(c2,aes(x=DifR,y=power)) + geom_point(shape=19,position = position_jitter(height = .05),aes(colour=as.factor(Type))) + facet_grid( NumSp ~ .)
+g <- ggplot(c2,aes(x=DifR,y=power)) + geom_point(shape=19,position = position_jitter(height = .05),aes(colour=as.factor(Type))) + facet_grid( NumSp ~ .)+
+  ylab(bquote("Rejection Rate of"~H[0]~"(" ~alpha~"= 0.05)")) +
+  xlab(bquote(Delta ~"Replacement rate")) +
+  scale_size_continuous(name="Type I error") +
+  scale_colour_discrete(name="") 
+
 g+ scale_x_log10(breaks=c(0.001,0.01,0.09,1))+theme_bw()
+
+ggsave("powAD_DifReplacement.png", width=6,height=6,units="in",dpi=600)
+
+require(pander)
+pandoc.table(c2,style="grid")
+
 
 # Calculate TypeI error in fuction of replacement rate
 c1 <- with(comp_AD,comp_AD[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2==RplR1,])
@@ -298,7 +316,7 @@ SAD have low power with a small number of species and a low type I error rate.
 
 The power of the AD or KS test Depends on the number of points used so for SAD the number of species compared change the number of points used for the test, but for DqSRS and DqSAD the number of points is always q=35 thus so we could calculate more dimensions to raise the power of the test.
 
-# Test usign glm whic factors influence power
+# Test usign glm which factors influence power
 
 ```{r testAD_factors, eval=F,echo=F,message=T,warning=T}
 require(plyr)
@@ -338,17 +356,6 @@ setwd("Simul")
 # 256 = 7 points for Dq
 #
 #cc <- powerNeutral_1T_D1(sim1,7,1)
-# 
-# Dq1 <- readNeutral_calcDq("neuFish65_256T100mfOrd.txt")
-# 
-# D1 <- DqT[DqT$q==1,]
-# dd <- D1[121:122,]
-# 
-# compareTwoCurvesT(dd$Type,dd$Dq,dd$SD.Dq,5)
-# 
-# dd <- D1[c(41,45),]
-# 
-# compareTwoCurvesT(dd$rep,dd$Dq,dd$SD.Dq,5)
 
 require(doParallel)
 cn <-detectCores()
@@ -384,20 +391,23 @@ Lets check
 ```{r power_PlotD1T, eval=F,echo=F,message=T,warning=T}
 
 require(ggplot2)
-pow_AD$MeanSp <- as.numeric(pow_AD$MeanSp)
-pow_AD$power <- as.numeric(pow_AD$power)
-pow_AD$typeI <- as.numeric(pow_AD$typeI)
+pow_TD1$MeanSp <- as.numeric(pow_TD1$MeanSp)
+pow_TD1$power <- as.numeric(pow_TD1$power)
+pow_TD1$typeI <- as.numeric(pow_TD1$typeI)
+# Add number of species in the metacommunity
+pow_TD1$spMeta <- ceiling(as.numeric(pow_TD1$NumSp)*1.33)
 
-# Add field with combination of dispersal & mortality 
-pow_AD$DspMrt <- with(pow_AD,paste0(DspD," - ",MrtR))
+g <- ggplot(pow_TD1,aes(x=spMeta,y=power)) + geom_point(shape=19,aes(size=typeI,colour=Type)) + facet_grid(Side ~ . ) +
+  ylab(bquote("Rejection Rate of"~H[0]~"(" ~alpha~"= 0.05)")) +
+  xlab("Metacommunity species number") +
+  scale_size_continuous(name="Type I error") +
+  scale_colour_discrete(name="") 
 
-# En vez de hacer merge fijarse donde genero parametros de simulacion!!!!!!!!
-pad <- merge(pow_AD,simul,by.x=c("Side","NumSp"),by.y=c("side","nsp") )
-
-g <- ggplot(pad,aes(x=spMeta,y=power)) + geom_point(shape=19,aes(size=typeI,colour=DspMrt)) + facet_grid(Side ~ Type)
 g+theme_bw()
 
-g <- ggplot(pow_AD,aes(x=MeanSp,y=typeI)) + geom_point(shape=19,aes(size=power,colour=DspMrt)) + facet_grid(Side ~ Type)
+ggsave("powTD1_spMeta_Side.png", width=6,height=6,units="in",dpi=600)
+
+g <- ggplot(pow_TD1,aes(x=spMeta,y=typeI)) + geom_point(shape=19,aes(size=power)) + facet_grid(Side ~ Type)
 g+theme_bw()
 
 
@@ -412,16 +422,26 @@ hh <-function(x) {
 
 # Calculate power in fuction of replacement rate difference
 # Falta cambiar NumSp por 
-c1 <- with(comp_AD,comp_AD[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2!=RplR1,])
-c1$DifR <- with(c1,abs(RplR2-RplR1))
-c2 <- ddply(c1,.(NumSp,Type,DifR),hh)
-#ggsave("power_DifReplacement.png", width=6,height=6,units="in",dpi=600)
+comp_TD1$spMeta <- ceiling(as.numeric(comp_TD1$NumSp)*1.33)
 
-g <- ggplot(c2,aes(x=DifR,y=power)) + geom_point(shape=19,position = position_jitter(height = .05),aes(colour=as.factor(Type))) + facet_grid( NumSp ~ .)
+c1 <- with(comp_TD1,comp_TD1[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2!=RplR1,])
+c1$DifR <- with(c1,abs(RplR2-RplR1))
+
+c2 <- ddply(c1,.(spMeta,Type,DifR),hh)
+
+g <- ggplot(c2,aes(x=DifR,y=power)) + geom_point(shape=19,position = position_jitter(height = .05),aes(colour=as.factor(Type))) + facet_grid( spMeta ~ .) +
+  ylab(bquote("Rejection Rate of"~H[0]~"(" ~alpha~"= 0.05)")) +
+  xlab(bquote(Delta ~"Replacement rate")) +
+  scale_size_continuous(name="Type I error") +
+  scale_colour_discrete(name="") 
+
 g+ scale_x_log10(breaks=c(0.001,0.01,0.09,1))+theme_bw()
 
+ggsave("powTD1_DifReplacement.png", width=6,height=6,units="in",dpi=600)
+
+
 # Calculate TypeI error in fuction of replacement rate
-c1 <- with(comp_AD,comp_AD[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2==RplR1,])
+c1 <- with(comp_TD1,comp_TD1[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2==RplR1,])
 c3 <- ddply(c1,.(NumSp,Type,RplR2),hh)
 names(c3)[4]<-"typeI"
 g <- ggplot(c3,aes(x=RplR2,y=typeI)) + geom_point(shape=19,aes(colour=as.factor(Type))) + facet_grid( NumSp ~ .)
@@ -431,7 +451,7 @@ rm(c1,c2,c3)
 
 ```
 
-
+The power of D1 in combination with a T-test is relatively low with a maximun of 0.6 for  
 
 ```{r power_GCtest, eval=F,echo=F,message=T,warning=T}
 setwd("Simul")
@@ -465,9 +485,59 @@ setwd(oldcd)
 save.image()
 ```
 
+```{r power_PlotGC, eval=F,echo=F,message=T,warning=T}
+
+require(ggplot2)
+pow_GC1$MeanSp <- as.numeric(pow_GC1$MeanSp)
+pow_GC1$power <- as.numeric(pow_GC1$power)
+pow_GC1$typeI <- as.numeric(pow_GC1$typeI)
+
+# Add number of species in the metacommunity
+pow_GC1$spMeta <- ceiling(as.numeric(pow_GC1$NumSp)*1.33)
+
+
+g <- ggplot(pow_GC1,aes(x=spMeta,y=power)) + geom_point(shape=19,aes(size=typeI,colour=Type)) + facet_grid(Side ~ . ) +
+  ylab(bquote("Rejection Rate of"~H[0]~"(" ~alpha~"= 0.05)")) +
+  xlab("Metacommunity species number") +
+  scale_size_continuous(name="Type I error") +
+  scale_colour_discrete(name="") 
+g+theme_bw()
+ggsave("powGC_spMeta_Side.png", width=6,height=6,units="in",dpi=600)
+
+# Recalculate power from comp_AD
+#
+require(plyr)
+hh <-function(x) {
+  t <- nrow(x)
+  s <- nrow(x[x$p.value<0.05,])
+  data.frame(power=s/t,n=t)
+}
+
+# Calculate power in fuction of replacement rate difference
+comp_GC1$spMeta <- ceiling(as.numeric(comp_GC1$NumSp)*1.33)
+
+c1 <- with(comp_GC1,comp_GC1[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2!=RplR1,])
+c1$DifR <- with(c1,abs(RplR2-RplR1))
+
+c2 <- ddply(c1,.(spMeta,Type,DifR),hh)
+
+g <- ggplot(c2,aes(x=DifR,y=power)) + geom_point(shape=19,position = position_jitter(height = .05),aes(colour=as.factor(Type))) + facet_grid( spMeta ~ .) +
+  ylab(bquote("Rejection Rate of"~H[0]~"(" ~alpha~"= 0.05)")) +
+  xlab(bquote(Delta ~"Replacement rate")) +
+  scale_size_continuous(name="Type I error") +
+  scale_colour_discrete(name="") 
+
+g+ scale_x_log10(breaks=c(0.001,0.01,0.09,1))+theme_bw()
+
+ggsave("powGC_DifReplacement.png", width=6,height=6,units="in",dpi=600)
+
+
+```
+
+
 More simulations to do comparisons with GC
 
-```{r more_simul512_LogSerParms, eval=T,echo=F,message=F,warning=F}
+```{r more_simul512_LogSerParms, eval=F,echo=F,message=F,warning=F}
 setwd("Simul")
 
 simul <- rbind(simul,simulNeutral_1Time(8,512,500,"L",20,F))
@@ -478,3 +548,48 @@ simul <- rbind(simul,simulNeutral_1Time(256,512,500,"L",20,F))
 
 setwd(oldcd)
 save.image()
+```
+
+```{r more_simul256_LogSerParms, eval=F,echo=F,message=F,warning=F}
+setwd("Simul")
+
+simul <- rbind(simul,simulNeutral_1Time(8,256,500,"L",20,F))
+simul <- rbind(simul,simulNeutral_1Time(64,256,500,"L",20,F))
+simul <- rbind(simul,simulNeutral_1Time(256,256,500,"L",20,F))
+
+setwd(oldcd)
+save.image()
+```
+Using the GC with q<=10
+
+```{r power_GCq10test, eval=T,echo=F,message=T,warning=T}
+setwd("Simul")
+# sim1 <- data.frame(nsp=65,side=256,time=100,meta="L",spMeta=87,rep=3)
+#
+#cc <- powerNeutral_1T_GC(simul[1,],3,0.2,0.04,0.001,10)
+
+require(doParallel)
+cn <-detectCores()
+cl <- makeCluster(cn)
+registerDoParallel(cl)
+require(foreach)
+
+cc <- foreach(i=1:nrow(simul)) %dopar%
+{
+    powerNeutral_1T_GC(simul[i,],3,0.2,0.04,0.001,10)
+}
+pow_GCq10 <- data.frame()
+comp_GCq10<- data.frame()
+
+for(i in 1:nrow(simul)) {
+
+  pow_GCq10 <- rbind(pow_GCq10, cc[[i]]$pow_AD)
+  comp_GCq10<- rbind(comp_GCq10,cc[[i]]$comp_AD)
+  }
+
+
+# rename s/'64'/'64_512'/ *neuFish64*.txt 
+
+setwd(oldcd)
+save.image()
+```
