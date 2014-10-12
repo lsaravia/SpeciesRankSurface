@@ -198,7 +198,6 @@ pairwiseAD_Dif <- function(denl,vv,parms){
     #i <<- i+1 
     #setTxtProgressBar(pb, i)
     # test the error!!!!!!!!!
-    print(paste(paste(p1,collapse="_"),nrow(d1),paste(p2,collapse="_"),nrow(d2)))
     if(sum(p1[,1:nc]==p2[,1:nc])==nc) {
       d1 <- merge(denl,p1)
       d2 <- merge(denl,p2)
@@ -1418,7 +1417,8 @@ simulNeutral_1Time<- function(nsp,side,time,meta="L",rep=10,delo=T)
   par[par$V1=="pomac",]$V2 <- 1 # 0:one set of parms 
                                 # 1:several simulations with pomac.lin parameters 
 
-  write.table(par, "sim.par",sep="\t",row.names=F,col.names=F,quote=F)
+  parfname <- paste0("sim",nsp,"_",side,".par")
+  write.table(par, parfname, sep="\t",row.names=F,col.names=F,quote=F)
 
   # Then pomac.lin to simulate a range of parmeters and repetitions.
   #
@@ -1433,17 +1433,17 @@ simulNeutral_1Time<- function(nsp,side,time,meta="L",rep=10,delo=T)
   # copy pomExp.lin to pomac.lin
   system("cp pomExp.lin pomac.lin")
   s <- system("uname -a",intern=T)
-  if(grepl("i386",s)) {
-    system(paste(neuBin,"sim.par",paste0(neuParm,".inp")))
+  if(grepl("i686",s)) {
+    system(paste(neuBin,parfname,paste0(neuParm,".inp")))
   } else {
-    system(paste(neuBin64,"sim.par",paste0(neuParm,".inp")))
+    system(paste(neuBin64,parfname,paste0(neuParm,".inp")))
   }
   return(data.frame(nsp,side,time,meta,spMeta,rep))
 }
 
 # Compare neutral simulations using anderson-darling test and calculate power
 #
-powerNeutral_1Time <- function(pSimul,mr=0,dd=0,cr=0,graph=F) 
+powerNeutral_1Time <- function(pSimul,mr=0,dd=0,cr=0,q=NULL,graph=F) 
 {
   if( nrow(pSimul)>1)
     stop("Only one row of parameters")
@@ -1478,6 +1478,8 @@ powerNeutral_1Time <- function(pSimul,mr=0,dd=0,cr=0,graph=F)
   {
     den1 <- den1[den1$MortalityRate==mr & den1$DispersalDistance==dd & den1$ColonizationRate==cr, ]
     if(nrow(den1)==0) stop("Subset with 0 rows")   
+  } else if(cr!=0) {
+    den1 <- with(den1,den1[ColonizationRate==cr,])
   }
  
   mKS <- pairwiseAD_Dif(den1,"value",den1[,1:5])
@@ -1510,19 +1512,25 @@ powerNeutral_1Time <- function(pSimul,mr=0,dd=0,cr=0,graph=F)
   fname <- paste0(bname,"T",time,"mfOrd.txt")
   Dq1 <- readNeutral_calcDq(fname)
 
-  # subset
+  # Subset based on parameters
   #  
   if(mr!=0 & dd!=0 & cr!=0) # .2, .04, 0.001
   {
     Dq1 <- with(Dq1,Dq1[MortalityRate==mr & DispersalDistance==dd & ColonizationRate==cr,])
     if(nrow(Dq1)==0) stop("Subset with 0 rows")   
+  } else if(cr!=0) {
+    Dq1 <- with(Dq1,Dq1[ColonizationRate==cr,])
   }
 
   simbyrep <- nrow(Dq1)/pSimul$rep
 
   Dq1$rep <- rep( 1:pSimul$rep,each=simbyrep)
 
-  #rep( 1:(nrow(Dq1)/qNumber),each=qNumber)
+  # Select the q range
+  #
+  if(!is.null(q)){
+    Dq1 <-Dq1[abs(Dq1$q)<=q,]
+  }
 
   mKS1 <- pairwiseAD_Dif(Dq1,"Dq",Dq1[,c(1:4,10)])   #### TEST THIS!
 
@@ -1530,19 +1538,28 @@ powerNeutral_1Time <- function(pSimul,mr=0,dd=0,cr=0,graph=F)
   pow_AD  <- rbind(pow_AD,c(side,nsp,m_nsp,time,Type="DqSRS",pp$nPower,pp$power,pp$nTypeI,pp$typeI))
  
 
-  # Calc power DqSAD
+  # Read DqSAD
   #
   fname <- paste0(bname,"T",time,"mfSAD.txt")
   Dq1 <- readNeutral_calcDq(fname)
+
+  # Subset based on parameters
   if(mr!=0 & dd!=0 & cr!=0) # .2, .04, 0.001
   {
     Dq1 <- with(Dq1,Dq1[MortalityRate==mr & DispersalDistance==dd & ColonizationRate==cr,])
     if(nrow(Dq1)==0) stop("Subset with 0 rows")   
+  } else if(cr!=0) {
+    Dq1 <- with(Dq1,Dq1[ColonizationRate==cr,])
   }
 
   simbyrep <- nrow(Dq1)/pSimul$rep
 
   Dq1$rep <- rep( 1:pSimul$rep,each=simbyrep)
+
+  # Select the q range
+  if(!is.null(q)){
+    Dq1 <-Dq1[abs(Dq1$q)<=q,]
+  }
 
   mKS2 <- pairwiseAD_Dif(Dq1,"Dq",Dq1[,c(1:4,10)])  
   

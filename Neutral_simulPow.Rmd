@@ -481,13 +481,15 @@ for(i in 1:nrow(simul)) {
   comp_GC1<- rbind(comp_GC1,cc[[i]]$comp_AD)
   }
 
+stopCluster(cl)
+
 setwd(oldcd)
 save.image()
 ```
 
 ```{r power_PlotGC, eval=F,echo=F,message=T,warning=T}
 
-require(ggplot2)
+require(ggplot2)
 pow_GC1$MeanSp <- as.numeric(pow_GC1$MeanSp)
 pow_GC1$power <- as.numeric(pow_GC1$power)
 pow_GC1$typeI <- as.numeric(pow_GC1$typeI)
@@ -537,36 +539,32 @@ ggsave("powGC_DifReplacement.png", width=6,height=6,units="in",dpi=600)
 
 More simulations to do comparisons with GC
 
-```{r more_simul512_LogSerParms, eval=F,echo=F,message=F,warning=F}
+```{r more_simul512_LogSerParms, eval=T,echo=F,message=F,warning=F}
 setwd("Simul")
 
-simul <- rbind(simul,simulNeutral_1Time(8,512,500,"L",20,F))
-simul <- rbind(simul,simulNeutral_1Time(64,512,500,"L",20,F))
-simul <- rbind(simul,simulNeutral_1Time(256,512,500,"L",20,F))
+ps <- data.frame(nsp=c(8,64,256),si=rep(c(512,256),each=3))
+require(doParallel)
+cn <-detectCores()
+cl <- makeCluster(cn)
+registerDoParallel(cl)
 
-# rename s/'64'/'64_512'/ *neuFish64*.txt 
+simul <- foreach(i=1:nrow(ps),.combine='rbind') %dopar%
+{
+    print(ps[i,])
+    simulNeutral_1Time(ps$nsp[i],ps$si[i],500,"L",20,F)
+}
+stopCluster(cl)
 
 setwd(oldcd)
+rm(ps,cn,cl)
 save.image()
 ```
 
-```{r more_simul256_LogSerParms, eval=F,echo=F,message=F,warning=F}
+
+Compare using the GC with q<=10
+
+```{r power_GCq10test, eval=F,echo=F,message=T,warning=T}
 setwd("Simul")
-
-simul <- rbind(simul,simulNeutral_1Time(8,256,500,"L",20,F))
-simul <- rbind(simul,simulNeutral_1Time(64,256,500,"L",20,F))
-simul <- rbind(simul,simulNeutral_1Time(256,256,500,"L",20,F))
-
-setwd(oldcd)
-save.image()
-```
-Using the GC with q<=10
-
-```{r power_GCq10test, eval=T,echo=F,message=T,warning=T}
-setwd("Simul")
-# sim1 <- data.frame(nsp=65,side=256,time=100,meta="L",spMeta=87,rep=3)
-#
-#cc <- powerNeutral_1T_GC(simul[1,],3,0.2,0.04,0.001,10)
 
 require(doParallel)
 cn <-detectCores()
@@ -576,7 +574,7 @@ require(foreach)
 
 cc <- foreach(i=1:nrow(simul)) %dopar%
 {
-    powerNeutral_1T_GC(simul[i,],3,0.2,0.04,0.001,10)
+    powerNeutral_1T_GC(simul[i,],3,0,0,0.001,10)
 }
 pow_GCq10 <- data.frame()
 comp_GCq10<- data.frame()
@@ -587,9 +585,44 @@ for(i in 1:nrow(simul)) {
   comp_GCq10<- rbind(comp_GCq10,cc[[i]]$comp_AD)
   }
 
-
-# rename s/'64'/'64_512'/ *neuFish64*.txt 
+stopCluster(cl)
 
 setwd(oldcd)
+rm(cc)
 save.image()
+
+```
+
+The power of compareGrowthCurves is much much greater using the range -10 10 than -24 24, and type I error is lower!!
+
+Lets try with ANderson-Darling test!
+
+```{r power_ADq10test, eval=F,echo=F,message=T,warning=T}
+setwd("Simul")
+
+require(doParallel)
+cn <-detectCores()
+cl <- makeCluster(cn)
+registerDoParallel(cl)
+require(foreach)
+
+cc <- foreach(i=1:nrow(simul)) %dopar%
+{
+    powerNeutral_1Time(simul[i,],0.2,0.04,0.001,10)
+}
+pow_ADq10 <- data.frame()
+comp_ADq10<- data.frame()
+
+for(i in 1:nrow(simul)) {
+
+  pow_ADq10 <- rbind(pow_ADq10, cc[[i]]$pow_AD)
+  comp_ADq10<- rbind(comp_ADq10,cc[[i]]$comp_AD)
+  }
+
+stopCluster(cl)
+
+setwd(oldcd)
+rm(cc)
+save.image()
+
 ```
