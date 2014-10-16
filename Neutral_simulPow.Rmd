@@ -21,7 +21,7 @@ panderOptions('table.split.table',Inf)
 options("scipen"=100, "digits"=4)
 ```
 
-## Simulations with different parameters using pomac and at Time=100
+## Neutral Simulations 
 
 Now I will simulate the model to Time=500 with a full set of parameters 
 Replacement = 0,0.001,0.01,0.1,1 and ten repetitions 
@@ -52,7 +52,7 @@ save.image()
 
 ```
 
-## Calculate power of SAD DqSAD DqSRS for parameters
+## Calculate power of SAD DqSAD DqSRS using q=[-24,24]
 
 Mortality=0.2
 Dispersal=0.04
@@ -73,21 +73,21 @@ cl <- makeCluster(cn)
 registerDoParallel(cl)
 require(foreach)
 
-pow_AD <- data.frame()
-comp_AD<- data.frame()
+pow_ADq24 <- data.frame()
+comp_ADq24<- data.frame()
 cc <- foreach(i=1:nrow(simul)) %dopar%
 {
     powerNeutral_1Time(simul[i,],0.2, 0.04, 0.001) # Mortality,Dispersal,Colonization
 }
 
 for(i in 1:nrow(simul)) {
-pow_AD <- rbind(pow_AD, cc[[i]]$pow_AD)
-comp_AD<- rbind(comp_AD,cc[[i]]$comp_AD)
+pow_ADq24 <- rbind(pow_ADq24, cc[[i]]$pow_AD)
+comp_ADq24<- rbind(comp_ADq24,cc[[i]]$comp_AD)
 }
 rm(cc)
-pow_AD$MrtR <- 0.2
-pow_AD$DspD <- 0.04
-pow_AD$ClnR <- 0.001
+pow_ADq24$MrtR <- 0.2
+pow_ADq24$DspD <- 0.04
+pow_ADq24$ClnR <- 0.001
 
 stopCluster(cl)
 
@@ -96,7 +96,7 @@ save.image()
 ```
 
 
-## Calculate power of SAD DqSAD DqSRS for parameters
+## Calculate power of SAD DqSAD DqSRS using q=[-24,24]
 
 Mortality=0.2
 Dispersal=0.4
@@ -108,9 +108,6 @@ setwd("Simul")
 
 #cc <- powerNeutral_1TimeParms(simul,0.2,0.4,0.001)
 
-#pow_AD <- rbind(pow_AD,cc$pow_AD)
-#comp_AD<- rbind(comp_AD,cc$comp_AD)
-#rm(cc)
 
 mm <- 0.2
 dd <- 0.4
@@ -130,14 +127,14 @@ p_AD <- data.frame()
 
 for(i in 1:nrow(simul)) {
 	p_AD <- rbind(p_AD, cc[[i]]$pow_AD)
-	comp_AD<- rbind(comp_AD,cc[[i]]$comp_AD)
+	comp_ADq24<- rbind(comp_ADq24,cc[[i]]$comp_AD)
 }
 rm(cc)
 p_AD$MrtR <- mm
 p_AD$DspD <- dd
 p_AD$ClnR <- co
 
-pow_AD <- rbind(pow_AD, p_AD)
+pow_ADq24 <- rbind(pow_ADq24, p_AD)
 
 
 stopCluster(cl)
@@ -147,7 +144,7 @@ save.image()
 ```
 
 
-## Calculate power of SAD DqSAD DqSRS for parameters
+## Calculate power of SAD DqSAD DqSRS using q=[-24,24]
 
 Mortality=0.4
 Dispersal=0.04
@@ -174,14 +171,14 @@ p_AD <- data.frame()
 
 for(i in 1:nrow(simul)) {
   	p_AD <- rbind(p_AD, cc[[i]]$pow_AD)
-	comp_AD<- rbind(comp_AD,cc[[i]]$comp_AD)
+	comp_ADq24<- rbind(comp_ADq24,cc[[i]]$comp_AD)
 }
 rm(cc)
 p_AD$MrtR <- mm
 p_AD$DspD <- dd
 p_AD$ClnR <- co
 
-pow_AD <- rbind(pow_AD, p_AD)
+pow_ADq24 <- rbind(pow_ADq24, p_AD)
 
 
 stopCluster(cl)
@@ -191,7 +188,7 @@ save.image()
 ```
 
 
-## Calculate power of SAD DqSAD DqSRS for parameters
+## Calculate power of SAD DqSAD DqSRS using q=[-24,24]
 
 Mortality=0.4
 Dispersal=0.4
@@ -219,14 +216,14 @@ p_AD <- data.frame()
 
 for(i in 1:nrow(simul)) {
     p_AD <- rbind(p_AD, cc[[i]]$pow_AD)
-	comp_AD<- rbind(comp_AD,cc[[i]]$comp_AD)
+	comp_ADq24<- rbind(comp_ADq24,cc[[i]]$comp_AD)
 }
 rm(cc)
 p_AD$MrtR <- mm
 p_AD$DspD <- dd
 p_AD$ClnR <- co
 
-pow_AD <- rbind(pow_AD, p_AD)
+pow_ADq24 <- rbind(pow_ADq24, p_AD)
 
 
 stopCluster(cl)
@@ -234,7 +231,7 @@ rm(p_AD)
 setwd(oldcd)
 save.image()
 ```
-# Make plots of power!
+# Make plots of power! using q=[-24,24]
 
 I do not use simulations with ColonizationRate = 0.0001
 
@@ -243,17 +240,17 @@ Replace NumSp with spMeta=number of species in metacommunity
 ```{r power_PlotAD, eval=F,echo=F,message=T,warning=T}
 
 require(ggplot2)
-pow_AD$MeanSp <- as.numeric(pow_AD$MeanSp)
-pow_AD$power <- as.numeric(pow_AD$power)
-pow_AD$typeI <- as.numeric(pow_AD$typeI)
+pow_ADq24$MeanSp <- as.numeric(pow_ADq24$MeanSp)
+pow_ADq24$power <- as.numeric(pow_ADq24$power)
+pow_ADq24$typeI <- as.numeric(pow_ADq24$typeI)
 
 # Add field with combination of dispersal & mortality 
-pow_AD$DspMrt <- with(pow_AD,paste0(DspD," - ",MrtR))
+pow_ADq24$DspMrt <- with(pow_ADq24,paste0(DspD," - ",MrtR))
 
 # Add number of species in the metacommunity
-pow_AD$spMeta <- ceiling(as.numeric(pow_AD$NumSp)*1.33)
+pow_ADq24$spMeta <- ceiling(as.numeric(pow_ADq24$NumSp)*1.33)
 
-g <- ggplot(pow_AD,aes(x=spMeta,y=power)) + geom_point(shape=19,aes(size=typeI,colour=DspMrt)) + facet_grid(Side ~ Type) +
+g <- ggplot(pow_ADq24,aes(x=spMeta,y=power)) + geom_point(shape=19,aes(size=typeI,colour=DspMrt)) + facet_grid(Side ~ Type) +
   ylab(bquote("Rejection Rate of"~H[0]~"(" ~alpha~"= 0.05)")) +
   xlab("Metacommunity species number") +
   scale_size_continuous(name="Type I error") +
@@ -262,11 +259,11 @@ g <- ggplot(pow_AD,aes(x=spMeta,y=power)) + geom_point(shape=19,aes(size=typeI,c
 g+theme_bw()
 ggsave("powAD_spMeta_Side.png", width=6,height=6,units="in",dpi=600)
 
-g <- ggplot(pow_AD,aes(x=MeanSp,y=typeI)) + geom_point(shape=19,aes(size=power,colour=DspMrt)) + facet_grid(Side ~ Type)
+g <- ggplot(pow_ADq24,aes(x=MeanSp,y=typeI)) + geom_point(shape=19,aes(size=power,colour=DspMrt)) + facet_grid(Side ~ Type)
 g+theme_bw()
 
 
-# Recalculate power from comp_AD
+# Recalculate power from comp_ADq24
 #
 require(plyr)
 hh <-function(x) {
@@ -275,11 +272,11 @@ hh <-function(x) {
   data.frame(power=s/t,n=t)
 }
 
-comp_AD$spMeta <- ceiling(as.numeric(comp_AD$NumSp)*1.33)
+comp_ADq24$spMeta <- ceiling(as.numeric(comp_ADq24$NumSp)*1.33)
 
 # Calculate power in fuction of replacement rate difference
 # Falta cambiar NumSp por 
-c1 <- with(comp_AD,comp_AD[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2!=RplR1,])
+c1 <- with(comp_ADq24,comp_ADq24[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2!=RplR1,])
 c1$DifR <- with(c1,abs(RplR2-RplR1))
 c2 <- ddply(c1,.(NumSp,Type,DifR),hh)
 
@@ -298,7 +295,7 @@ pandoc.table(c2,style="grid")
 
 
 # Calculate TypeI error in fuction of replacement rate
-c1 <- with(comp_AD,comp_AD[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2==RplR1,])
+c1 <- with(comp_ADq24,comp_ADq24[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2==RplR1,])
 c3 <- ddply(c1,.(NumSp,Type,RplR2),hh)
 names(c3)[4]<-"typeI"
 g <- ggplot(c3,aes(x=RplR2,y=typeI)) + geom_point(shape=19,aes(colour=as.factor(Type))) + facet_grid( NumSp ~ .)
@@ -326,7 +323,7 @@ hh <-function(x) {
   data.frame(count=s,power=s/t,n=t)
 }
 # Calculate power
-c1 <- with(comp_AD,comp_AD[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2!=RplR1,])
+c1 <- with(comp_ADq24,comp_ADq24[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2!=RplR1,])
 c1$DifR <- with(c1,abs(RplR2-RplR1))
 c2 <- ddply(c1,.(NumSp,Side,Type,MrtR1,DspD1,DifR),hh)
 #require(dplyr)
@@ -346,7 +343,7 @@ plot(model1)
 ```
 
 
-# Use the information dimension t-test with sd from   
+# Use the information dimension t-test 
 
 Fractal dimensions have several problems of estimation (Halley) so we use information dimension with sd estimated by the regression
 
@@ -365,7 +362,7 @@ require(foreach)
 
 cc <- foreach(i=1:nrow(simul)) %dopar%
 {
-    powerNeutral_1T_D1(simul[i,],log2(simul$side)-1,1,0,0,0.001)
+    powerNeutral_1T_D1(simul[i,],log2(simul$side)-1,1,0.2,0.04,0.001)
 }
 pow_TD1 <- data.frame()
 comp_TD1<- data.frame()
@@ -384,9 +381,7 @@ save.image()
 
 ```
 
-The power of D1 is around .5 too low
-
-Lets check
+## Plot power of D1 
 
 ```{r power_PlotD1T, eval=F,echo=F,message=T,warning=T}
 
@@ -539,7 +534,7 @@ ggsave("powGC_DifReplacement.png", width=6,height=6,units="in",dpi=600)
 
 More simulations to do comparisons with GC
 
-```{r more_simul512_LogSerParms, eval=T,echo=F,message=F,warning=F}
+```{r more_simul512_LogSerParms, eval=F,echo=F,message=F,warning=F}
 setwd("Simul")
 
 ps <- data.frame(nsp=c(8,64,256),si=rep(c(512,256),each=3))
@@ -550,7 +545,6 @@ registerDoParallel(cl)
 
 simul <- foreach(i=1:nrow(ps),.combine='rbind') %dopar%
 {
-    print(ps[i,])
     simulNeutral_1Time(ps$nsp[i],ps$si[i],500,"L",20,F)
 }
 stopCluster(cl)
@@ -563,7 +557,7 @@ save.image()
 
 Compare using the GC with q<=10
 
-```{r power_GCq10test, eval=F,echo=F,message=T,warning=T}
+```{r power_GCq10test, eval=T,echo=F,message=T,warning=T}
 setwd("Simul")
 
 require(doParallel)
@@ -574,7 +568,7 @@ require(foreach)
 
 cc <- foreach(i=1:nrow(simul)) %dopar%
 {
-    powerNeutral_1T_GC(simul[i,],3,0,0,0.001,10)
+    powerNeutral_1T_GC(simul[i,],3,40.2,0.0,0.001,10)
 }
 pow_GCq10 <- data.frame()
 comp_GCq10<- data.frame()

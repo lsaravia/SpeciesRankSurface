@@ -95,15 +95,14 @@ To simulate more realistic patterns of species-abundance-area relationships I us
 
 The model assume a metacommunity: a regionall collection of communities, from which migration occurs at a rate $m$. Species can also disperse locally and I assume an exponential dispersal kernel with average dispersal distance $d$. Other model parameters are the mortality rate $\mu$, the number of species in the metacommunity and also the size of the community, this last is represented as the *side* of the grid used in the simulations. I use a logseries SAD for the metacommunity, defined by the maximun number of individuals (*side x side*) and the number of species [@Fisher1943].  
 
-I performed simulations 10 simulations for each combination of parameters given in Table 1, the total number of simulations was . varying mainly the parameter $\rho=0$ because this produces communities with different SAD to compare.  
-
+I performed 50 simulations for each combination of parameters given in Table 1. To compute the power I made comparisons of communities with different levels of $\rho$, representing more neutral or hierarchichal communities, the other parameters were kept constant. I also made comparisons between repetitions with the same $\rho$ to calculate the type I error. 
 
 +------+-------------+-------+-----+--------+--------+
 | Side | No. Species | $\mu$ | $d$ |  $m$   | $\rho$ |
 +======+=============+=======+=====+========+========+
-|  256 |          11 |   0.2 | 2.5 |  0.001 |      1 |
+|  256 |          11 |   0.2 |  25 |  0.001 |      1 |
 +------+-------------+-------+-----+--------+--------+
-|  512 |          86 |   0.4 |  25 |        |    0.1 |
+|  512 |          86 |       |     |        |    0.1 |
 +------+-------------+-------+-----+--------+--------+
 |      |         341 |       |     |        |   0.01 |
 +------+-------------+-------+-----+--------+--------+
@@ -112,9 +111,15 @@ I performed simulations 10 simulations for each combination of parameters given 
 |      |             |       |     |        |      0 |
 +------+-------------+-------+-----+--------+--------+
 
-Table: 
+Table: Parameters values used in the simulations of the neutral-hierarchical model 
 
-### Comparison of methods
+### Statistical comparison of methods
+
+I wish to analyze the comparative performance of SAD to differentiate comunities against multifractal spectra so I need a method that could be applied to the curves produced by all methods. Thus I used a non-parametric test related to the Kolmogorov-Smirnov (KS) test: the Anderson-Darling (AD) test [@Feigelson2012] . This test measure the diferences between the empirical distribution functions (EDF) of two datasets as a weighted sum of square deviations between the EDFs. In extensive simulations the AD test has proven more sensitive to the KS test [@Stephens1974]. I use the package kSamples [@Scholz2012] in the R statistical languaje. 
+
+SAR exponent is widely used to characterize communities [prefix@CitationKey] , this exponent is part of the DqSAD espectra when q=0. An equivalent single number indicator from DqSRS is the information dimension [prefix@CitationKey], that is the DqSRS when q=1. I calculate the power of this two indices using a simple T-test. I used the standard deviation obtained from the box-counting procedure used to estimate the multifractal spectrum, These are obtained with autocorrelated data because small squares are nested within big squares  (See Multifractal Analysis). The consequence is that the SD may be  underestimated, but the slopes estimates are still unbiased [@Kutner2005]. Thus should result in an increased type I error rate and a increase in power also. 
+
+I use another method to statistical compare DqSAD and DqSRS  a permutation test which gives a global p-level (Function compareGrowthCurves from R package statmod [@Smyth2011]). This test calculates the average T statistic over all points of the curve, then the distribution of this mean T is obtained via permutations. 
 
 ### Simulation methods
 

@@ -1377,12 +1377,12 @@ simulNeutral_1Time<- function(nsp,side,time,meta="L",rep=10,delo=T)
 
   if(toupper(meta)=="L") {
     prob <- genFisherSAD(nsp,side)
-    neuParm <- "fishE"
+    neuParm <- paste0("fishE",nsp,"_",side)
     bname <- paste0("neuFish",nsp,"_",side)
     sadName <- "Neutral"
   } else {
     prob <- rep(1/nsp,nsp)  
-    neuParm <- "unifE"
+    neuParm <- paste0("unifE",nsp,"_",side)
     bname <- paste0("neuUnif",nsp,"_",side)
     sadName <- "NeuUnif"
   }
@@ -1395,6 +1395,7 @@ simulNeutral_1Time<- function(nsp,side,time,meta="L",rep=10,delo=T)
   # Colonization = 0.001 -0.0001
   # Replacement  = 0 - 1
   spMeta <- length(prob)
+
   # First generate de inp file with species and metacommunity parameters 
   genNeutralParms(neuParm,side,prob,1,0.2,0.04,0.0001)
 
@@ -1655,7 +1656,7 @@ powerNeutral_1T_D1 <- function(pSimul,n,q=NULL,mr=0,dd=0,cr=0)
   pp  <- calcPower_fromFrame(mKS1)
 
   pow_AD <- data.frame(Side=side,NumSp=nsp,MeanSp=spMeta,Time=time,Type="DqSRS",nPower=pp$nPower,
-                       power=pp$power,nTypeI=pp$nTypeI,typeI=pp$typeI,stringsAsFactors = F)
+                       power=pp$power,nTypeI=pp$nTypeI,typeI=pp$typeI,q=q,stringsAsFactors = F)
  
   #pow_AD  <- rbind(pow_AD,c(side,nsp,m_nsp,time,Type="DqSRS",pp$nPower,pp$power,pp$nTypeI,pp$typeI))
  
@@ -1676,13 +1677,14 @@ powerNeutral_1T_D1 <- function(pSimul,n,q=NULL,mr=0,dd=0,cr=0)
 
   Dq1$rep <- rep( 1:pSimul$rep,each=simbyrep)
   if(!is.null(q)){
+    if(q==1) q <-0
     Dq1 <-Dq1[Dq1$q==q,]
   }
   
   mKS2 <- pairwiseTD1_Dif(Dq1,"Dq",Dq1[,c(1:4,10)],n)  
   
   pp  <- calcPower_fromFrame(mKS2)
-  pow_AD  <- rbind(pow_AD,c(side,nsp,spMeta,time,Type="DqSAD",pp$nPower,pp$power,pp$nTypeI,pp$typeI))
+  pow_AD  <- rbind(pow_AD,c(side,nsp,spMeta,time,Type="DqSAD",pp$nPower,pp$power,pp$nTypeI,pp$typeI,q))
 
   
   mKS1 <- mKS1[,2:ncol(mKS1)]
