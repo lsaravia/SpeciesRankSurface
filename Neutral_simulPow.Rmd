@@ -24,30 +24,25 @@ options("scipen"=100, "digits"=4)
 ## Neutral Simulations 
 
 Now I will simulate the model to Time=500 with a full set of parameters 
-Replacement = 0,0.001,0.01,0.1,1 and ten repetitions 
+Replacement = 0,0.001,0.01,0.1,1 and 30 repetitions 
 
-```{r simul256_LogSerParms, eval=F,echo=F,message=F,warning=F}
-setwd("Simul")
-#simul <- data.frame()
-simul <- rbind(simul,simulNeutral_1Time(8,256,500))
-simul <- rbind(simul,simulNeutral_1Time(64,256,500))
-simul <- rbind(simul,simulNeutral_1Time(256,256,500))
-
-setwd(oldcd)
-save.image()
-
-```
-
-```{r simul512_LogSerParms, eval=F,echo=F,message=F,warning=F}
+```{r simul30_LogSerParms, eval=F,echo=F,message=F,warning=F}
 setwd("Simul")
 
-simul <- rbind(simul,simulNeutral_1Time(8,512,500))
-simul <- rbind(simul,simulNeutral_1Time(64,512,500))
-simul <- rbind(simul,simulNeutral_1Time(256,512,500))
+ps <- data.frame(nsp=c(8,64,256),si=rep(c(512,256),each=3))
+require(doParallel)
+cn <-detectCores()
+cl <- makeCluster(cn)
+registerDoParallel(cl)
 
-# rename s/'64'/'64_512'/ *neuFish64*.txt 
+simul <- foreach(i=1:nrow(ps),.combine='rbind') %dopar%
+{
+    simulNeutral_1Time(ps$nsp[i],ps$si[i],500,"L",30,F)
+}
+stopCluster(cl)
 
 setwd(oldcd)
+rm(ps,cn,cl)
 save.image()
 
 ```
@@ -62,98 +57,13 @@ Colonization=0.001
 setwd("Simul")
 
 # Testing
+#
 #simul <- data.frame()
 #sim1 <- rbind(simul,simulNeutral_1Time(65,256,100,"L",3))
 #sim1 <- data.frame(nsp=65,side=256,time=100,meta="L",spMeta=87,rep=3)
 #cc <- powerNeutral_1Time(simul[4,])
 
-require(doParallel)
-cn <-detectCores()
-cl <- makeCluster(cn)
-registerDoParallel(cl)
-require(foreach)
-
-pow_ADq24 <- data.frame()
-comp_ADq24<- data.frame()
-cc <- foreach(i=1:nrow(simul)) %dopar%
-{
-    powerNeutral_1Time(simul[i,],0.2, 0.04, 0.001) # Mortality,Dispersal,Colonization
-}
-
-for(i in 1:nrow(simul)) {
-pow_ADq24 <- rbind(pow_ADq24, cc[[i]]$pow_AD)
-comp_ADq24<- rbind(comp_ADq24,cc[[i]]$comp_AD)
-}
-rm(cc)
-pow_ADq24$MrtR <- 0.2
-pow_ADq24$DspD <- 0.04
-pow_ADq24$ClnR <- 0.001
-
-stopCluster(cl)
-
-setwd(oldcd)
-save.image()
-```
-
-
-## Calculate power of SAD DqSAD DqSRS using q=[-24,24]
-
-Mortality=0.2
-Dispersal=0.4
-Colonization=0.001
-
-
-```{r power_LogSerParms1, eval=F,echo=F,message=T,warning=T}
-setwd("Simul")
-
-#cc <- powerNeutral_1TimeParms(simul,0.2,0.4,0.001)
-
-
 mm <- 0.2
-dd <- 0.4
-co <- 0.001
-
-require(doParallel)
-cn <-detectCores()
-cl <- makeCluster(cn)
-registerDoParallel(cl)
-require(foreach)
-
-cc <- foreach(i=1:nrow(simul)) %dopar%
-{
-    powerNeutral_1Time(simul[i,],mm, dd, co) # Mortality,Dispersal,Colonization
-}
-p_AD <- data.frame()
-
-for(i in 1:nrow(simul)) {
-	p_AD <- rbind(p_AD, cc[[i]]$pow_AD)
-	comp_ADq24<- rbind(comp_ADq24,cc[[i]]$comp_AD)
-}
-rm(cc)
-p_AD$MrtR <- mm
-p_AD$DspD <- dd
-p_AD$ClnR <- co
-
-pow_ADq24 <- rbind(pow_ADq24, p_AD)
-
-
-stopCluster(cl)
-
-setwd(oldcd)
-save.image()
-```
-
-
-## Calculate power of SAD DqSAD DqSRS using q=[-24,24]
-
-Mortality=0.4
-Dispersal=0.04
-Colonization=0.001
-
-```{r power_LogSerParms2, eval=F,echo=F,message=T,warning=T}
-setwd("Simul")
-
-mm <- 0.4
 dd <- 0.04
 co <- 0.001
 
@@ -167,142 +77,21 @@ cc <- foreach(i=1:nrow(simul)) %dopar%
 {
     powerNeutral_1Time(simul[i,],mm, dd, co) # Mortality,Dispersal,Colonization
 }
-p_AD <- data.frame()
+pow_ADq24 <- data.frame()
+comp_ADq24<- data.frame()
+
 
 for(i in 1:nrow(simul)) {
-  	p_AD <- rbind(p_AD, cc[[i]]$pow_AD)
+  pow_ADq24 <- rbind(pow_ADq24, cc[[i]]$pow_AD)
 	comp_ADq24<- rbind(comp_ADq24,cc[[i]]$comp_AD)
 }
+
 rm(cc)
-p_AD$MrtR <- mm
-p_AD$DspD <- dd
-p_AD$ClnR <- co
-
-pow_ADq24 <- rbind(pow_ADq24, p_AD)
-
 
 stopCluster(cl)
 
 setwd(oldcd)
 save.image()
-```
-
-
-## Calculate power of SAD DqSAD DqSRS using q=[-24,24]
-
-Mortality=0.4
-Dispersal=0.4
-Colonization=0.001
-
-
-```{r power_LogSerParms3, eval=F,echo=F,message=T,warning=T}
-setwd("Simul")
-
-mm <- 0.4
-dd <- 0.4
-co <- 0.001
-
-require(doParallel)
-cn <-detectCores()
-cl <- makeCluster(cn)
-registerDoParallel(cl)
-require(foreach)
-
-cc <- foreach(i=1:nrow(simul)) %dopar%
-{
-    powerNeutral_1Time(simul[i,],mm, dd, co) # Mortality,Dispersal,Colonization
-}
-p_AD <- data.frame()
-
-for(i in 1:nrow(simul)) {
-    p_AD <- rbind(p_AD, cc[[i]]$pow_AD)
-	comp_ADq24<- rbind(comp_ADq24,cc[[i]]$comp_AD)
-}
-rm(cc)
-p_AD$MrtR <- mm
-p_AD$DspD <- dd
-p_AD$ClnR <- co
-
-pow_ADq24 <- rbind(pow_ADq24, p_AD)
-
-
-stopCluster(cl)
-rm(p_AD)
-setwd(oldcd)
-save.image()
-```
-# Make plots of power! using q=[-24,24]
-
-I do not use simulations with ColonizationRate = 0.0001
-
-Replace NumSp with spMeta=number of species in metacommunity
-
-```{r power_PlotAD, eval=F,echo=F,message=T,warning=T}
-
-require(ggplot2)
-pow_ADq24$MeanSp <- as.numeric(pow_ADq24$MeanSp)
-pow_ADq24$power <- as.numeric(pow_ADq24$power)
-pow_ADq24$typeI <- as.numeric(pow_ADq24$typeI)
-
-# Add field with combination of dispersal & mortality 
-pow_ADq24$DspMrt <- with(pow_ADq24,paste0(DspD," - ",MrtR))
-
-# Add number of species in the metacommunity
-pow_ADq24$spMeta <- ceiling(as.numeric(pow_ADq24$NumSp)*1.33)
-
-g <- ggplot(pow_ADq24,aes(x=spMeta,y=power)) + geom_point(shape=19,aes(size=typeI,colour=DspMrt)) + facet_grid(Side ~ Type) +
-  ylab(bquote("Rejection Rate of"~H[0]~"(" ~alpha~"= 0.05)")) +
-  xlab("Metacommunity species number") +
-  scale_size_continuous(name="Type I error") +
-  scale_colour_discrete(name="Disp - Mort") 
-
-g+theme_bw()
-ggsave("powAD_spMeta_Side.png", width=6,height=6,units="in",dpi=600)
-
-g <- ggplot(pow_ADq24,aes(x=MeanSp,y=typeI)) + geom_point(shape=19,aes(size=power,colour=DspMrt)) + facet_grid(Side ~ Type)
-g+theme_bw()
-
-
-# Recalculate power from comp_ADq24
-#
-require(plyr)
-hh <-function(x) {
-  t <- nrow(x)
-  s <- nrow(x[x$p.value<0.05,])
-  data.frame(power=s/t,n=t)
-}
-
-comp_ADq24$spMeta <- ceiling(as.numeric(comp_ADq24$NumSp)*1.33)
-
-# Calculate power in fuction of replacement rate difference
-# Falta cambiar NumSp por 
-c1 <- with(comp_ADq24,comp_ADq24[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2!=RplR1,])
-c1$DifR <- with(c1,abs(RplR2-RplR1))
-c2 <- ddply(c1,.(NumSp,Type,DifR),hh)
-
-g <- ggplot(c2,aes(x=DifR,y=power)) + geom_point(shape=19,position = position_jitter(height = .05),aes(colour=as.factor(Type))) + facet_grid( NumSp ~ .)+
-  ylab(bquote("Rejection Rate of"~H[0]~"(" ~alpha~"= 0.05)")) +
-  xlab(bquote(Delta ~"Replacement rate")) +
-  scale_size_continuous(name="Type I error") +
-  scale_colour_discrete(name="") 
-
-g+ scale_x_log10(breaks=c(0.001,0.01,0.09,1))+theme_bw()
-
-ggsave("powAD_DifReplacement.png", width=6,height=6,units="in",dpi=600)
-
-require(pander)
-pandoc.table(c2,style="grid")
-
-
-# Calculate TypeI error in fuction of replacement rate
-c1 <- with(comp_ADq24,comp_ADq24[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2==RplR1,])
-c3 <- ddply(c1,.(NumSp,Type,RplR2),hh)
-names(c3)[4]<-"typeI"
-g <- ggplot(c3,aes(x=RplR2,y=typeI)) + geom_point(shape=19,aes(colour=as.factor(Type))) + facet_grid( NumSp ~ .)
-g+theme_bw()
-
-rm(c1,c2,c3)
-
 ```
 
 
@@ -312,6 +101,7 @@ SAD have low power with a small number of species and a low type I error rate.
 
 
 The power of the AD or KS test Depends on the number of points used so for SAD the number of species compared change the number of points used for the test, but for DqSRS and DqSAD the number of points is always q=35 thus so we could calculate more dimensions to raise the power of the test.
+
 
 # Test usign glm which factors influence power
 
@@ -325,7 +115,7 @@ hh <-function(x) {
 # Calculate power
 c1 <- with(comp_ADq24,comp_ADq24[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2!=RplR1,])
 c1$DifR <- with(c1,abs(RplR2-RplR1))
-c2 <- ddply(c1,.(NumSp,Side,Type,MrtR1,DspD1,DifR),hh)
+c2 <- ddply(c1,.(NumSp,Side,Type,DifR),hh)
 #require(dplyr)
 #c2 <- tbl_df(c1)
 #c3 <- c2 %>% 
@@ -333,7 +123,7 @@ c2 <- ddply(c1,.(NumSp,Side,Type,MrtR1,DspD1,DifR),hh)
 #  filter(p.value<0.05) %>% 
 #  summarize(tot=n()) %>% 
 #  summarize(pgt5=n()) 
-model1 <-glm(count~NumSp*Side*Type*MrtR1*DspD1*DifR,poisson,data=c2)
+model1 <-glm(count~NumSp*Side*Type*DifR,poisson,data=c2)
 summary(model1)
 plot(model1)
 
@@ -380,73 +170,7 @@ save.image()
 
 
 ```
-
-## Plot power of D1 
-
-```{r power_PlotD1T, eval=F,echo=F,message=T,warning=T}
-
-require(ggplot2)
-pow_TD1$MeanSp <- as.numeric(pow_TD1$MeanSp)
-pow_TD1$power <- as.numeric(pow_TD1$power)
-pow_TD1$typeI <- as.numeric(pow_TD1$typeI)
-# Add number of species in the metacommunity
-pow_TD1$spMeta <- ceiling(as.numeric(pow_TD1$NumSp)*1.33)
-
-g <- ggplot(pow_TD1,aes(x=spMeta,y=power)) + geom_point(shape=19,aes(size=typeI,colour=Type)) + facet_grid(Side ~ . ) +
-  ylab(bquote("Rejection Rate of"~H[0]~"(" ~alpha~"= 0.05)")) +
-  xlab("Metacommunity species number") +
-  scale_size_continuous(name="Type I error") +
-  scale_colour_discrete(name="") 
-
-g+theme_bw()
-
-ggsave("powTD1_spMeta_Side.png", width=6,height=6,units="in",dpi=600)
-
-g <- ggplot(pow_TD1,aes(x=spMeta,y=typeI)) + geom_point(shape=19,aes(size=power)) + facet_grid(Side ~ Type)
-g+theme_bw()
-
-
-# Recalculate power from comp_AD
-#
-require(plyr)
-hh <-function(x) {
-  t <- nrow(x)
-  s <- nrow(x[x$p.value<0.05,])
-  data.frame(power=s/t,n=t)
-}
-
-# Calculate power in fuction of replacement rate difference
-# Falta cambiar NumSp por 
-comp_TD1$spMeta <- ceiling(as.numeric(comp_TD1$NumSp)*1.33)
-
-c1 <- with(comp_TD1,comp_TD1[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2!=RplR1,])
-c1$DifR <- with(c1,abs(RplR2-RplR1))
-
-c2 <- ddply(c1,.(spMeta,Type,DifR),hh)
-
-g <- ggplot(c2,aes(x=DifR,y=power)) + geom_point(shape=19,position = position_jitter(height = .05),aes(colour=as.factor(Type))) + facet_grid( spMeta ~ .) +
-  ylab(bquote("Rejection Rate of"~H[0]~"(" ~alpha~"= 0.05)")) +
-  xlab(bquote(Delta ~"Replacement rate")) +
-  scale_size_continuous(name="Type I error") +
-  scale_colour_discrete(name="") 
-
-g+ scale_x_log10(breaks=c(0.001,0.01,0.09,1))+theme_bw()
-
-ggsave("powTD1_DifReplacement.png", width=6,height=6,units="in",dpi=600)
-
-
-# Calculate TypeI error in fuction of replacement rate
-c1 <- with(comp_TD1,comp_TD1[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2==RplR1,])
-c3 <- ddply(c1,.(NumSp,Type,RplR2),hh)
-names(c3)[4]<-"typeI"
-g <- ggplot(c3,aes(x=RplR2,y=typeI)) + geom_point(shape=19,aes(colour=as.factor(Type))) + facet_grid( NumSp ~ .)
-g+theme_bw()
-
-rm(c1,c2,c3)
-
-```
-
-The power of D1 in combination with a T-test is relatively low with a maximun of 0.6 for  
+Calculate Power using compareGrowthCurves and q=-24,24
 
 ```{r power_GCtest, eval=F,echo=F,message=T,warning=T}
 setwd("Simul")
@@ -465,7 +189,7 @@ require(foreach)
 
 cc <- foreach(i=1:nrow(simul)) %dopar%
 {
-    powerNeutral_1T_GC(simul[i,],3,0,0,0.001)
+    powerNeutral_1T_GC(simul[i,],3,0.2,0.04,0.001)
 }
 pow_GC1 <- data.frame()
 comp_GC1<- data.frame()
@@ -479,57 +203,10 @@ for(i in 1:nrow(simul)) {
 stopCluster(cl)
 
 setwd(oldcd)
+rm(cc)
 save.image()
 ```
 
-```{r power_PlotGC, eval=F,echo=F,message=T,warning=T}
-
-require(ggplot2)
-pow_GC1$MeanSp <- as.numeric(pow_GC1$MeanSp)
-pow_GC1$power <- as.numeric(pow_GC1$power)
-pow_GC1$typeI <- as.numeric(pow_GC1$typeI)
-
-# Add number of species in the metacommunity
-pow_GC1$spMeta <- ceiling(as.numeric(pow_GC1$NumSp)*1.33)
-
-
-g <- ggplot(pow_GC1,aes(x=spMeta,y=power)) + geom_point(shape=19,aes(size=typeI,colour=Type)) + facet_grid(Side ~ . ) +
-  ylab(bquote("Rejection Rate of"~H[0]~"(" ~alpha~"= 0.05)")) +
-  xlab("Metacommunity species number") +
-  scale_size_continuous(name="Type I error") +
-  scale_colour_discrete(name="") 
-g+theme_bw()
-ggsave("powGC_spMeta_Side.png", width=6,height=6,units="in",dpi=600)
-
-# Recalculate power from comp_AD
-#
-require(plyr)
-hh <-function(x) {
-  t <- nrow(x)
-  s <- nrow(x[x$p.value<0.05,])
-  data.frame(power=s/t,n=t)
-}
-
-# Calculate power in fuction of replacement rate difference
-comp_GC1$spMeta <- ceiling(as.numeric(comp_GC1$NumSp)*1.33)
-
-c1 <- with(comp_GC1,comp_GC1[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2!=RplR1,])
-c1$DifR <- with(c1,abs(RplR2-RplR1))
-
-c2 <- ddply(c1,.(spMeta,Type,DifR),hh)
-
-g <- ggplot(c2,aes(x=DifR,y=power)) + geom_point(shape=19,position = position_jitter(height = .05),aes(colour=as.factor(Type))) + facet_grid( spMeta ~ .) +
-  ylab(bquote("Rejection Rate of"~H[0]~"(" ~alpha~"= 0.05)")) +
-  xlab(bquote(Delta ~"Replacement rate")) +
-  scale_size_continuous(name="Type I error") +
-  scale_colour_discrete(name="") 
-
-g+ scale_x_log10(breaks=c(0.001,0.01,0.09,1))+theme_bw()
-
-ggsave("powGC_DifReplacement.png", width=6,height=6,units="in",dpi=600)
-
-
-```
 
 
 More simulations to do comparisons with GC
@@ -566,9 +243,12 @@ cl <- makeCluster(cn)
 registerDoParallel(cl)
 require(foreach)
 
+#] "0.2_0.04_0.001_1_1 3 0.2_0.04_0.001_1_3 3"
+# Error: valor ausente donde TRUE/FALSE es necesario
+
 cc <- foreach(i=1:nrow(simul)) %dopar%
 {
-    powerNeutral_1T_GC(simul[i,],3,40.2,0.0,0.001,10)
+    powerNeutral_1T_GC(simul[i,],3,0.2,0.04,0.001,10)
 }
 pow_GCq10 <- data.frame()
 comp_GCq10<- data.frame()
@@ -619,4 +299,141 @@ setwd(oldcd)
 rm(cc)
 save.image()
 
+```
+
+# Make plots of power! using q=[-24,24]
+
+
+```{r power_PlotAD, eval=F,echo=F,message=T,warning=T}
+
+require(dplyr)
+#pow_ADq24 <- with(pow_AD,pow_AD[MrtR==0.2 & DspD==0.04 & ClnR==0.001,])
+
+# Select only the subset I will use
+#
+#pow_ADq24 <- filter(pow_AD,MrtR==0.2 & DspD==0.04 & ClnR==0.001) %>%
+#  mutate(spMeta = ceiling(as.numeric(NumSp)*1.33)) 
+ 
+plotPow_MeanSp_side(pow_ADq24)
+
+ggsave("powADq24_MeanSp_Side.png", width=6,height=6,units="in",dpi=600)
+
+require(pander)
+pandoc.table(select(pow_ADq24,Side,spMeta,MeanSp, c(5:9)),style="grid",split.tables=Inf)
+
+
+pow_ADq24 <- pow_ADq24 %>% mutate(NumSp=as.numeric(NumSp),MeanSp=as.numeric(MeanSp),Side=as.numeric(Side))
+
+comp_ADq24 <- comp_AD %>% filter(MrtR1==0.2 & DspD1==0.04 & ClnR1==0.001) %>% 
+  left_join(unique(pow_ADq24[,1:3]),by=c("Side","NumSp"))
+
+plotPow_MeanSp_difR(comp_ADq24)
+
+ggsave("powADq24_DifReplacement.png", width=6,height=6,units="in",dpi=600)
+
+
+
+# Calculate TypeI error in fuction of replacement rate
+#c1 <- with(comp_ADq24,comp_ADq24[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2==RplR1,])
+#c3 <- ddply(c1,.(NumSp,Type,RplR2),hh)
+#names(c3)[4]<-"typeI"
+#g <- ggplot(c3,aes(x=RplR2,y=typeI)) + geom_point(shape=19,aes(colour=as.factor(Type))) + facet_grid( NumSp ~ .)
+#g+theme_bw()
+
+#rm(c1,c2,c3)
+
+```
+## Plot power of D1 
+
+```{r power_PlotD1T, eval=F,echo=F,message=T,warning=T}
+
+require(dplyr)
+
+#pow_TD1$spMeta <- ceiling(as.numeric(pow_TD1$NumSp)*1.33)
+
+pow_TD1 <- pow_TD1 %>% select(-MeanSp) %>% 
+  mutate(spMeta=ceiling(as.numeric(NumSp)*1.33),power=as.numeric(power),typeI=as.numeric(typeI)) %>% 
+  left_join(unique(pow_ADq10[,1:3]),by=c("Side","NumSp"))
+require(pander)
+pandoc.table(  select(pow_TD1,Side,spMeta,MeanSp,c(4:8)),style="grid",split.tables=Inf)
+
+plotPow_MeanSp_side(pow_TD1)
+
+ggsave("powTD1_MeanSp_Side.png", width=6,height=6,units="in",dpi=600)
+
+# Calculate power in fuction of replacement rate difference
+# Falta cambiar NumSp por 
+#comp_TD1$spMeta <- ceiling(as.numeric(comp_TD1$NumSp)*1.33)
+
+
+pow_TD1 <- pow_TD1 %>% mutate(NumSp=as.numeric(NumSp),MeanSp=as.numeric(MeanSp),Side=as.numeric(Side))
+
+comp_TD1 <- comp_TD1 %>% filter(MrtR1==0.2 & DspD1==0.04 & ClnR1==0.001) %>% 
+  left_join(unique(pow_ADq10[,1:3]),by=c("Side","NumSp"))
+
+
+plotPow_MeanSp_difR(comp_TD1)
+ggsave("powTD1_DifReplacement.png", width=6,height=6,units="in",dpi=600)
+
+
+
+```
+
+The power of D1 in combination with a T-test is relatively low with a maximun of 0.6 for  
+
+
+```{r power_PlotGC, eval=F,echo=F,message=T,warning=T}
+
+#pow_GC1 <-merge(pow_GC1,unique(pow_ADq10[,1:3]),by.x=c(1,2),by.y=c(1,2),all.y=F)[,c(1:2,10,4:9)]
+#names(pow_GC1)[3]<- "MeanSp"
+require(dplyr)
+
+pow_GC1 <- pow_GC1 %>% select(-MeanSp) %>% 
+  mutate(spMeta=ceiling(as.numeric(NumSp)*1.33),power=as.numeric(power),typeI=as.numeric(typeI)) %>% 
+  left_join(unique(pow_ADq24[,1:3]),by=c("Side","NumSp")) %>%
+  select(Side,spMeta,MeanSp,c(4:8))
+
+require(pander)
+pandoc.table(pow_GC1,style="grid",split.tables=Inf)
+
+
+plotPow_MeanSp_side(pow_GC1)
+
+ggsave("powGC_spMeta_Side.png", width=6,height=6,units="in",dpi=600)
+
+plotPow_MeanSp_difR(comp_GC1)
+
+ggsave("powGC_DifReplacement.png", width=6,height=6,units="in",dpi=600)
+
+```
+
+
+```{r power_PlotADq10, eval=F,echo=F,message=T,warning=T}
+
+
+#pow_GC1 <-merge(pow_GC1,unique(pow_ADq10[,1:3]),by.x=c(1,2),by.y=c(1,2),all.y=F)[,c(1:2,10,4:9)]
+#names(pow_GC1)[3]<- "MeanSp"
+
+plotPow_MeanSp_side(pow_ADq10)
+
+ggsave("powADq10_MeanSp_Side.png", width=6,height=6,units="in",dpi=600)
+
+
+## ADD ANOTHER COLUM WITH MEANSP
+require(dplyr)
+# DONE! in .RData
+#
+#pow_ADq10 <- pow_ADq10 %>% mutate(NumSp=as.numeric(NumSp),MeanSp=as.numeric(MeanSp),Side=as.numeric(Side))
+#
+#
+#comp_ADq10 <- comp_ADq10 %>% filter(MrtR1==0.2 & DspD1==0.04 & ClnR1==0.001) %>% 
+#  left_join(unique(pow_ADq10[,1:3]),by=c("Side","NumSp"))
+
+plotPow_MeanSp_difR(comp_ADq10)
+
+ggsave("powADq10_DifReplacement.png", width=6,height=6,units="in",dpi=600)
+
+require(pander)
+pandoc.table( mutate(pow_ADq10 ,spMeta=ceiling(as.numeric(NumSp)*1.33),power=as.numeric(power),typeI=as.numeric(typeI)) %>% select(Side,spMeta,MeanSp,c(5:9))
+,style="grid",split.tables=Inf,round=4)
 ```

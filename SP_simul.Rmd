@@ -24,14 +24,14 @@ options("scipen"=100, "digits"=4)
 
 First generate a pattern with  SAR z=1 using simply bands of species z=0.5 because I am using area as Borda-de-Agua instead of side.
 
-```{r simul_z1, eval=F,echo=F,message=F,warning=F}
+```{r simul_z1, eval=T,echo=F,message=F,warning=F}
 setwd("Simul")
 
-DqF <- compMethods_UniformSAD(8,256)
+DqF <- compMethods_UniformSAD(8,256)$Dq
 
-DqF <- rbind(DqF,compMethods_UniformSAD(64,256))
+DqF <- rbind(DqF,compMethods_UniformSAD(64,256)$Dq)
 
-DqF <- rbind(DqF,compMethods_UniformSAD(256,256))
+DqF <- rbind(DqF,compMethods_UniformSAD(256,256)$Dq)
 
 # Analizing this last it means that the scaling is broken at side 16
 #  
@@ -43,7 +43,7 @@ DqF <- rbind(DqF,compMethods_UniformSAD(256,256))
 #Dq2$Type <- "rnzDqSAD2-16"
 #Dq3<- rbind(Dq3,Dq2)
 #plotDq(Dq3,"Type")
-
+require(pander)
 pandoc.table(DqF[DqF$R.Dq<0.8,],caption="R2<0.8")
 setwd(oldcd)
 ```
@@ -59,14 +59,19 @@ To see if there is any efect of side
 setwd("Simul")
 
 
+DqF <- rbind(DqF,compMethods_UniformSAD(8,512))
 
 DqF <- rbind(DqF,compMethods_UniformSAD(64,512))
 
+DqF <- rbind(DqF,compMethods_UniformSAD(256,512))
 
 setwd(oldcd)
 ```
 
 Thus DqSAD works in the range 2-8 2-16 2-32 depending on the number of species
+
+For different number of species and different sides the same cualitative patterns are observed.
+
 
 # Now simulate an image with logseries SAD with 8, 64 & 256 species
 
@@ -97,7 +102,7 @@ DqF <- rbind(DqF,compMethods_FisherSAD(64,512))
 DqF <- rbind(DqF,compMethods_FisherSAD(256,512))
 
 setwd(oldcd)
-rm(Dq1,Dq2,spa)
+save.image()
 
 ```
 
@@ -202,7 +207,7 @@ save.image()
 Perform Neutral with metacommunity logseries and Logseries, 10 simulations with side =256/512
 
 
-```{r test_SAD256, eval=T,echo=F,message=F,warning=F}
+```{r test_SAD256, eval=F,echo=F,message=F,warning=F}
 setwd("Simul")
 
 cc <- comp_NeutralLogseries(8,256)
@@ -244,7 +249,7 @@ save.image()
 
 Now check if all simulations are done a make power calculations
 
-```{r power_adtest, eval=T,echo=F,message=F,warning=F}
+```{r power_adtest, eval=F,echo=F,message=F,warning=F}
 # Check all simulations are present
 require(plyr)
 ddply(SadT,3:6,summarize, max(rep))
@@ -264,7 +269,7 @@ save.image()
 
 Make plots of power and type I error 
 
-```{r power_adtest, eval=T,echo=F,message=F,warning=F}
+```{r power_adtest, eval=F,echo=F,message=F,warning=F}
 
 plot_DqPowerTypeI <- function(pp,tit){
   require(ggplot2)
@@ -294,4 +299,171 @@ plot_DqPowerTypeI(p1,"Neutral")
 
 
 ```
+
+## Plots for publication uniform SAD 
+
+```{r plots_spDq, eval=T,echo=F,message=F,warning=F}
+setwd("Simul")
+
+# Plot of the uniform and randomized spatial pattern for a uniform SAD with 64 species and side=256
+#
+
+g <- plotSAD_SpatPat(64,256,"U")
+g 
+setwd("..")
+ggsave("spat_Unif64_256.png", width=8,height=6,units="in",dpi=600)
+setwd("Simul")
+
+
+#
+# Plots of Dq with uniform SAD and 20 repetitions!
+#
+unique(DqT$SAD)
+#DqT$Type[DqT$Type=="SRS"] <- "DqSRS"
+#DqT$Type[DqT$Type=="rnzSRS"] <- "rnzDqSRS"
+
+rm(Dq1,Dq2,fname,fname1)
+
+
+g <- plotDq_Side_Sp(DqT,256,64,"Uniform")
+g
+setwd("..")
+ggsave("Dq_Unif64_256.png", width=8,height=4,units="in",dpi=600)
+
+g <- plotDq_Side_Sp(DqT,256,0,"Uniform")
+g
+ggsave("Dq_Unif_NumSp_256.png", width=8,height=6,units="in",dpi=600)
+
+g <- plotDq_Side_Sp(DqT,512,0,"Uniform")
+g
+ggsave("Dq_Unif_NumSp_512.png", width=8,height=6,units="in",dpi=600)
+
+#
+# Plot R2 for dqSAD dqSRS
+#
+g <- plotR2Dq_Side_Sp(DqT,256,64,"Uniform")
+g
+ggsave("R2Dq_Unif_64_256.png", width=8,height=6,units="in",dpi=600) 
+
+g <- plotR2Dq_Side_Sp(DqT,0,0,"Uniform")
+g
+ggsave("R2Dq_Unif_NumSp_Side.png", width=8,height=6,units="in",dpi=600) 
+
+#
+# Generate Tables with R2 proportions
+#
+require(dplyr)
+hh <-function(x,c,...){
+  length(x[x>c])/length(x)
+}
+
+Dq1 <- filter(DqT, SAD=="Logseries" | SAD=="Uniform",Side==256,NumSp==8,Type=="DqSAD") 
+
+Dq1 <- filter(DqT, SAD=="Logseries" | SAD=="Uniform") %>%
+  mutate(DqType=ifelse(grepl("SRS",Type),"SRS","SAD"), SpatialPattern=ifelse(grepl("rnz",Type),"Random","Regular")) %>%
+  group_by(SAD,SpatialPattern,DqType,NumSp,Side) %>% 
+  summarize(Freq60=hh(R.Dq,.6),Freq90=hh(R.Dq,.9)) 
+
+write.table(format(Dq1,digits=2), file = "Dq1.dat", sep = "  ", row.names = F,quote = F)
+
+#
+# The same for neutral simulations with logseries metacommunity 
+#
+
+Dq1 <- filter(DqT, SAD=="Neutral" | SAD=="NeuUnif") %>%
+  mutate(DqType=ifelse(grepl("SRS",Type),"SRS","SAD"), SpatialPattern=ifelse(grepl("rnz",Type),"Randomized","Unmodified")) %>%
+  group_by(SAD,SpatialPattern,DqType,NumSp,Side) %>% 
+  summarize(Freq60=hh(R.Dq,.6),Freq90=hh(R.Dq,.9)) 
+
+
+names(SadT)
+Sad1 <- filter(SadT, SAD=="Neutral") %>%
+  group_by(Type,Side,NumSp,SAD,rep) %>% summarize(NumSpAct=n()) %>% summarize(meanNumSp=mean(NumSpAct),rangeSp=paste(range(NumSpAct),collapse="-"))
+
+# Merge Sad1 with Dq1 for meanNumSp
+unique(Sad1$Type)
+unique(Dq1$DqType)
+Dq1 <- inner_join(Dq1,Sad1) %>% select(SAD, meanNumSp,Side,SpatialPattern,DqType,Freq60,Freq90)
+pow <- distinct(select(pow_ADq24,NumSp,spMeta))
+
+Dq1 <- left_join(Dq1,pow)  %>% 
+    select(SAD, spMeta,meanNumSp,Side,SpatialPattern,DqType,Freq60,Freq90)
+names(Dq1)
+write.table(format(Dq1,digits=2), file = "Dq1.dat", sep = "  ", row.names = F,quote = F)
+
+
+rm(Dq1,Sad1,pow)
+
+#
+# plot of the Fit of the method for Dq
+#
+
+setwd("Simul")
+
+zq <- readDq_fit(256,64,"Uniform")
+g <- plotDqFitG(zq)
+g
+setwd(oldcd)
+ggsave("DqFit_Unif_64_256.png", width=8,height=6,units="in",dpi=600) 
+
+g <- plotDqFitGQ(zq,c(-10,-4,-1,0,1,4,10))
+g
+
+```
+
+
+## Plots for publication Logseries SAD 
+
+```{r plots_logser_spDq, eval=T,echo=F,message=F,warning=F}
+setwd("Simul")
+
+# Plot of the uniform and randomized spatial pattern for a logseries SAD with 64 species and side=256
+#
+
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! GENERA MAL 
+# save_matrix_as_sed
+# 
+# Le falta un \n
+
+g <- plotSAD_SpatPat(64,256,"L")
+g 
+setwd("..")
+ggsave("spat_Logser64_256.png", width=8,height=6,units="in",dpi=600)
+
+unique(DqT$SAD)
+
+g <- plotDq_Side_Sp(DqT,256,64,"Logseries")
+g
+ggsave("Dq_Logser64_256.png", width=8,height=4,units="in",dpi=600)
+
+g <- plotDq_Side_Sp(DqT,256,0,"Logseries")
+g
+ggsave("Dq_Logser_NumSp_256.png", width=8,height=6,units="in",dpi=600)
+
+g <- plotDq_Side_Sp(DqT,512,0,"Logseries")
+g
+ggsave("Dq_Logser_NumSp_512.png", width=8,height=6,units="in",dpi=600)
+
+
+#
+# Plot R2 for dqSAD dqSRS
+#
+g <- plotR2Dq_Side_Sp(DqT,256,64,"Logseries")
+g
+ggsave("R2Dq_Logser_64_256.png", width=8,height=6,units="in",dpi=600) 
+
+g <- plotR2Dq_Side_Sp(DqT,0,0,"Logseries")
+g
+
+#
+# plot of the Fit of the method for Dq
+#
+
+setwd("Simul")
+
+zq <- readDq_fit(256,64,"Logseries")
+g <-plotDqFitG(zq)
+g
+setwd(oldcd)
+ggsave("DqFit_Logser_64_256.png", width=8,height=6,units="in",dpi=600) 
 

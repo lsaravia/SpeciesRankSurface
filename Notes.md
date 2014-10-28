@@ -157,3 +157,26 @@ the transfer parameter b. A test can be said to have
 correct rate of type I error if, across the simulations,
 the rejection rate is approximately equal to the signifi-
 cance level a used to make the statistical decision.
+
+
+1. Rosindell J, Cornell SJ (2007) Species–area relationships from a spatially explicit neutral model in an infinite landscape. Ecol Lett 10: 586–595. doi:10.1111/j.1461-0248.2007.01050.x.
+
+The species–area exponent z relating to the power law
+S μ Az is a key quantity for ecologists, but existing studies
+give apparently inconsistent predictions of how z should
+behave under the neutrality assumption. Zillio et al. (2005)
+predict that z does not vary with m provided that m is small,
+whereas the formulae of Durrett & Levin (1996) predict that z
+should vary weakly with m. Hubbell (2001, p. 188) produces a
+diagram showing how z should vary strongly with the
+Ôfundamental biodiversity numberÕ h 1⁄4 2Jm for his patch
+model. Chave et al. (2002) show that z varies with spatial scale
+and can take realistic values, but only investigate SARs for
+h 1⁄4 5. 
+All these existing studies use biphasic SARs to identify
+z. We hope to resolve these differences by identifying z as the
+gradient in the central phase of our triphasic model. We show
+how the value of z from our model can take any value between
+0 and 1 and is a simple function of m alone, independent of the
+other model parameters.
+
