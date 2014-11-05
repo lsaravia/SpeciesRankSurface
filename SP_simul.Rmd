@@ -300,35 +300,40 @@ plot_DqPowerTypeI(p1,"Neutral")
 
 ```
 
-## Plots for publication uniform SAD 
+## Plots for publication uniform/Logseries SAD 
 
 ```{r plots_spDq, eval=T,echo=F,message=F,warning=F}
 setwd("Simul")
 
-# Plot of the uniform and randomized spatial pattern for a uniform SAD with 64 species and side=256
+# Plot of the Regular and Randomized spatial pattern for a uniform & Logseries SAD with 64 species and side=256
 #
+g <- plotSAD_SpatPat(64,256,"B")
+g
 
-g <- plotSAD_SpatPat(64,256,"U")
-g 
+#g <- plotSAD_SpatPat(64,256,"U")
+#g 
 setwd("..")
-ggsave("spat_Unif64_256.png", width=8,height=6,units="in",dpi=600)
+ggsave("spat_UniLog64_256.png", width=8,height=6,units="in",dpi=600)
 setwd("Simul")
 
 
 #
-# Plots of Dq with uniform SAD and 20 repetitions!
+# Plots of Dq with uniform/Logseries SAD and 10 repetitions!
 #
 unique(DqT$SAD)
-#DqT$Type[DqT$Type=="SRS"] <- "DqSRS"
-#DqT$Type[DqT$Type=="rnzSRS"] <- "rnzDqSRS"
 
-rm(Dq1,Dq2,fname,fname1)
-
-
-g <- plotDq_Side_Sp(DqT,256,64,"Uniform")
+g <- plotDq_Side_Sp(DqT,256,64,"B")
 g
 setwd("..")
-ggsave("Dq_Unif64_256.png", width=8,height=4,units="in",dpi=600)
+ggsave("Dq_UniLog64_256.png", width=8,height=6,units="in",dpi=600)
+
+g <- plotDq_Side_Sp(DqT,256,0,"B")
+g
+ggsave("Dq_UniLog_NumSp_256.png", width=8,height=6,units="in",dpi=600)
+
+
+#g <- plotDq_Side_Sp(DqT,256,64,"Uniform")
+#g
 
 g <- plotDq_Side_Sp(DqT,256,0,"Uniform")
 g
@@ -339,11 +344,14 @@ g
 ggsave("Dq_Unif_NumSp_512.png", width=8,height=6,units="in",dpi=600)
 
 #
-# Plot R2 for dqSAD dqSRS
+# Plot R2 for dqSAD dqSRS for uniform & Logseries
 #
+g <- plotR2Dq_Side_Sp(DqT,256,64,"B") 
+g
+ggsave("R2Dq_UniLog_64_256.png", width=8,height=6,units="in",dpi=600) 
+
 g <- plotR2Dq_Side_Sp(DqT,256,64,"Uniform")
 g
-ggsave("R2Dq_Unif_64_256.png", width=8,height=6,units="in",dpi=600) 
 
 g <- plotR2Dq_Side_Sp(DqT,0,0,"Uniform")
 g
@@ -420,21 +428,16 @@ setwd("Simul")
 # Plot of the uniform and randomized spatial pattern for a logseries SAD with 64 species and side=256
 #
 
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! GENERA MAL 
-# save_matrix_as_sed
-# 
-# Le falta un \n
+#g <- plotSAD_SpatPat(64,256,"L")
+#g 
+#setwd("..")
+#ggsave("spat_Logser64_256.png", width=8,height=6,units="in",dpi=600)
 
-g <- plotSAD_SpatPat(64,256,"L")
-g 
-setwd("..")
-ggsave("spat_Logser64_256.png", width=8,height=6,units="in",dpi=600)
+#unique(DqT$SAD)
 
-unique(DqT$SAD)
-
-g <- plotDq_Side_Sp(DqT,256,64,"Logseries")
-g
-ggsave("Dq_Logser64_256.png", width=8,height=4,units="in",dpi=600)
+#g <- plotDq_Side_Sp(DqT,256,64,"Logseries")
+#g
+#ggsave("Dq_Logser64_256.png", width=8,height=4,units="in",dpi=600)
 
 g <- plotDq_Side_Sp(DqT,256,0,"Logseries")
 g
@@ -448,11 +451,14 @@ ggsave("Dq_Logser_NumSp_512.png", width=8,height=6,units="in",dpi=600)
 #
 # Plot R2 for dqSAD dqSRS
 #
-g <- plotR2Dq_Side_Sp(DqT,256,64,"Logseries")
-g
-ggsave("R2Dq_Logser_64_256.png", width=8,height=6,units="in",dpi=600) 
+#g <- plotR2Dq_Side_Sp(DqT,256,64,"Logseries")
+#g
+#ggsave("R2Dq_Logser_64_256.png", width=8,height=6,units="in",dpi=600) 
 
 g <- plotR2Dq_Side_Sp(DqT,0,0,"Logseries")
+g
+
+g <- plotR2Dq_Side_Sp(DqT,0,0,"Neutral")
 g
 
 #

@@ -29,10 +29,8 @@ Neutral: rule (5) determines that no species has an advantage
 over another and as all species have the same rates the model is 
 termed neutral. 
 
-Hierarchical: rule (5) is modified, an individual of a species 
-k always replaces and individual of a species k+1 with probability 
-ρ. Thus a hierarchical ordering of species is established. When 
-this probability is zero the neutral model is recovered. 
+Hierarchical: rule (5) is modified, an individual of a species k always replaces and individual of a species k+1 with probability
+$\rho$. Thus a hierarchical ordering of species is established. When this probability is zero the neutral model is recovered.
 
 
 ## Appendix A References
@@ -247,10 +245,11 @@ Table: Proportion of $R^2$ that are greater than 0.6 and 0.9. The $R^2$ are from
 |  256   |   341    |   78.3   | DqSAD  |   1000   |  0.909  |   225    |  0.2889  |
 +--------+----------+----------+--------+----------+---------+----------+----------+
 
-Table S1: Power and Type I error rate for SAD, DqSAD and DqSRS. The number of points used for SAD is 
+Table: Power and Type I error rate for SAD, DqSAD and DqSRS. The number of points used for SAD is 
 the number of species found in the compared communities, and the number of points for multifractal spectra are the q used for the estimation ranging -24 to 24 (n=35). The complete set used is 
 q={-24,-22,-20,-18,-16,-14,-12,-10,-8,-6,-4,-3,-2.5,-2,-1.5,-1,-0.5,0,0.5,1,1.5,2,2.5,3,4,6,8,10,12,14,16,18,20,22,24
 }.
+
 
 +--------+----------+----------+--------+----------+---------+----------+---------+
 |  Side  |  spMeta  |  MeanSp  |  Type  |  nPower  |  power  |  nTypeI  |  typeI  |
@@ -279,7 +278,8 @@ q={-24,-22,-20,-18,-16,-14,-12,-10,-8,-6,-4,-3,-2.5,-2,-1.5,-1,-0.5,0,0.5,1,1.5,
 +--------+----------+----------+--------+----------+---------+----------+---------+
 |  256   |   341    |  76.572  | D0SAD  |  25000   | 0.4429  |   6125   | 0.3631  |
 +--------+----------+----------+--------+----------+---------+----------+---------+
-Table S2: Power and Type I error rate for T-test comparison of the SAR exponent usually called *z* labeled D0SAD and information dimension D1SRS.
+
+Table: Power and Type I error rate for T-test comparison of the SAR exponent usually called *z* labeled D0SAD and information dimension D1SRS.
 
 
 +--------+----------+----------+--------+----------+---------+----------+---------+
@@ -322,7 +322,7 @@ Table S2: Power and Type I error rate for T-test comparison of the SAR exponent 
 |  256   |   341    |  76.572  | DqSAD  |  25000   | 0.6101  |   6125   | 0.0478  |
 +--------+----------+----------+--------+----------+---------+----------+---------+
 
-Table S3: Power and Type I error rate for SAD, DqSAD and DqSRS using Anderson-Darling test. The number of points used for SAD comparisons is the number of species found in the communities. The number of points used for multifractal spectra correspond to the q in the range -10 to 10 (n=21), according to the following set q={-10,-8,-6,-4,-3,-2.5,-2,-1.5,-1,-0.5,0,0.5,1,1.5,2,2.5,3,4,6,8,10}.
+Table: Power and Type I error rate for SAD, DqSAD and DqSRS using Anderson-Darling test. The number of points used for SAD comparisons is the number of species found in the communities. The number of points used for multifractal spectra correspond to the q in the range -10 to 10 (n=21), according to the following set q={-10,-8,-6,-4,-3,-2.5,-2,-1.5,-1,-0.5,0,0.5,1,1.5,2,2.5,3,4,6,8,10}.
 
 
 

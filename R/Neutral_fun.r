@@ -588,7 +588,7 @@ read_sed <- function(fname)
 {
   d <-read.table(fname, nrows=1,header=F)
   per <-data.matrix(read.table(fname, skip=2,header=F))
-  if(d$V2!=nrow(per)) stop("Incorrect formated sed file")
+  if(d$V2!=nrow(per)) stop(paste("Incorrect formated sed file:",fname))
   return(per)
 }
 
@@ -658,7 +658,7 @@ plotDqFitG <- function(zq0,fac=3)
   
   zq1 <- subset(zq0, q==1 | q==2 | q==3 | q==4 | q==5 | q==0 | q==-1 | q==-2 | q==-3 | q==-4 | q==-5 )
   zq1$logTr <- zq1$logTr+zq1$q/fac
-  zq1 <- mutate(zq1,DqType=ifelse(grepl("SRS",Type),"SRS","SAD"), Type=ifelse(grepl("rnz",Type),"Random","Regular"))
+  zq1 <- mutate(zq1,DqType=ifelse(grepl("SRS",Type),"SRS","SAD"), Type=ifelse(grepl("rnz",Type),"b) Randomized","a) Regular"))
   
 #  g <- ggplot(zq1,aes(LogBox,logTr,colour=factor(q))) + geom_point(aes(shape=factor(q))) + 
 #    scale_color_discrete(name="q") + 
@@ -679,7 +679,7 @@ plotDqFitGQ <- function(zq0,qq,fac=3)
   
   zq1 <- filter(zq0, q %in% qq  )
   zq1$logTr <- zq1$logTr+zq1$q/fac
-  zq1 <- mutate(zq1,DqType=ifelse(grepl("SRS",Type),"SRS","SAD"), Type=ifelse(grepl("rnz",Type),"Random","Regular"))
+  zq1 <- mutate(zq1,DqType=ifelse(grepl("SRS",Type),"SRS","SAD"), Type=ifelse(grepl("rnz",Type),"b) Randomized","a) Regular"))
   
   #  g <- ggplot(zq1,aes(LogBox,logTr,colour=factor(q))) + geom_point(aes(shape=factor(q))) + 
   #    scale_color_discrete(name="q") + 
@@ -2094,7 +2094,7 @@ plotPow_MeanSp_difR <- function(comp)
 # side: side of the image
 #
 plotSAD_SpatPat<-function(nsp,side,type="U")
-  {
+{
   require(ggplot2)
   #nsp<-64
   #side<-256
@@ -2114,13 +2114,39 @@ plotSAD_SpatPat<-function(nsp,side,type="U")
   sp1$Type <- "b) Randomized"
 
   spa <-  rbind(spa,sp1)
+  spa$SAD = ifelse(type=="U","Uniform","Logseries")
 
-  g <- ggplot(spa, aes(x, y, fill = factor(v))) + geom_raster(hjust = 0, vjust = 0) + theme_bw() + coord_equal() + facet_grid(. ~ Type)
+  if(type=="B") {
+    fname <- paste0("unif",nsp,"_",side,".sed")
+    fname1 <- paste0("unif",nsp,"_",side,"rnz.sed") 
+
+    sp1 <-read_sed2xy(fname)
+    sp1$Type <- "a) Regular"
+    #spa <- rbind(spa,spa[nrow(spa),])
+
+    sp2 <- read_sed2xy(fname1)
+    sp2$Type <- "b) Randomized"
+
+    sp1 <- rbind(sp1,sp2)   
+    sp1$SAD <- "Uniform"
+
+    spa <- rbind(spa,sp1)
+  }
+
+  g <- ggplot(spa, aes(x, y, fill = factor(v))) + geom_raster(hjust = 0, vjust = 0) + 
+    theme_bw() + coord_equal() 
+  
   g <- g + scale_fill_grey(guide=F) +
     scale_x_continuous(expand=c(.01,.01)) + 
     scale_y_continuous(expand=c(.01,.01)) +  
     labs(x=NULL, y=NULL) 
 
+  if(type=="B")
+  {
+    g <- g + facet_grid(SAD ~ Type)
+  } else {
+    g <- g + facet_grid(. ~ Type) 
+  }
   #g <- ggplot(spa, aes(x, y, fill = v)) + geom_raster(hjust = 0, vjust = 0) + theme_bw() + coord_equal() + facet_grid(. ~ Type)
   #g <- g + scale_fill_gradient(low="red", high="green", guide=F) +
   #    labs(x=NULL, y=NULL) 
@@ -2132,31 +2158,49 @@ plotDq_Side_Sp <- function(Dqq,side,nsp,sad="Uniform"){
   require(dplyr)
   require(ggplot2)
   #mylabs <- list(bquote(D[q]^SRS),bquote(Rnz -~D[q]^SRS),bquote(D[q]^SAD),bquote(Rnz -~D[q]^SAD))
-  mylabs <- list("Regular","Random")
+  mylabs <- list("Regular","Randomized")
   
   if(nsp!=0) {
-    Dq1<-with(Dqq,Dqq[SAD==sad & Side==side & NumSp==nsp,])
+    if(sad=="B"){
+        mylabs <- list("Regular Uniform","Randomized Uniform","Regular Logseries","Randomized Logseries" )
+        Dq1<- filter(Dqq,Side==side,NumSp==nsp,SAD=="Uniform" | SAD=="Logseries")
+    } else
+        Dq1<- filter(Dqq,SAD==sad,Side==side,NumSp==nsp)
 
-    Dq1 <- group_by(Dq1,Type,q) %>% summarize(SD.Dq=sd(Dq),Dq=mean(Dq),count=n()) %>% mutate(DqType=ifelse(grepl("SRS",Type),"a) SRS","b) SAD"))
+    Dq1 <- group_by(Dq1,SAD,Type,q) %>% summarize(SD.Dq=sd(Dq),Dq=mean(Dq),count=n()) %>% 
+#      mutate(DqType=ifelse(grepl("SRS",Type),"SRS","SAD"), SAD1=ifelse(grepl("Logseries",SAD),"a) Logseries","b) Uniform"))
+      mutate(DqType=ifelse(grepl("SRS",Type),"SRS","SAD"), TypeSAD=paste(Type,SAD) )
 
-    g <- ggplot(Dq1, aes(x=q, y=Dq, shape=Type)) +
+    g <- ggplot(Dq1, aes(x=q, y=Dq, shape=TypeSAD)) +
               geom_errorbar(aes(ymin=Dq-SD.Dq, ymax=Dq+SD.Dq), width=.1,colour="gray") +
               geom_point() + theme_bw() + ylab(expression(D[q]))
-    g <- g + facet_wrap(~ DqType, scales="free") + scale_shape_manual(values=c(21,21,24,24),guide=guide_legend(title=NULL),
-                                                               breaks=c("DqSRS","rnzDqSRS"),
+    g <- g  + scale_shape_manual(values=c(21,24,21,24,3,4,3,4),guide=guide_legend(title=NULL),
+                                                               breaks=c("DqSRS Uniform","rnzDqSRS Uniform","DqSRS Logseries","rnzDqSRS Logseries"),
                                                                labels=mylabs) 
+    if(sad=="B")
+      g <- g + facet_wrap( ~ DqType, scales="free")
+    else
+      g <- g + facet_wrap(~ DqType, scales="free")
+
   } else {
+    if(sad=="B") {
+        mylabs <- list("Regular Uniform","Randomized Uniform","Regular Logseries","Randomized Logseries" )
+        Dq1<- filter(Dqq,Side==side,SAD=="Uniform" | SAD=="Logseries")
+    } else
+      Dq1<- filter(Dqq,SAD==sad,Side==side)
 
-    Dq1<-with(DqT,DqT[SAD==sad & Side==side  ,])
-    Dq1 <- group_by(Dq1,Type,NumSp,q) %>% summarize(SD.Dq=sd(Dq),Dq=mean(Dq),count=n()) %>% mutate(DqType=ifelse(grepl("SRS",Type),"a) SRS","b) SAD"))
+    Dq1 <- group_by(Dq1,SAD,Type,NumSp,q) %>% summarize(SD.Dq=sd(Dq),Dq=mean(Dq),count=n()) %>% 
+#    mutate(DqType=ifelse(grepl("SRS",Type),"SRS","SAD"))
+    mutate(DqType=ifelse(grepl("SRS",Type),"SRS","SAD"), TypeSAD=paste(Type,SAD) )
 
-    g <- ggplot(Dq1, aes(x=q, y=Dq, shape=Type)) +
+    g <- ggplot(Dq1, aes(x=q, y=Dq, shape=TypeSAD)) +
               geom_errorbar(aes(ymin=Dq-SD.Dq, ymax=Dq+SD.Dq), width=.1,colour="gray") +
-              geom_point() + theme_bw() + ylab(expression(D[q]))
-    g <- g + facet_wrap(NumSp~ DqType, scales="free",ncol=2) + scale_shape_manual(values=c(21,21,24,24),guide=guide_legend(title=NULL),
-                                                                 breaks=c("DqSRS","rnzDqSRS"),
-                                                                 labels=mylabs) 
+              geom_point(size=1.4) + theme_bw() + ylab(expression(D[q]))
+    g <- g  + scale_shape_manual(values=c(21,24,21,24,3,4,3,4),guide=guide_legend(title=NULL),
+                                                               breaks=c("DqSRS Uniform","rnzDqSRS Uniform","DqSRS Logseries","rnzDqSRS Logseries"),
+                                                               labels=mylabs) 
 
+    g <- g + facet_wrap(NumSp~ DqType, scales="free",ncol=2) 
   }
 }
 
@@ -2166,22 +2210,43 @@ plotR2Dq_Side_Sp <- function(Dqq,side,nsp,sad="Uniform")
   require(dplyr)
   if(nsp!=0 & side!=0) {
 
-    Dq1<-with(Dqq,Dqq[SAD==sad & Side==side & NumSp==nsp,])
-    Dq1 <- mutate(Dq1,DqType=ifelse(grepl("SRS",Type),"a) SRS","b) SAD"), Type=ifelse(grepl("rnz",Type),"Random","Regular"))
+    if(sad=="B")
+        Dq1<- filter(Dqq,Side==side,NumSp==nsp,SAD=="Uniform" | SAD=="Logseries")
+    else
+        Dq1<- filter(Dqq,SAD==sad,Side==side,NumSp==nsp)
     
-    bin <- range(Dq1$R.Dq)
-    bin <- (bin[2]-bin[1])/10
-    g <- ggplot(Dq1, aes(x=R.Dq)) + geom_histogram(binwidth = bin,colour="black",fill="grey") + 
-        theme_bw() + facet_grid(Type ~DqType) + 
+    Dq1 <- mutate(Dq1,DqType=ifelse(grepl("SRS",Type),"SRS","SAD"), Type=ifelse(grepl("rnz",Type),"b) Randomized","a) Regular"))
+
+    if(sad=="B"){
+      bin <- range(Dq1$R.Dq)
+      bin <- (bin[2]-bin[1])/20
+      #       g <- ggplot(Dq1, aes(x=R.Dq,colour=SAD)) + geom_freqpoly(binwidth = bin) + 
+      #         theme_bw() + facet_grid(Type ~DqType) + scale_colour_grey() + 
+      #         scale_x_continuous(breaks=c(.5,.6,.7,.8,.9,1.0))
+      #         xlab(expression(R^2))
+      #       print(g)
+      g <- ggplot(Dq1, aes(x=R.Dq,fill=SAD)) + geom_histogram(binwidth = bin,position="dodge",colour="black") + 
+        theme_bw() + scale_fill_manual(values=c("white", "darkgrey")) + 
+        facet_wrap(Type ~ DqType) + #+ facet_grid(Type ~DqType)
+        scale_x_continuous(breaks=c(.5,.6,.7,.8,.9,1.0)) + 
         xlab(expression(R^2))
+    } else {
+    
+      bin <- range(Dq1$R.Dq)
+      bin <- (bin[2]-bin[1])/10
+      g <- ggplot(Dq1, aes(x=R.Dq)) + geom_histogram(binwidth = bin,colour="black",fill="grey") + 
+          theme_bw() + facet_grid(Type ~DqType) + 
+          xlab(expression(R^2))
+    }
+
   } else {
 
-    Dq1<-with(Dqq,Dqq[SAD==sad,])
+    Dq1<-filter(Dqq,SAD==sad)
     bin <- range(Dq1$R.Dq)
     bin <- (bin[2]-bin[1])/10
 
-    g <-ggplot(Dq1, aes(x=R.Dq,fill=Type)) + geom_histogram(alpha=0.3,binwidth = bin,position="identity") + 
-      xlim(0,1) + theme_bw() + facet_grid(Side~NumSp,labeller=label_both) + 
+    g <-ggplot(Dq1, aes(x=R.Dq,fill=Type)) + geom_histogram(binwidth = bin,position="dodge") + 
+       theme_bw() + facet_grid(Side~NumSp,labeller=label_both) + 
       xlab(expression(R^2))
   }
 }

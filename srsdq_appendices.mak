@@ -1,5 +1,5 @@
-all:mpnc_appendices.pdf
+all:srsdq_appendices.pdf
 
-mpnc_appendices.pdf: mpnc_appendices.sty mpnc_appendices.md
-	pandoc -H mpnc_appendices.sty mpnc_appendices.md -o mpnc_appendices.pdf 
-	evince mpnc_appendices.pdf		
+srsdq_appendices.pdf: srsdq_figures.sty srsdq_appendices.md
+	pandoc -H srsdq_figures.sty srsdq_appendices.md -o srsdq_appendices.pdf 
+	evince srsdq_appendices.pdf		
