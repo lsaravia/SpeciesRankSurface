@@ -658,7 +658,7 @@ plotDqFitG <- function(zq0,fac=3)
   
   zq1 <- subset(zq0, q==1 | q==2 | q==3 | q==4 | q==5 | q==0 | q==-1 | q==-2 | q==-3 | q==-4 | q==-5 )
   zq1$logTr <- zq1$logTr+zq1$q/fac
-  zq1 <- mutate(zq1,DqType=ifelse(grepl("SRS",Type),"SRS","SAD"), Type=ifelse(grepl("rnz",Type),"b) Randomized","a) Regular"))
+  zq1 <- mutate(zq1,DqType=ifelse(grepl("SRS",Type),"DqSRS","DqSAD"), Type=ifelse(grepl("rnz",Type),"b) Randomized","a) Regular"))
   
 #  g <- ggplot(zq1,aes(LogBox,logTr,colour=factor(q))) + geom_point(aes(shape=factor(q))) + 
 #    scale_color_discrete(name="q") + 
@@ -2157,12 +2157,13 @@ plotSAD_SpatPat<-function(nsp,side,type="U")
 plotDq_Side_Sp <- function(Dqq,side,nsp,sad="Uniform"){
   require(dplyr)
   require(ggplot2)
+  require(grid)
   #mylabs <- list(bquote(D[q]^SRS),bquote(Rnz -~D[q]^SRS),bquote(D[q]^SAD),bquote(Rnz -~D[q]^SAD))
   mylabs <- list("Regular","Randomized")
   
   if(nsp!=0) {
     if(sad=="B"){
-        mylabs <- list("Regular Uniform","Randomized Uniform","Regular Logseries","Randomized Logseries" )
+        mylabs <- list("Regular\nUniform","Randomized\nUniform","Regular\nLogseries","Randomized\nLogseries" )
         Dq1<- filter(Dqq,Side==side,NumSp==nsp,SAD=="Uniform" | SAD=="Logseries")
     } else
         Dq1<- filter(Dqq,SAD==sad,Side==side,NumSp==nsp)
@@ -2184,23 +2185,23 @@ plotDq_Side_Sp <- function(Dqq,side,nsp,sad="Uniform"){
 
   } else {
     if(sad=="B") {
-        mylabs <- list("Regular Uniform","Randomized Uniform","Regular Logseries","Randomized Logseries" )
-        Dq1<- filter(Dqq,Side==side,SAD=="Uniform" | SAD=="Logseries")
+      mylabs <- list("Regular\nUniform","Randomized\nUniform","Regular\nLogseries","Randomized\nLogseries" )
+      Dq1<- filter(Dqq,Side==side,SAD=="Uniform" | SAD=="Logseries")
     } else
       Dq1<- filter(Dqq,SAD==sad,Side==side)
 
     Dq1 <- group_by(Dq1,SAD,Type,NumSp,q) %>% summarize(SD.Dq=sd(Dq),Dq=mean(Dq),count=n()) %>% 
 #    mutate(DqType=ifelse(grepl("SRS",Type),"SRS","SAD"))
-    mutate(DqType=ifelse(grepl("SRS",Type),"SRS","SAD"), TypeSAD=paste(Type,SAD) )
+    mutate(DqType=ifelse(grepl("SRS",Type),"DqSRS","DqSAD"), TypeSAD=paste(Type,SAD), NumSpecies=paste("No. Species",NumSp))
+    Dq1$NumSpecies <- factor(Dq1$NumSpecies, levels = c("No. Species 8", "No. Species 64", "No. Species 256"))
 
     g <- ggplot(Dq1, aes(x=q, y=Dq, shape=TypeSAD)) +
               geom_errorbar(aes(ymin=Dq-SD.Dq, ymax=Dq+SD.Dq), width=.1,colour="gray") +
-              geom_point(size=1.4) + theme_bw() + ylab(expression(D[q]))
+              geom_point(size=1.3) + theme_bw() + ylab(expression(D[q]))
     g <- g  + scale_shape_manual(values=c(21,24,21,24,3,4,3,4),guide=guide_legend(title=NULL),
                                                                breaks=c("DqSRS Uniform","rnzDqSRS Uniform","DqSRS Logseries","rnzDqSRS Logseries"),
                                                                labels=mylabs) 
-
-    g <- g + facet_wrap(NumSp~ DqType, scales="free",ncol=2) 
+    g <- g + facet_wrap(NumSpecies~ DqType, scales="free",ncol=2) + theme(legend.key.size = unit(1, "cm"))
   }
 }
 
@@ -2215,7 +2216,7 @@ plotR2Dq_Side_Sp <- function(Dqq,side,nsp,sad="Uniform")
     else
         Dq1<- filter(Dqq,SAD==sad,Side==side,NumSp==nsp)
     
-    Dq1 <- mutate(Dq1,DqType=ifelse(grepl("SRS",Type),"SRS","SAD"), Type=ifelse(grepl("rnz",Type),"b) Randomized","a) Regular"))
+    Dq1 <- mutate(Dq1,DqType=ifelse(grepl("SRS",Type),"DqSRS","DqSAD"), Type=ifelse(grepl("rnz",Type),"b) Randomized","a) Regular"))
 
     if(sad=="B"){
       bin <- range(Dq1$R.Dq)

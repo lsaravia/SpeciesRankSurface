@@ -320,28 +320,16 @@ setwd("Simul")
 #
 # Plots of Dq with uniform/Logseries SAD and 10 repetitions!
 #
-unique(DqT$SAD)
-
-g <- plotDq_Side_Sp(DqT,256,64,"B")
-g
 setwd("..")
-ggsave("Dq_UniLog64_256.png", width=8,height=6,units="in",dpi=600)
 
 g <- plotDq_Side_Sp(DqT,256,0,"B")
 g
-ggsave("Dq_UniLog_NumSp_256.png", width=8,height=6,units="in",dpi=600)
+ggsave("Dq_UniLog_NumSp_256.png", width=8,height=8,units="in",dpi=600)
 
-
-#g <- plotDq_Side_Sp(DqT,256,64,"Uniform")
-#g
-
-g <- plotDq_Side_Sp(DqT,256,0,"Uniform")
+g <- plotDq_Side_Sp(DqT,512,0,"B")
 g
-ggsave("Dq_Unif_NumSp_256.png", width=8,height=6,units="in",dpi=600)
+ggsave("Dq_UniLog_NumSp_512.png", width=8,height=8,units="in",dpi=600)
 
-g <- plotDq_Side_Sp(DqT,512,0,"Uniform")
-g
-ggsave("Dq_Unif_NumSp_512.png", width=8,height=6,units="in",dpi=600)
 
 #
 # Plot R2 for dqSAD dqSRS for uniform & Logseries
@@ -350,57 +338,11 @@ g <- plotR2Dq_Side_Sp(DqT,256,64,"B")
 g
 ggsave("R2Dq_UniLog_64_256.png", width=8,height=6,units="in",dpi=600) 
 
-g <- plotR2Dq_Side_Sp(DqT,256,64,"Uniform")
-g
 
 g <- plotR2Dq_Side_Sp(DqT,0,0,"Uniform")
 g
 ggsave("R2Dq_Unif_NumSp_Side.png", width=8,height=6,units="in",dpi=600) 
 
-#
-# Generate Tables with R2 proportions
-#
-require(dplyr)
-hh <-function(x,c,...){
-  length(x[x>c])/length(x)
-}
-
-Dq1 <- filter(DqT, SAD=="Logseries" | SAD=="Uniform",Side==256,NumSp==8,Type=="DqSAD") 
-
-Dq1 <- filter(DqT, SAD=="Logseries" | SAD=="Uniform") %>%
-  mutate(DqType=ifelse(grepl("SRS",Type),"SRS","SAD"), SpatialPattern=ifelse(grepl("rnz",Type),"Random","Regular")) %>%
-  group_by(SAD,SpatialPattern,DqType,NumSp,Side) %>% 
-  summarize(Freq60=hh(R.Dq,.6),Freq90=hh(R.Dq,.9)) 
-
-write.table(format(Dq1,digits=2), file = "Dq1.dat", sep = "  ", row.names = F,quote = F)
-
-#
-# The same for neutral simulations with logseries metacommunity 
-#
-
-Dq1 <- filter(DqT, SAD=="Neutral" | SAD=="NeuUnif") %>%
-  mutate(DqType=ifelse(grepl("SRS",Type),"SRS","SAD"), SpatialPattern=ifelse(grepl("rnz",Type),"Randomized","Unmodified")) %>%
-  group_by(SAD,SpatialPattern,DqType,NumSp,Side) %>% 
-  summarize(Freq60=hh(R.Dq,.6),Freq90=hh(R.Dq,.9)) 
-
-
-names(SadT)
-Sad1 <- filter(SadT, SAD=="Neutral") %>%
-  group_by(Type,Side,NumSp,SAD,rep) %>% summarize(NumSpAct=n()) %>% summarize(meanNumSp=mean(NumSpAct),rangeSp=paste(range(NumSpAct),collapse="-"))
-
-# Merge Sad1 with Dq1 for meanNumSp
-unique(Sad1$Type)
-unique(Dq1$DqType)
-Dq1 <- inner_join(Dq1,Sad1) %>% select(SAD, meanNumSp,Side,SpatialPattern,DqType,Freq60,Freq90)
-pow <- distinct(select(pow_ADq24,NumSp,spMeta))
-
-Dq1 <- left_join(Dq1,pow)  %>% 
-    select(SAD, spMeta,meanNumSp,Side,SpatialPattern,DqType,Freq60,Freq90)
-names(Dq1)
-write.table(format(Dq1,digits=2), file = "Dq1.dat", sep = "  ", row.names = F,quote = F)
-
-
-rm(Dq1,Sad1,pow)
 
 #
 # plot of the Fit of the method for Dq
@@ -417,27 +359,28 @@ ggsave("DqFit_Unif_64_256.png", width=8,height=6,units="in",dpi=600)
 g <- plotDqFitGQ(zq,c(-10,-4,-1,0,1,4,10))
 g
 
+setwd("Simul")
+zq <- readDq_fit(256,8,"Uniform")
+g <- plotDqFitG(zq)
+g
+setwd(oldcd)
+ggsave("DqFit_Unif_8_256.png", width=8,height=6,units="in",dpi=600) 
+
+setwd("Simul")
+zq <- readDq_fit(256,256,"Uniform")
+g <- plotDqFitG(zq)
+g
+setwd(oldcd)
+ggsave("DqFit_Unif_256_256.png", width=8,height=6,units="in",dpi=600) 
+
+
 ```
 
 
 ## Plots for publication Logseries SAD 
 
 ```{r plots_logser_spDq, eval=T,echo=F,message=F,warning=F}
-setwd("Simul")
 
-# Plot of the uniform and randomized spatial pattern for a logseries SAD with 64 species and side=256
-#
-
-#g <- plotSAD_SpatPat(64,256,"L")
-#g 
-#setwd("..")
-#ggsave("spat_Logser64_256.png", width=8,height=6,units="in",dpi=600)
-
-#unique(DqT$SAD)
-
-#g <- plotDq_Side_Sp(DqT,256,64,"Logseries")
-#g
-#ggsave("Dq_Logser64_256.png", width=8,height=4,units="in",dpi=600)
 
 g <- plotDq_Side_Sp(DqT,256,0,"Logseries")
 g
@@ -473,3 +416,54 @@ g
 setwd(oldcd)
 ggsave("DqFit_Logser_64_256.png", width=8,height=6,units="in",dpi=600) 
 
+```
+
+## Generate Tables with R2 proportions
+
+```{r R2tbl_Dq, eval=F,echo=F,message=F,warning=F}
+
+#
+# Generate Tables with R2 proportions
+#
+require(dplyr)
+hh <-function(x,c,...){
+  length(x[x>c])/length(x)
+}
+
+Dq1 <- filter(DqT, SAD=="Logseries" | SAD=="Uniform",Side==256,NumSp==8,Type=="DqSAD") 
+
+Dq1 <- filter(DqT, SAD=="Logseries" | SAD=="Uniform") %>%
+  mutate(DqType=ifelse(grepl("SRS",Type),"SRS","SAD"), SpatialPattern=ifelse(grepl("rnz",Type),"Random","Regular")) %>%
+  group_by(DqType,SAD,SpatialPattern,NumSp,Side) %>% 
+  summarize(Freq60=hh(R.Dq,.6),Freq90=hh(R.Dq,.9)) 
+
+write.table(format(Dq1,digits=2), file = "Dq1.dat", sep = "  ", row.names = F,quote = F)
+
+#
+# The same for neutral simulations with logseries metacommunity 
+#
+
+Dq1 <- filter(DqT, SAD=="Neutral" | SAD=="NeuUnif") %>%
+  mutate(DqType=ifelse(grepl("SRS",Type),"SRS","SAD"), SpatialPattern=ifelse(grepl("rnz",Type),"Randomized","Unmodified")) %>%
+  group_by(SAD,SpatialPattern,DqType,NumSp,Side) %>% 
+  summarize(Freq60=hh(R.Dq,.6),Freq90=hh(R.Dq,.9)) 
+
+
+names(SadT)
+Sad1 <- filter(SadT, SAD=="Neutral") %>%
+  group_by(Type,Side,NumSp,SAD,rep) %>% summarize(NumSpAct=n()) %>% summarize(meanNumSp=mean(NumSpAct),rangeSp=paste(range(NumSpAct),collapse="-"))
+
+# Merge Sad1 with Dq1 for meanNumSp
+unique(Sad1$Type)
+unique(Dq1$DqType)
+Dq1 <- inner_join(Dq1,Sad1) %>% select(SAD, meanNumSp,Side,SpatialPattern,DqType,Freq60,Freq90)
+pow <- distinct(select(pow_ADq24,NumSp,spMeta))
+
+Dq1 <- left_join(Dq1,pow)  %>% 
+    select(SAD, spMeta,meanNumSp,Side,SpatialPattern,DqType,Freq60,Freq90)
+names(Dq1)
+write.table(format(Dq1,digits=2), file = "Dq1.dat", sep = "  ", row.names = F,quote = F)
+
+
+rm(Dq1,Sad1,pow)
+```

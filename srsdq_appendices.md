@@ -44,108 +44,110 @@ $\rho$. Thus a hierarchical ordering of species is established. When this probab
 
 ## Appendix B Tables
 
-+-----------+---------+------------+-----------+------+-----------+-----------+
-|    SAD    | Spatial | $D_q$ Type | Number of | Side | Freq > 60 | Freq > 90 |
-|           | Pattern |            |  Species  |      |           |           |
-+===========+=========+============+===========+======+===========+===========+
-| Logseries | Random  | SAD        |         8 |  256 |      0.87 |      0.45 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Logseries | Random  | SAD        |         8 |  512 |      0.75 |      0.46 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Logseries | Random  | SAD        |        64 |  256 |      0.99 |      0.51 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Logseries | Random  | SAD        |        64 |  512 |      0.91 |      0.50 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Logseries | Random  | SAD        |       256 |  256 |      1.00 |      0.51 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Logseries | Random  | SAD        |       256 |  512 |      1.00 |      0.50 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Logseries | Random  | SRS        |         8 |  256 |      1.00 |      1.00 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Logseries | Random  | SRS        |         8 |  512 |      1.00 |      1.00 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Logseries | Random  | SRS        |        64 |  256 |      1.00 |      1.00 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Logseries | Random  | SRS        |        64 |  512 |      1.00 |      1.00 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Logseries | Random  | SRS        |       256 |  256 |      1.00 |      1.00 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Logseries | Random  | SRS        |       256 |  512 |      1.00 |      1.00 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Logseries | Regular | SAD        |         8 |  256 |      0.90 |      0.63 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Logseries | Regular | SAD        |         8 |  512 |      0.82 |      0.54 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Logseries | Regular | SAD        |        64 |  256 |      0.98 |      0.64 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Logseries | Regular | SAD        |        64 |  512 |      0.97 |      0.57 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Logseries | Regular | SAD        |       256 |  256 |      1.00 |      0.85 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Logseries | Regular | SAD        |       256 |  512 |      1.00 |      0.72 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Logseries | Regular | SRS        |         8 |  256 |      1.00 |      1.00 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Logseries | Regular | SRS        |         8 |  512 |      1.00 |      1.00 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Logseries | Regular | SRS        |        64 |  256 |      1.00 |      1.00 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Logseries | Regular | SRS        |        64 |  512 |      1.00 |      1.00 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Logseries | Regular | SRS        |       256 |  256 |      1.00 |      1.00 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Logseries | Regular | SRS        |       256 |  512 |      1.00 |      1.00 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Uniform   | Random  | SAD        |         8 |  256 |      0.43 |      0.00 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Uniform   | Random  | SAD        |         8 |  512 |      0.34 |      0.00 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Uniform   | Random  | SAD        |        64 |  256 |      0.69 |      0.18 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Uniform   | Random  | SAD        |        64 |  512 |      0.57 |      0.00 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Uniform   | Random  | SAD        |       256 |  256 |      1.00 |      0.33 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Uniform   | Random  | SAD        |       256 |  512 |      1.00 |      0.23 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Uniform   | Random  | SRS        |         8 |  256 |      1.00 |      1.00 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Uniform   | Random  | SRS        |         8 |  512 |      1.00 |      1.00 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Uniform   | Random  | SRS        |        64 |  256 |      1.00 |      1.00 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Uniform   | Random  | SRS        |        64 |  512 |      1.00 |      1.00 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Uniform   | Random  | SRS        |       256 |  256 |      1.00 |      1.00 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Uniform   | Random  | SRS        |       256 |  512 |      1.00 |      1.00 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Uniform   | Regular | SAD        |         8 |  256 |      0.99 |      0.30 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Uniform   | Regular | SAD        |         8 |  512 |      0.53 |      0.38 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Uniform   | Regular | SAD        |        64 |  256 |      1.00 |      0.79 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Uniform   | Regular | SAD        |        64 |  512 |      1.00 |      0.76 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Uniform   | Regular | SAD        |       256 |  256 |      1.00 |      0.82 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Uniform   | Regular | SAD        |       256 |  512 |      1.00 |      0.77 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Uniform   | Regular | SRS        |         8 |  256 |      1.00 |      1.00 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Uniform   | Regular | SRS        |         8 |  512 |      1.00 |      1.00 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Uniform   | Regular | SRS        |        64 |  256 |      1.00 |      1.00 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Uniform   | Regular | SRS        |        64 |  512 |      1.00 |      1.00 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Uniform   | Regular | SRS        |       256 |  256 |      1.00 |      1.00 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
-| Uniform   | Regular | SRS        |       256 |  512 |      1.00 |      1.00 |
-+-----------+---------+------------+-----------+------+-----------+-----------+
++------------+-----------+---------+-----------+------+-----------+-----------+
+| $D_q$ Type |    SAD    | Spatial | Number of | Side | Freq > 60 | Freq > 90 |
+|            |           | Pattern |  Species  |      |           |           |
++============+===========+=========+===========+======+===========+===========+
+| SAD        | Logseries | Random  |         8 |  256 |      0.87 |      0.45 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |         8 |  512 |      0.75 |      0.46 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |        64 |  256 |      0.99 |      0.51 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |        64 |  512 |      0.91 |      0.50 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |       256 |  256 |      1.00 |      0.51 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |       256 |  512 |      1.00 |      0.50 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           | Regular |         8 |  256 |      0.90 |      0.63 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |         8 |  512 |      0.82 |      0.54 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |        64 |  256 |      0.98 |      0.64 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |        64 |  512 |      0.97 |      0.57 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |       256 |  256 |      1.00 |      0.85 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |       256 |  512 |      1.00 |      0.72 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            | Uniform   | Random  |         8 |  256 |      0.43 |      0.00 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |         8 |  512 |      0.34 |      0.00 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |        64 |  256 |      0.69 |      0.18 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |        64 |  512 |      0.57 |      0.00 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |       256 |  256 |      1.00 |      0.33 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |       256 |  512 |      1.00 |      0.23 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           | Regular |         8 |  256 |      0.99 |      0.30 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |         8 |  512 |      0.53 |      0.38 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |        64 |  256 |      1.00 |      0.79 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |        64 |  512 |      1.00 |      0.76 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |       256 |  256 |      1.00 |      0.82 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |       256 |  512 |      1.00 |      0.77 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+| SRS        | Logseries | Random  |         8 |  256 |      1.00 |      1.00 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |         8 |  512 |      1.00 |      1.00 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |        64 |  256 |      1.00 |      1.00 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |        64 |  512 |      1.00 |      1.00 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |       256 |  256 |      1.00 |      1.00 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |       256 |  512 |      1.00 |      1.00 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           | Regular |         8 |  256 |      1.00 |      1.00 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |         8 |  512 |      1.00 |      1.00 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |        64 |  256 |      1.00 |      1.00 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |        64 |  512 |      1.00 |      1.00 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |       256 |  256 |      1.00 |      1.00 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |       256 |  512 |      1.00 |      1.00 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            | Uniform   | Random  |         8 |  256 |      1.00 |      1.00 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |         8 |  512 |      1.00 |      1.00 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |        64 |  256 |      1.00 |      1.00 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |        64 |  512 |      1.00 |      1.00 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |       256 |  256 |      1.00 |      1.00 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |       256 |  512 |      1.00 |      1.00 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           | Regular |         8 |  256 |      1.00 |      1.00 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |         8 |  512 |      1.00 |      1.00 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |        64 |  256 |      1.00 |      1.00 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |        64 |  512 |      1.00 |      1.00 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |       256 |  256 |      1.00 |      1.00 |
++------------+-----------+---------+-----------+------+-----------+-----------+
+|            |           |         |       256 |  512 |      1.00 |      1.00 |
++------------+-----------+---------+-----------+------+-----------+-----------+
 
 Table: Proportion of $R^2$ that are greater than 0.6 and 0.9. The $R^2$ are from linear regressions used to estimate generalized dimensions $D_q$ in simulated spatial patterns. $D_q$ was estimated for different spatial patterns: *Regular* & *Random*, with two species abundance distributions: *Logseries* & *Uniform*, and using two approaches: *SRS* and *SAD* (See main text). *Side* is the side of grid used for simulate the spatial pattern.
+
+\newpage
 
 
 +---------+--------+-----------+------+----------------+--------+--------+--------+
@@ -203,6 +205,7 @@ Table: Proportion of $R^2$ that are greater than 0.6 and 0.9. The $R^2$ are from
 Table: Proportion of $R^2$ that are greater than 0.6 and 0.9. The $R^2$ are from linear regressions used to estimate generalized dimensions $D_q$ in simulated neutral spatial patterns. $D_q$ was estimated for different spatial patterns: *Randomized* & *Unmodified*, with Logseries metacommunity, and using two approaches: *SRS* and *SAD* (See main text). *Side* is the side of grid used in the neutral model simulations.
 
 
+\newpage
 
 
 +--------+----------+----------+--------+----------+---------+----------+----------+
@@ -250,6 +253,8 @@ the number of species found in the compared communities, and the number of point
 q={-24,-22,-20,-18,-16,-14,-12,-10,-8,-6,-4,-3,-2.5,-2,-1.5,-1,-0.5,0,0.5,1,1.5,2,2.5,3,4,6,8,10,12,14,16,18,20,22,24
 }.
 
+\newpage
+
 
 +--------+----------+----------+--------+----------+---------+----------+---------+
 |  Side  |  spMeta  |  MeanSp  |  Type  |  nPower  |  power  |  nTypeI  |  typeI  |
@@ -280,6 +285,8 @@ q={-24,-22,-20,-18,-16,-14,-12,-10,-8,-6,-4,-3,-2.5,-2,-1.5,-1,-0.5,0,0.5,1,1.5,
 +--------+----------+----------+--------+----------+---------+----------+---------+
 
 Table: Power and Type I error rate for T-test comparison of the SAR exponent usually called *z* labeled D0SAD and information dimension D1SRS.
+
+\newpage
 
 
 +--------+----------+----------+--------+----------+---------+----------+---------+
@@ -324,5 +331,46 @@ Table: Power and Type I error rate for T-test comparison of the SAR exponent usu
 
 Table: Power and Type I error rate for SAD, DqSAD and DqSRS using Anderson-Darling test. The number of points used for SAD comparisons is the number of species found in the communities. The number of points used for multifractal spectra correspond to the q in the range -10 to 10 (n=21), according to the following set q={-10,-8,-6,-4,-3,-2.5,-2,-1.5,-1,-0.5,0,0.5,1,1.5,2,2.5,3,4,6,8,10}.
 
+\newpage
 
 
+## Appendix figures
+
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=6.5in]{Dq_UniLog_NumSp_512.png}
+\caption{Generalized dimension spectra $D_q$ of simulated species spatial patterns. The points are means of 10 repetitions of simulated patterns using a spatial grid of side=512. A Logseries or uniform species abundance distribution were used, with 8,64 and 256 species. Two forms of generalized dimensions were estimated: DqSRS, from species rank surface $D_q^{SRS}$ and DqSAD, estimated from species abundance distribution $D_q^{SAD}$. Two different spatial patterns were used: Regular, the species are distributed in vertical bands, Randomized the spatial distribution of species was randomized.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=6.5in]{DqFit_Unif_8_256.png}
+\caption{Linear fit from generalized dimension ($D_q$) estimation showing a range of $q$ from -4 to 4. The spatial grid has a side=256 occupied with 8 species with a uniform abundance distribution. Two different spatial patterns were used: a) Regular, a regular spatial pattern with species distributed in vertical bands of equal width. b) Randomized, the positions of species in the grid are randomized. Two kinds of generalized dimension were estimated: DqSRS corresponds the fit of $D_q^{SRS}$ (see text) and DqSAD is the fit from the estimation of $D_q^{SAD}$ (see text). $Z_q(\epsilon)$ corresponds to the partition function calculated for a box with side $\epsilon$ in the DqSRS case. In DqSAD case, $\epsilon$ represent the area of the box used.}
+\end{figure}. 
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=6.5in]{DqFit_Unif_256_256.png}
+\caption{Linear fit from generalized dimension ($D_q$) estimation showing a range of $q$ from -4 to 4. The spatial grid has a side=256 occupied with 256 species with a uniform abundance distribution. Two different spatial patterns were used: a) Regular, a regular spatial pattern with species distributed in vertical bands of equal width. b) Randomized, the positions of species in the grid are randomized. Two kinds of generalized dimension were estimated: DqSRS corresponds the fit of $D_q^{SRS}$ (see text) and DqSAD is the fit from the estimation of $D_q^{SAD}$ (see text). $Z_q(\epsilon)$ corresponds to the partition function calculated for a box with side $\epsilon$ in the DqSRS case. In DqSAD case, $\epsilon$ represent the area of the box used.}
+\end{figure}. 
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=6.5in]{DqFit_Logser_8_256.png}
+\caption{Linear fit from generalized dimension ($D_q$) estimation showing a range of $q$ from -4 to 4. The spatial grid has a side=256 occupied with 8 species with a uniform logseries distribution. Two different spatial patterns were used: a) Regular, a regular spatial pattern with species distributed in vertical bands of equal width. b) Randomized, the positions of species in the grid are randomized. Two kinds of generalized dimension were estimated: DqSRS corresponds the fit of $D_q^{SRS}$ (see text) and DqSAD is the fit from the estimation of $D_q^{SAD}$ (see text). $Z_q(\epsilon)$ corresponds to the partition function calculated for a box with side $\epsilon$ in the DqSRS case. In DqSAD case, $\epsilon$ represent the area of the box used.}
+\end{figure}. 
+
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=6.5in]{DqFit_Logser_64_256.png}
+\caption{Linear fit from generalized dimension ($D_q$) estimation showing a range of $q$ from -4 to 4. The spatial grid has a side=256 occupied with 64 species with a uniform logseries distribution. Two different spatial patterns were used: a) Regular, a regular spatial pattern with species distributed in vertical bands of equal width. b) Randomized, the positions of species in the grid are randomized. Two kinds of generalized dimension were estimated: DqSRS corresponds the fit of $D_q^{SRS}$ (see text) and DqSAD is the fit from the estimation of $D_q^{SAD}$ (see text). $Z_q(\epsilon)$ corresponds to the partition function calculated for a box with side $\epsilon$ in the DqSRS case. In DqSAD case, $\epsilon$ represent the area of the box used.}
+\end{figure}. 
+
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=6.5in]{DqFit_Logser_256_256.png}
+\caption{Linear fit from generalized dimension ($D_q$) estimation showing a range of $q$ from -4 to 4. The spatial grid has a side=256 occupied with 256 species with a uniform logseries distribution. Two different spatial patterns were used: a) Regular, a regular spatial pattern with species distributed in vertical bands of equal width. b) Randomized, the positions of species in the grid are randomized. Two kinds of generalized dimension were estimated: DqSRS corresponds the fit of $D_q^{SRS}$ (see text) and DqSAD is the fit from the estimation of $D_q^{SAD}$ (see text). $Z_q(\epsilon)$ corresponds to the partition function calculated for a box with side $\epsilon$ in the DqSRS case. In DqSAD case, $\epsilon$ represent the area of the box used.}
+\end{figure}. 
