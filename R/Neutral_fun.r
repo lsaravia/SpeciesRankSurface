@@ -92,7 +92,7 @@ calcRankSAD_by  <- function(den,vv,cols)
   hh <- function(x) { 
   x1 <- x[x[[vv]]>0,]
   x1$parms <- paste(unique(x[,cols]),collapse="_")
-  x1$Rank <- nrow(x1) - rank(x1[[vv]]) +1
+  x1$Rank <- nrow(x1) - rank(x1[[vv]],ties.method="min") +1
   return(x1)
   }
   ddply(den, cols,hh )
@@ -2279,4 +2279,245 @@ readDq_fit <- function(side,nsp,sad="U") {
   zq1 <- readZq(paste0("t.", fname1),"q.sed")
   zq1$Type <- "rnzDqSAD"
   zq<- rbind(zq,zq1)
+}
+
+
+# Plot of multiespecies spatial pattern generated with neutral model and logseries SAD
+#
+#
+plotNeutral_SpatPat<-function(nsp,side,time,meta="L",ReplRate=c(0,0.001,0.01,0.1,1))
+{
+  require(ggplot2)
+ 
+  spa <- data.frame()
+  for(i in 1:length(ReplRate)) {
+    if(toupper(meta)=="L") {
+      bname <- paste0("neuFish",nsp,"_",side,"R", ReplRate[i])
+    } else {
+      bname <- paste0("neuUnif",nsp,"_",side,"R", ReplRate[i])
+    }
+    
+    fname <- paste0(bname,"-",formatC(time,width=4,flag=0),".sed")
+    
+    sp1 <-read_sed2xy(fname)
+    sp1$Type <- paste("Replacement:", ReplRate[i])
+    sp1$Species <- paste("Species:",length(unique(sp1$v)))
+
+    spa <-  rbind(spa,sp1)
+  }
+  #lvl <- unique(spa$Type)
+  #spa$Type <- factor(spa$Type, levels = lvl)
+  
+  g <- ggplot(spa, aes(x, y, fill = factor(v))) + geom_raster(hjust = 0, vjust = 0) + 
+    theme_bw() + coord_equal() 
+  
+  g <- g + scale_fill_grey(guide=F) +
+    scale_x_continuous(expand=c(.01,.01)) + 
+    scale_y_continuous(expand=c(.01,.01)) +  
+    labs(x=NULL, y=NULL) 
+
+  g <- g + facet_wrap( ~ Type +Species,ncol=2) 
+  #g <- ggplot(spa, aes(x, y, fill = v)) + geom_raster(hjust = 0, vjust = 0) + theme_bw() + coord_equal() + facet_grid(. ~ Type)
+  #g <- g + scale_fill_gradient(low="red", high="green", guide=F) +
+  #    labs(x=NULL, y=NULL) 
+}
+
+
+simul_NeutralSAD <- function(nsp,side,time,meta="L",ReplRate=c(0,0.001,0.01,0.1,1)) {
+  if(!exists("neuBin")) stop("Variable neuBin not set (neutral binary)")
+  if(!require(untb))  stop("Untb package not installed")
+
+  if(toupper(meta)=="L") {
+    prob <- genFisherSAD(nsp,side)
+    sadName <- "Neutral"
+  } else {
+    prob <- rep(1/nsp,nsp)  
+    sadName <- "NeuUnif"
+  }
+  sad <- data.frame()
+  for(i in 1:length(ReplRate)) {
+    if(toupper(meta)=="L") {
+      neuParm <- paste0("fishE",nsp,"_",side,"R", ReplRate[i])
+      bname <- paste0("neuFish",nsp,"_",side,"R", ReplRate[i])
+    } else {
+      neuParm <- paste0("unifE",nsp,"_",side,"R", ReplRate[i])
+      bname <- paste0("neuUnif",nsp,"_",side,"R", ReplRate[i])
+    }
+
+    genNeutralParms(neuParm,side,prob,1,0.2,0.4,0.001,ReplRate[i])
+
+    # Delete old simulations
+    system(paste0("rm ",bname,"*"))
+
+    par <- read.table("sim.par",quote="",stringsAsFactors=F)
+    # Change base name
+    par[par$V1=="nEvals",]$V2 <- time
+    par[par$V1=="inter",]$V2 <- time # interval to measure Density and Diversity
+    par[par$V1=="init",]$V2 <- time  # Firs time of measurement = interval
+    par[par$V1=="modType",]$V2 <- 4 # Hierarchical saturated
+    par[par$V1=="sa",]$V2 <- "S" # Save a snapshot of the model
+    par[par$V1=="baseName",]$V2 <- bname 
+    par[par$V1=="minBox",]$V2 <- 2
+    par[par$V1=="pomac",]$V2 <- 0 # 0:one set of parms 
+                                  # 1:several simulations with pomac.lin parameters 
+
+    parfname <- paste0("sim",nsp,"_",side,"_",ReplRate[i],".par")
+    write.table(par, parfname, sep="\t",row.names=F,col.names=F,quote=F)
+    s <- system("uname -a",intern=T)
+    if(grepl("i686",s)) {
+      system(paste(neuBin,parfname,paste0(neuParm,".inp")))
+    } else {
+      system(paste(neuBin64,parfname,paste0(neuParm,".inp")))
+    }
+
+    #fname <- paste0("neuFish",nsp,"Density.txt")
+    #sad1 <- meltDensityOut_NT(fname,nsp)
+
+    
+    fname <- paste0(bname,"-",formatC(time,width=4,flag=0),".sed")
+    spa <- read_sed(fname)
+
+    sad1 <- data.frame(table(spa),Type="SAD",Side=side,NumSp=nsp,SAD=sadName,RplRt=ReplRate[i])
+    sad <- rbind(sad,sad1)
+  }
+  return(sad)
+}
+
+# Plot of Dq multiespecies spatial pattern generated with neutral model and logseries SAD
+#
+#
+plotNeutral_Dq<-function(nsp,side,time,meta="L",ReplRate=c(0,0.001,0.01,0.1,1))
+{
+  require(ggplot2)
+  if(!is.null(ReplRate))
+  { 
+    Dq3 <- data.frame()
+    for(i in 1:length(ReplRate)) {
+      if(toupper(meta)=="L") {
+        bname <- paste0("neuFish",nsp,"_",side,"R", ReplRate[i])
+      } else {
+        bname <- paste0("neuUnif",nsp,"_",side,"R", ReplRate[i])
+      }
+      
+      fname <- paste0(bname,"-",formatC(time,width=4,flag=0),".sed")
+
+      Dq1<- calcDq_multiSBA(fname,"q.sed 2 1024 20 S",mfBin,T)
+      Dq1$DqType <- "DqSRS"
+      Dq1$ReplacementRate <- ReplRate[i]
+      Dq2<- calcDq_multiSBA(fname,"q.sed 2 1024 20 E",mfBin,T)
+      Dq2$DqType <- "DqSAD"
+      Dq2$ReplacementRate <- ReplRate[i]
+
+      Dq3 <- rbind(Dq3,Dq1,Dq2)
+    }
+  } else {
+    if(nsp==0){
+      Dq3 <- data.frame()
+      for(nsp in c(8,64,256))
+      {
+        Dq3 <- rbind(Dq3, plotNeutral_Dq_aux(nsp,side))  
+      }
+    } else {
+      Dq3 <- plotNeutral_Dq_aux(nsp,side)  
+    }
+  }
+
+  g <- ggplot(Dq3, aes(x=q, y=Dq, shape=factor(ReplacementRate))) +
+            geom_errorbar(aes(ymin=Dq-SD.Dq, ymax=Dq+SD.Dq), width=.1,colour="gray") +
+            geom_point(size=1.3) + theme_bw() + ylab(expression(D[q]))
+  g <- g + scale_shape_manual(values=c(21,24,4,25,3,8),guide=guide_legend(title="Replacement")) 
+  if(nsp==0)
+    g <- g + facet_wrap(spMeta ~ DqType, scales="free",ncol=2)
+  else
+    g <- g + facet_wrap(~ DqType, scales="free",ncol=2)
+  
+  print(g)
+}
+
+plotNeutral_Dq_aux<-function(nsp,side,time=500,meta="L")
+{
+  if(toupper(meta)=="L") {
+    bname <- paste0("neuFish",nsp,"_",side)
+  } else {
+    bname <- paste0("neuUnif",nsp,"_",side)
+  }
+  fname <- paste0(bname,"T",time,"mfOrd.txt")
+  Dq1 <- readNeutral_calcDq(fname)
+  Dq1$DqType <- "DqSRS"
+
+  fname <- paste0(bname,"T",time,"mfSAD.txt")
+  Dq2 <- readNeutral_calcDq(fname)
+  Dq2$DqType <- "DqSAD"
+  
+  Dq1 <- rbind(Dq1,Dq2)
+  require(dplyr)
+  
+  Dq3 <- filter(Dq1,MortalityRate==.2,DispersalDistance==0.4,ColonizationRate==0.001) %>% 
+    group_by(DqType,ReplacementRate,q) %>% summarize(SD.Dq=sd(Dq),Dq=mean(Dq),count=n()) 
+  Dq3$spMeta <- ceiling(as.numeric(nsp)*1.33)
+  return(Dq3)
+} 
+
+plotNeutral_SAD<-function(nsp,side,time=500,meta="L")
+{
+  require(ggplot2)
+  require(plyr)
+  require(dplyr)
+  den<- data.frame()
+  if(nsp!=0){
+    if(toupper(meta)=="L") {
+      bname <- paste0("neuFish",nsp,"_",side)
+    } else {
+      bname <- paste0("neuUnif",nsp,"_",side)
+    }
+    fname <- paste0(bname,"T",time,"Density.txt")
+    spMeta <- ceiling(as.numeric(nsp)*1.33)
+
+    den1 <- meltDensityOut_NT(fname,spMeta)
+
+    den <- filter(den1,MortalityRate==.2,DispersalDistance==0.4,ColonizationRate==0.001) 
+    den <- calcRankSAD_by(den,"value",1:5)
+    
+    
+    den <- group_by(den,ReplacementRate,Rank) %>% summarize(Freq=mean(value),count=n()) 
+    
+
+  } else {
+    for(nsp in c(8,64,256))
+    {
+      den <-rbind(den,plotNeutral_SAD_aux(nsp,side))
+    }
+    den <- mutate(den, metaLbl =paste0("Metacommunity sp.",spMeta))
+    ml <- unique(den$metaLbl)
+    den$metaLbl <- factor(den$metaLbl,levels=c(ml[1],ml[2], ml[3]))
+    g <- ggplot(den,aes(x=Rank,y=log(Freq),shape=factor(ReplacementRate))) +  theme_bw() + geom_point(size=1)
+    g <- g + scale_shape_manual(values=c(21,24,4,25,3,8),guide=guide_legend(title="Replacement")) +
+      geom_smooth(se=F,span = 0.95,colour="grey") 
+    g <- g + facet_wrap(~ metaLbl, scales="free",ncol=2)
+    
+  }
+  
+  print(g)
+  return(den)
+}
+
+plotNeutral_SAD_aux<-function(nsp,side,time=500,meta="L")
+{
+  if(toupper(meta)=="L") {
+    bname <- paste0("neuFish",nsp,"_",side)
+  } else {
+    bname <- paste0("neuUnif",nsp,"_",side)
+  }
+  fname <- paste0(bname,"T",time,"Density.txt")
+  spMeta <- ceiling(as.numeric(nsp)*1.33)
+
+  den1 <- meltDensityOut_NT(fname,spMeta)
+
+  den3 <- filter(den1,MortalityRate==.2,DispersalDistance==0.4,ColonizationRate==0.001) 
+  den3 <- calcRankSAD_by(den3,"value",1:5)
+  
+  
+  den3 <- group_by(den3,ReplacementRate,Rank) %>% summarize(Freq=mean(value),count=n()) 
+  den3$spMeta <- spMeta
+  return(den3)  
 }

@@ -437,3 +437,41 @@ require(pander)
 pandoc.table( mutate(pow_ADq10 ,spMeta=ceiling(as.numeric(NumSp)*1.33),power=as.numeric(power),typeI=as.numeric(typeI)) %>% select(Side,spMeta,MeanSp,c(5:9))
 ,style="grid",split.tables=Inf,round=4)
 ```
+
+## Simulations to plot spatial patterns with differents replacement Rate
+
+```{r neutral_SpSimPlot256, eval=F,echo=F,message=T,warning=T}
+setwd("Simul")
+
+
+# meta = 64, side=250, time=500
+sad64 <- simul_NeutralSAD(64,256,500)
+
+# Plot of the spatial pattern for Neutral model with Logseries SAD with 8,64,256 species and side=512/256
+#
+g <- plotNeutral_SpatPat(64,256,500,"L",c(0,0.001,0.01,0.1))
+g
+
+setwd("..")
+ggsave("spat_NeuLog64_256.png", width=8,height=6,units="in",dpi=600)
+
+setwd("Simul")
+
+plotNeutral_Dq(64,256,500,"L",NULL) # Null use previous simulations 
+
+setwd("..")
+ggsave("Dq_NeuLog64_256.png", width=8,height=4,units="in",dpi=600)
+
+
+
+### Plot Average SAD!
+setwd("Simul")
+den <- plotNeutral_SAD(0,256)
+
+setwd("..")
+ggsave("RAD_NeuLog_spMeta_256.png", width=8,height=6,units="in",dpi=600)
+
+
+
+# USAR dplyr en calcRankSAD_by (ver SP_simul 428)
+```

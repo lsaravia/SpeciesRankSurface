@@ -149,13 +149,17 @@ The uniform SAD produces $D_q^{SRS}$ with higher $\Delta D_q$ for regular patter
 
 The $R^2$ for $D_q^{SRS}$ are all greater than 0.9 and are all greater than $D_q^{SAD}$ (Appendix table 1) and the linear trends are also better (Figure 3). An example of linear trends for different number of species and different SAD is shown in the appendix (Appendix figures 2-6). The same qualitative patterns of $D_q^{SAD}$ and $D_q^{SRS}$ are observed for simulations with side=512 (Appendix figure 1).
 
-## Ecological communities
 
 
+## Simulated Neutral communities
 
-## Neutral Model
+An examples of the patterns simulated by the Neutral/hierarchical model are shown in Figure 5. The spatial patterns are similar to the eye except because communities with more hierarchy are more dark. This is because the model produces hierarchical communities dominated by species with lower numbers (see appendix model description). With more degree of competitive hierarchy very few species dominate and several rare species are scattered over the landscape.
+
+For negative q $D_q^{SAD}$ spectra quickly reach a maximum and a minimum with positive q, this pattern is more pronounced with hierarchical communities because they tend to have two types of species: dominant ones reflected in positive side and rare species in the negative. Thus when the communities becomes more neutral and the SAD do not have an abrupt declination, Dq tend to reach the asymptotic values more slowly. 
+## Dq plots for different metacommunities 
 
 
+* DqSAD y DqSRS de los distintos Replacement5
 
 # Discussion
 

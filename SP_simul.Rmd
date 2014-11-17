@@ -467,3 +467,5 @@ write.table(format(Dq1,digits=2), file = "Dq1.dat", sep = "  ", row.names = F,qu
 
 rm(Dq1,Sad1,pow)
 ```
+
+
