@@ -419,7 +419,7 @@ plotPow_MeanSp_side(pow_ADq10)
 ggsave("powADq10_MeanSp_Side.png", width=6,height=6,units="in",dpi=600)
 
 
-## ADD ANOTHER COLUM WITH MEANSP
+require(plyr)
 require(dplyr)
 # DONE! in .RData
 #
@@ -429,16 +429,24 @@ require(dplyr)
 #comp_ADq10 <- comp_ADq10 %>% filter(MrtR1==0.2 & DspD1==0.04 & ClnR1==0.001) %>% 
 #  left_join(unique(pow_ADq10[,1:3]),by=c("Side","NumSp"))
 
-plotPow_MeanSp_difR(comp_ADq10)
+p1 <- plotPow_MeanSp_difR(comp_ADq10)
+ggsave("powADq10_DifR_256.png", width=6,height=6,units="in",dpi=600)
 
-ggsave("powADq10_DifReplacement.png", width=6,height=6,units="in",dpi=600)
+p2 <- plotPow_MeanSp_difR(comp_ADq10,512)
+ggsave("powADq10_DifR_512.png", width=6,height=6,units="in",dpi=600)
+
+p1 <- rbind(p1,p2)
+p1 <- select(p1,Side,spMeta,Type:n) %>% arrange(Side,spMeta,Type,DifR) 
+write.table(format(p1,digits=2), file = "Dq1.dat", sep = "  ", row.names = F,quote = F)
+
+rm(p1,p2)
 
 require(pander)
 pandoc.table( mutate(pow_ADq10 ,spMeta=ceiling(as.numeric(NumSp)*1.33),power=as.numeric(power),typeI=as.numeric(typeI)) %>% select(Side,spMeta,MeanSp,c(5:9))
 ,style="grid",split.tables=Inf,round=4)
 ```
 
-## Simulations to plot spatial patterns with differents replacement Rate
+## Simulations to plot spatial patterns with different replacement Rate
 
 ```{r neutral_SpSimPlot256, eval=F,echo=F,message=T,warning=T}
 setwd("Simul")
@@ -449,19 +457,44 @@ sad64 <- simul_NeutralSAD(64,256,500)
 
 # Plot of the spatial pattern for Neutral model with Logseries SAD with 8,64,256 species and side=512/256
 #
+g <- plotNeutral_SpatPat(64,256,500,"L",c(0,0.001,0.01,0.1,1))
 g <- plotNeutral_SpatPat(64,256,500,"L",c(0,0.001,0.01,0.1))
 g
+
 
 setwd("..")
 ggsave("spat_NeuLog64_256.png", width=8,height=6,units="in",dpi=600)
 
+
+# Plot Dq for simulations in txt files (NULL)
+#
+
 setwd("Simul")
-
 plotNeutral_Dq(64,256,500,"L",NULL) # Null use previous simulations 
-
 setwd("..")
 ggsave("Dq_NeuLog64_256.png", width=8,height=4,units="in",dpi=600)
 
+setwd("Simul")
+plotNeutral_Dq(8,256,500,"L",NULL) # Null use previous simulations 
+setwd("..")
+ggsave("Dq_NeuLog8_256.png", width=8,height=4,units="in",dpi=600)
+
+setwd("Simul")
+plotNeutral_Dq(256,256,500,"L",NULL) # Null use previous simulations 
+setwd("..")
+ggsave("Dq_NeuLog256_256.png", width=8,height=4,units="in",dpi=600)
+
+# Plot simulations for all metacommunities 
+#
+setwd("Simul")
+plotNeutral_Dq(0,256,500,"L",NULL) # Null use previous simulations 
+setwd("..")
+ggsave("Dq_NeuLog_NumSp_256.png", width=8,height=8,units="in",dpi=600)
+
+setwd("Simul")
+plotNeutral_Dq(0,512,500,"L",NULL) # Null use previous simulations 
+setwd("..")
+ggsave("Dq_NeuLog_NumSp_512.png", width=8,height=8,units="in",dpi=600)
 
 
 ### Plot Average SAD!
@@ -472,6 +505,29 @@ setwd("..")
 ggsave("RAD_NeuLog_spMeta_256.png", width=8,height=6,units="in",dpi=600)
 
 
+# Create table with R2 of neutral models Dq
+#
 
-# USAR dplyr en calcRankSAD_by (ver SP_simul 428)
+setwd("Simul")
+Dqq <- R2Neutral_Dq(256)
+Dqq <- rbind(Dqq,R2Neutral_Dq(512))
+
+Dqq <- arrange(Dqq,DqType,Side,spMeta,ReplacementRate,Freq60,Freq90) %>% select(DqType,Side,spMeta,meanSp,ReplacementRate,Freq60,Freq90)
+
+
+setwd("..")
+
+#write.table(format(Dqq,digits=2), file = "Dq1.dat", sep = "  ", row.names = F,quote = F)
+
+require(pander)
+pandoc.table(format(Dqq,digits=2),style="grid",split.tables=Inf)
+
+# Table with mean number of species by replacement rate
+#
+Dqq <- select(Dqq,Side,spMeta,ReplacementRate,meanSp)
+
+#write.table(format(Dqq,digits=2), file = "Dq1.dat", sep = "  ", row.names = F,quote = F)
+pandoc.table(format(Dqq,digits=2),style="grid",split.tables=Inf)
+
+rm(Dqq,Dqq1)
 ```

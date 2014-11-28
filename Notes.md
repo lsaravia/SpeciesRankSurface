@@ -180,3 +180,10 @@ how the value of z from our model can take any value between
 0 and 1 and is a simple function of m alone, independent of the
 other model parameters.
 
+
+1. S. R. Supp, X. Xiao, S. K. M. Ernest, and E. P. White. 2012. An experimental test of the response of macroecological patterns to altered species interactions. Ecology 93: 2505-2511. doi:10.1890/12-0370.1
+
+http://jabberwocky.weecology.org/2013/01/16/do-macroecological-patterns-respond-to-altered-species-interactions-research-summary/
+
+Despite a long history of documenting macroecological patterns, an understanding of what determines pattern behavior, why patterns are so easily predicted by so many different models, and how we should go about addressing real ecological problems using a macroecological approach has still not been reached.
+

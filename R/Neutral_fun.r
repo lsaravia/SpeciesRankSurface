@@ -2053,7 +2053,7 @@ plotPow_MeanSp_side <- function(pow){
 
 }
 
-plotPow_MeanSp_difR <- function(comp)
+plotPow_MeanSp_difR <- function(comp,side=256)
 {
   require(ggplot2)
   # Recalculate power from comp_AD
@@ -2069,23 +2069,28 @@ plotPow_MeanSp_difR <- function(comp)
   # Calculate power in fuction of replacement rate difference
   #comp$spMeta <- ceiling(as.numeric(comp$NumSp)*1.33)
 
-  c1 <- with(comp,comp[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2!=RplR1,])
+  c1 <- with(comp,comp[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2!=RplR1 & Side==side,])
   c1$DifR <- with(c1,abs(RplR2-RplR1))
 
-  c2 <- ddply(c1,.(NumSp,Type,DifR),hh)
+  c2 <- ddply(c1,.(Side,NumSp,Type,DifR),hh)
+  c2$spMeta <- ceiling(as.numeric(c2$NumSp)*1.33)
 
-  g <- ggplot(c2,aes(x=DifR,y=power)) + 
-    geom_point(shape=19,position = position_jitter(height = .05),aes(colour=as.factor(Type))) + 
-    facet_grid( mean_sp ~ .) +
+  g <- ggplot(c2,aes(x=as.factor(DifR),y=power)) + 
+#    geom_point(shape=19,position = position_jitter(height = .01),aes(colour=as.factor(Type))) + 
+    geom_point(aes(shape=as.factor(Type))) + 
+    facet_grid( spMeta ~ .) +
     ylab(bquote("Rejection Rate of"~H[0]~"(" ~alpha~"= 0.05)")) +
-    xlab(bquote(Delta ~"Replacement rate")) +
-    scale_size_continuous(name="Type I error") +
-    scale_colour_discrete(name="") 
+    xlab(bquote(Delta ~"Replacement")) +
+    scale_shape_manual(values=c(21,24,4,25,3,8),guide=guide_legend(title="")) 
+#    scale_size_continuous(name="Type I error") +
+#    scale_colour_discrete(name="") 
 
-  print(g+ scale_x_log10(breaks=c(0.001,0.01,0.09,1))+theme_bw())
+  #print(g+ scale_x_log10(breaks=c(0.001,0.01,0.09,1))+theme_bw())
+  print(g+ theme_bw())
 
-  require(pander)
-  pandoc.table(c2,style="grid")
+#  require(pander)
+#  pandoc.table(c2,style="grid")
+  return(c2)
 }
 
 # Plot of multiespecies spatial pattern generated with diffent SAD
@@ -2315,8 +2320,10 @@ plotNeutral_SpatPat<-function(nsp,side,time,meta="L",ReplRate=c(0,0.001,0.01,0.1
     scale_x_continuous(expand=c(.01,.01)) + 
     scale_y_continuous(expand=c(.01,.01)) +  
     labs(x=NULL, y=NULL) 
-
+  
   g <- g + facet_wrap( ~ Type +Species,ncol=2) 
+  print(g)
+  
   #g <- ggplot(spa, aes(x, y, fill = v)) + geom_raster(hjust = 0, vjust = 0) + theme_bw() + coord_equal() + facet_grid(. ~ Type)
   #g <- g + scale_fill_gradient(low="red", high="green", guide=F) +
   #    labs(x=NULL, y=NULL) 
@@ -2413,10 +2420,12 @@ plotNeutral_Dq<-function(nsp,side,time,meta="L",ReplRate=c(0,0.001,0.01,0.1,1))
   } else {
     if(nsp==0){
       Dq3 <- data.frame()
-      for(nsp in c(8,64,256))
+      for(num in c(8,64,256))
       {
-        Dq3 <- rbind(Dq3, plotNeutral_Dq_aux(nsp,side))  
+        Dq3 <- rbind(Dq3, plotNeutral_Dq_aux(num,side))  
       }
+      Dq3 <- mutate(Dq3,spMeta = paste0("Metacommunity sp.",spMeta))
+      Dq3$spMeta <- factor(Dq3$spMeta,levels=unique(Dq3$spMeta))
     } else {
       Dq3 <- plotNeutral_Dq_aux(nsp,side)  
     }
@@ -2426,11 +2435,12 @@ plotNeutral_Dq<-function(nsp,side,time,meta="L",ReplRate=c(0,0.001,0.01,0.1,1))
             geom_errorbar(aes(ymin=Dq-SD.Dq, ymax=Dq+SD.Dq), width=.1,colour="gray") +
             geom_point(size=1.3) + theme_bw() + ylab(expression(D[q]))
   g <- g + scale_shape_manual(values=c(21,24,4,25,3,8),guide=guide_legend(title="Replacement")) 
-  if(nsp==0)
-    g <- g + facet_wrap(spMeta ~ DqType, scales="free",ncol=2)
-  else
-    g <- g + facet_wrap(~ DqType, scales="free",ncol=2)
   
+  if(nsp==0){
+    g <- g + facet_wrap(spMeta ~ DqType, scales="free",ncol=2)
+  } else {
+    g <- g + facet_wrap(~ DqType, scales="free",ncol=2)
+  }
   print(g)
 }
 
@@ -2457,6 +2467,55 @@ plotNeutral_Dq_aux<-function(nsp,side,time=500,meta="L")
   Dq3$spMeta <- ceiling(as.numeric(nsp)*1.33)
   return(Dq3)
 } 
+
+R2Neutral_Dq<-function(side,time=500,meta="L")
+{
+  require(dplyr)
+  hh <-function(x,c,...){
+    length(x[x>c])/length(x)
+  }
+
+  Dq3 <- data.frame()
+  for(nsp in c(8,64,256))
+  {
+    if(toupper(meta)=="L") {
+      bname <- paste0("neuFish",nsp,"_",side)
+    } else {
+      bname <- paste0("neuUnif",nsp,"_",side)
+    }
+    fname <- paste0(bname,"T",time,"mfOrd.txt")
+    Dq1 <- readNeutral_calcDq(fname)
+    Dq1$DqType <- "DqSRS"
+
+    fname <- paste0(bname,"T",time,"mfSAD.txt")
+    Dq2 <- readNeutral_calcDq(fname)
+    Dq2$DqType <- "DqSAD"
+    
+    Dq1 <- rbind(Dq1,Dq2)
+    require(dplyr)
+    
+    Dq1 <- filter(Dq1,MortalityRate==.2,DispersalDistance==0.4,ColonizationRate==0.001) %>% 
+      group_by(DqType,ReplacementRate) %>% 
+      summarize(Freq60=hh(R.Dq,.6),Freq90=hh(R.Dq,.9)) 
+
+    Dq1$spMeta <- ceiling(as.numeric(nsp)*1.33)
+
+
+    fname <- paste0(bname,"T",time,"Density.txt")
+    den1 <- meltDensityOut_NT(fname,unique(Dq1$spMeta))
+    den1 <- filter(den1,MortalityRate==.2,DispersalDistance==0.4,ColonizationRate==0.001) %>% 
+      group_by(rep,ReplacementRate) %>% summarize(nsp=n()) %>%
+      group_by(ReplacementRate) %>% summarize(meanSp=mean(nsp))
+    Dq1 <- left_join(Dq1,den1)   
+
+    Dq3 <- rbind(Dq3,Dq1)
+    
+  }
+  Dq3$Side <- side
+  return(Dq3)
+} 
+
+
 
 plotNeutral_SAD<-function(nsp,side,time=500,meta="L")
 {
