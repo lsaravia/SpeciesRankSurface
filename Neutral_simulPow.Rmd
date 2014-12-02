@@ -457,8 +457,8 @@ sad64 <- simul_NeutralSAD(64,256,500)
 
 # Plot of the spatial pattern for Neutral model with Logseries SAD with 8,64,256 species and side=512/256
 #
-g <- plotNeutral_SpatPat(64,256,500,"L",c(0,0.001,0.01,0.1,1))
-g <- plotNeutral_SpatPat(64,256,500,"L",c(0,0.001,0.01,0.1))
+g <- plotNeutral_SpatPat(64,256,500,"L",c(0.1,1))
+g <- plotNeutral_SpatPat(64,256,500,"L",c(0,0.01,0.1,1))
 g
 
 

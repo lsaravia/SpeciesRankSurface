@@ -1,5 +1,7 @@
 # Species rank distributions in space: a multifractal analysis
 
+# Combining species abundances and spatial patterns to compare communities
+
 **Leonardo A. Saravia**, Ph.D.
 
 Instituto de Ciencias Básicas
@@ -138,7 +140,7 @@ The $R^2$ for $D_q^{SRS}$ are all greater than 0.9 and are all greater than $D_q
 
 Examples of the patterns simulated by the Neutral/hierarchical model are shown in Figure 5. More hierarchical communities with are more dark. By definition hierarchical communities have more competitive species with lower index, and neutral communities have more abundant species with higher index numbers, determined by metacommunity abundance (see appendix model description). With more degree of competitive hierarchy one or few species dominate and several rare species are scattered over the landscape (Figure 6). This produces a mostly uniform pattern of dominant species with rare species distributed at random. In neutral communities the most abundant species are not so dominant (Figure 6), they left space for species with intermediate abundances, and that produces a pattern of several aggregated species. Aggregation is produced in this model only because dispersal is mainly near the parent. 
 
-For both estimated $D_q$ the $R^2$ are very good, $D_q^{SRS}$ shows always $R^2$>0.9 and $D_q^{SAD}$ have in almost all cases $R^2$>0.6 and a 50% or more of the cases greater than 0.9 (Appendix table 2).
+For both estimated $D_q$ the $R^2$ are very good, $D_q^{SRS}$ shows always $R^2$>0.9 and $D_q^{SAD}$ have in almost all cases $R^2$>0.6 and a 50% or more of the cases greater than 0.9 (Appendix table 2). Thus both satisfy the rule of thumb described previously.
 
 There are two groups of $D_q^{SAD}$: one composed of neutral like communities for $\rho < 0.1$ and another composed of more hierarchical ones for $\rho >0.1$. The curves for hierarchical communities are more separated for negative $q$ than for positive $q$. In neutral communities this pattern is inverted, for positive $q$ the curves are more different. This reflects the patterns in SAD: hierarchical communities have one or few relatively abundant species and this is why $D_q^{SAD}$ reach 0 quickly, no new abundant species are found when scale changes. Neutral communities have more species with intermediate densities and this produces $D_q^{SAD} > 0$ in the positive side. 
 
@@ -159,34 +161,35 @@ For $D_q^{SAD}$ and $D_q^{SRS}$ I have the possibility to use different ranges o
 
 Using only one dimension of the spectra ($D_0^{SAD}$ and $D_1^{SRS}$) result in a power generally below 0.5 (Table 2) and the type I error is around 0.4, much greater than $\alpha$. These high type I error values are expected due to the presence of spatial autocorrelations in the dependent variable [@Legendre2002]. Parameter estimates can be corrected in different ways [@Legendre2012], but these procedures should not increase the power of $D_0^{SAD}$ and $D_1^{SRS}$.  
 
-For communities with lower species numbers (11 species in the metacommunity) the comparisons made with SAD have a constant low power across $\Delta \rho$, so no matter how different are the communities as the points used in the test are the number of species the power is low (Table 3). Generalized dimensions $D_q^{SAD}$ and $D_q^{SRS}$ in contrast have a high power but Type I error is also greater than $\alpha$. One way to alleviate this problem is to check for a coincidence of the two methods SAD & $D_q$, another way would be to rise the number of points used inside the $q$ range, because $D_q$ could be calculated for any real number. I used 21 points (Table 3) but that could be increased, the only restriction could be the additional computational time required. In simulated communities with more species (86 & 341 species metacommunity) the type I error falls below $\alpha$ for all the methods and overall SAD is slightly more powerful (table 3). 
+For communities with lower species numbers (11 species in the metacommunity) the comparisons made with SAD have a constant low power across $\Delta \rho$, so no matter how different are the communities as the points used in the test are the number of species the power is low (Table 3). Generalized dimensions $D_q^{SAD}$ and $D_q^{SRS}$ in contrast have a high power but Type I error is also greater than $\alpha$. One way to alleviate this problem is to check for a coincidence of the two methods SAD & $D_q$, another way would be to rise the number of points used inside the $q$ range, because $D_q$ could be calculated for any real number. I used 21 points (Table 3) but that could be increased, the only restriction is the additional computational time required. In simulated communities with more species (86 & 341 species metacommunity) the type I error falls below $\alpha$ for all the methods and overall SAD is slightly more powerful (table 3). 
 
-But differences between communities ($\Delta \rho$) influence power. With $\Delta \rho$ less than 0.09 the power is in most cases below 0.5. Except for SAD in some communities with high species metacommunity, these are comparisons with higher number of points (circa 100) so this results in greater power. 
-For differences greater or equal than 0.09 the power is high (over 0.75) in most cases. The exception is $\Delta \rho=0.9$, this only happens when we compare two hierarchical communities. In these cases SAD but particularly $D_q^{SAD}$ have less power, below 0.25 in some cases. 
+Differences between communities ($\Delta \rho$) influence power. With $\Delta \rho$ less than 0.09 the power is in most cases below 0.5. Except for SAD in some communities with high species metacommunity, these are comparisons with a higher number of points (circa 100) so this results in a greater power. 
+For differences greater or equal than 0.09 the power is high (over 0.75) in most cases. The exception is $\Delta \rho=0.9$, this only happens when we compare two hierarchical communities. In these cases SAD but particularly $D_q^{SAD}$ have less power, below 0.25 in some cases. Note that with $\Delta \rho<0.1$ the communities compared are more neutral with a similar number of species and SADs, comparison with $\Delta \rho>=0.1$ are between neutral and hierarchical (except for 0.9) communities different number of species and SAD. 
 
-
+   
 # Discussion
 
-While $D_q^{SAD}$ measures the change in species abundance distribution with scale, $D_q^{SRS}$ represent the change in the spatial distribution of ranks of species. Thus $D_q^{SRS} is related to the spatial pattern of species and also to its abundance distribution. $D_q^{SAD}$ also reflect changes in spatial pattern but my results suggest that it can not distinguish between them. With less species and a more equitative abundance distributions $D_q^{SAD}$ should not be applied. With less species and more dominant SAD patterns D_qSAD do not detect changes in communities.
+While $D_q^{SAD}$ measures the change in species abundance distribution with scale, $D_q^{SRS}$ represent the change in the spatial distribution of ranks of species. Thus $D_q^{SRS} is related to the spatial pattern of species and to its abundance distribution. $D_q^{SAD}$ also reflect changes in spatial pattern but my results suggest that it can not distinguish between regular and randomized spatial patterns. In contrast $D_q^{SRS}$ curves differ clearly between these patterns. 
+
+All $D_q$ can be interpreted in terms of $q$ that modulates the weight of abundant and rare species in the distribution. $D_q$ for positive $q$ reflect more abundant species or dominance patterns in SAD, while $D_q$ for negative $q$ represent rare species patterns. An alternative way to analyze $D_q$ would be to split species in ranges of abundances and calculate $D_0^{SAD}$ or $D_1^{SRS}$, this was done for biomass and forest height spatial analysis [prefix@CitationKey] but for species distributions has drawbacks. First the species spatial distribution is analyzed as a whole and it is quite possible that the complete set of species fits very well but one or more single species do not [@Sizling2004a]. Second rare species represent a few points in space thus the estimation of $D_q$ will have a high uncertainty.  
+
+When I compare between competitive hierarchical communities the number of species is relatively low, SAD and $D_q^{SAD}$ have a low power but $D_q^{SRS}$ maintains a high power. This highlights the ability of $D_q^{SRS}$ to detect differences in spatial patterns of rare species. 
+
+Both $D_q$ seem to depend on the number of species and SAD, when communities are very similar in both the power to detect differences is low in most cases. 
+
+
+In neutral models SAR exponent depends on speciation rate --in our case migration from metacommunity-- and local community size [@Rosindell2007; @Cencini2012]. I do not expect to find a great power using SAR exponent ($D_0^{SAD}$) because I did not vary migration parameter and did not made comparisons between different sizes. But I found high type I error rates for $D_0^{SAD}$ and the information dimension $D_1^{SRS}$. This means that the statistical methods should be improved applying a correction for autocorrelation to lower type I errors, also a greater number of boxes should be used to increase power. In most cases exist a range of different $D_q$ and that means that the distribution is a multifractal [@Stanley1988] thus species spatial distributions will not be well described by only one generalized dimension. To compare communities $D_q^{SRS}$ and $D_q^{SAD}$ represent an improvement over comparisons made with only one dimension like SAR exponent or information dimension. 
+
+The species abundance distribution SAD is the most studied biodiversity pattern but it's generally studied at one scale, here I used the whole simulation area, and at this scale the power of SAD is at the same level that generalized dimensions. Several studies regard SAD as not very informative because many different models can produce the same patterns, but in this simulations SAD can differentiate models quite well, except for low species numbers where its power is low. 
+
+With less species and a more equitative abundance distributions $D_q^{SAD}$ should not be applied. With less species and more dominant SAD patterns D_qSAD do not detect changes in communities.
 Thus $D_q^{SAD}$ could be used to analyze diversity-area relationships but it is valid in a more limited set of cases than $D_q^{SRS}$   
 
-The two versions of $D_q$ could be interpreted in terms of abundant and rare species.  
-
-
-$D_q^{SAD}$ scaling limits with number of species
 
 
  
+In summary $D_q^{SRS}$ have always better fits and can be applied in all the cases simulated here. It maintains a high power and when $D_q^{SAD}$ and SAD fail. But when the number of species is around 6 some care have to be taken and the number of $q$ used should be greater than 21.   
  
-A straightforward way to analyze $D_q^{SAD}$ instead of using $q$ as the modulation of the spectra would be to split species in ranges of abundances, this has the advantage of knowing which species are the ones which have different dimensions so the interpretation is easier, the disadvantage is that there could be problems with estimation if you have few individuals of the rare species. This kind of spectra has been used for estimate spectra of biomass spatial distribution and have a similar shape than $D_q^{SAD}$ . 
-
-One dimension methods should use a greater number of boxes to increase power and a correction for autocorrelation to lower type I errors. 
-
-Multifractal spectrum $D_q$ can be used to describe spatial patterns in all the cases I analyzed. Multifractals patterns could be produced by the existence of multiplicative interaction between species but this is not the only possibility, spatially correlated random processes like dispersal and growth to adjacent areas would also produce multifractals [@Stanley1988]. Because plant and animal species are generally aggregated in space is very likely that multifractal analysis can be used in a wide range of cases.
-The occurrence of multifractal patterns with the same $D_q$ in several places does not prove that the same mechanism is acting, but may provide stronger evidence for similar mechanisms than if only one fractal dimension is estimated. Usually this dimension corresponds to $D_0$, that characterizes the geometric complexity of the spatial distribution, the other dimensions in the multifractal spectrum characterize the non-uniformity of the distribution [@Harte2001]. This adds much information to the characterization of spatial patterns that is lost if only one dimension is calculated.
-
- 
-
 
 # Acknowledgments
 

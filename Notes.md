@@ -187,3 +187,6 @@ http://jabberwocky.weecology.org/2013/01/16/do-macroecological-patterns-respond-
 
 Despite a long history of documenting macroecological patterns, an understanding of what determines pattern behavior, why patterns are so easily predicted by so many different models, and how we should go about addressing real ecological problems using a macroecological approach has still not been reached.
 
+1. Rosindell J, Cornell SJ (2013) Universal scaling of species-abundance distributions across multiple scales. Oikos 122: 1101–1111. doi:10.1111/j.1600-0706.2012.20751.x.
+
+The species abundance distribution (SAD) describes the distribution of commonness and rarity among species, but only at one spatial scale. In contrast the species area curve (SAC) spans many spatial scales, but only gives total species richness at each scale. It is increasingly recognised that SADs and SACs are not very informative of process because many different models can produce the same patterns
