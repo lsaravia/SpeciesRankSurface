@@ -1,4 +1,4 @@
-all:srsdq.pdf
+all:srsdq.docx
 
 srsdq.bib: srsdq.md
 	cp "/home/leonardo/BibTeX/Manuscritos-SAD vs SRS-Dq.bib" srsdq.bib

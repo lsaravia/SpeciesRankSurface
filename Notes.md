@@ -189,4 +189,8 @@ Despite a long history of documenting macroecological patterns, an understanding
 
 1. Rosindell J, Cornell SJ (2013) Universal scaling of species-abundance distributions across multiple scales. Oikos 122: 1101–1111. doi:10.1111/j.1600-0706.2012.20751.x.
 
+
 The species abundance distribution (SAD) describes the distribution of commonness and rarity among species, but only at one spatial scale. In contrast the species area curve (SAC) spans many spatial scales, but only gives total species richness at each scale. It is increasingly recognised that SADs and SACs are not very informative of process because many different models can produce the same patterns
+
+The combination of many SADs at different spatial scales is likely to be much more informative
+(Chisholm and Lichstein 2009) because it indicates the commonness and rarity of species and spans many spatial scales.
