@@ -11,7 +11,10 @@ Different communities may have the same species-abundance, the simplest example 
 
 Chave, J., H. C. Muller-Landau, and S. A. Levin. 2002. Comparing Classical Community Models: Theoretical Consequences for Patterns of Diversity. American Naturalist 159:1-23.
 
-termina diciendo que hacen falta otras medidas de las comunidades 
+In addition, we should look for other community-level patterns that are more sensitive to the underlying
+processes
+
+
 
 # Interpretation of multifractal spectrum
 

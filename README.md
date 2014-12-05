@@ -1,6 +1,3 @@
-# Species rank distributions in space: a multifractal analysis
-
-# Species Rank Surface: analysing multispecies spatial paterns using multifractals
-
+# A new method to analyze species abundances in space using generalized dimensions
 
 Markdown version of the manuscript and R source code for the data analysis. 
