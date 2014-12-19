@@ -1,5 +1,9 @@
 # Multifractal analysis of multispecies spatial distributions - Model simulations 
 
+I use here the following neutral model with exponential dispersion:
+
+<https://github.com/lsaravia/Neutral>
+
 I generate parameter files for the simulation of neutral/hierarchical model using logseries as the metacommunity distribution
 
 

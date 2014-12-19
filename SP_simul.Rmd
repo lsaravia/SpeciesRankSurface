@@ -1,5 +1,7 @@
 # Multifractal analysis of multispecies spatial distributions - Spatial patterns simulations
 
+I use mfSBA for multifractal estimation: <https://github.com/lsaravia/mfsba>
+
 I generate different a spatial patterns to compare SRSDq SADdq and SAD
 
 ```{r setup, eval=T }
