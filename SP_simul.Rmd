@@ -418,6 +418,21 @@ g
 setwd(oldcd)
 ggsave("DqFit_Logser_64_256.png", width=8,height=6,units="in",dpi=600) 
 
+setwd("Simul")
+
+zq <- readDq_fit(256,8,"Logseries")
+g <-plotDqFitG(zq)
+g
+setwd(oldcd)
+ggsave("DqFit_Logser_8_256.png", width=8,height=6,units="in",dpi=600) 
+
+setwd("Simul")
+zq <- readDq_fit(256,256,"Logseries")
+g <-plotDqFitG(zq)
+g
+setwd(oldcd)
+ggsave("DqFit_Logser_256_256.png", width=8,height=6,units="in",dpi=600) 
+
 ```
 
 ## Generate Tables with R2 proportions
