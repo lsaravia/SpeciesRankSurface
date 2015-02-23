@@ -1445,6 +1445,9 @@ calcPower_AD <- function(Dqq,Sad,nsp,side){
   return(pow)
 }
 
+# Simulations of the model with output of one time 
+#
+#
 simulNeutral_1Time<- function(nsp,side,time,meta="L",rep=10,delo=T)
 {
 

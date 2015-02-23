@@ -197,3 +197,17 @@ The species abundance distribution (SAD) describes the distribution of commonnes
 
 The combination of many SADs at different spatial scales is likely to be much more informative
 (Chisholm and Lichstein 2009) because it indicates the commonness and rarity of species and spans many spatial scales.
+
+
+-----------
+
+Leibold MA, McPeek MA (2006) Coexistence of the Niche and Neutral 
+Perspectives in Community Ecology. Ecology 87: 1399–1410. 
+
+How might we tell whether drift processes are important to structuring 
+natural communities? The current focus on abundance distributions 
+is severely limited, because such patterns cannot discriminate 
+among the multiple alternatives that can generate the same patterns. 
+Instead what we need are methods that can identify which species 
+combinations are most likely to act as equivalents. One 
+
