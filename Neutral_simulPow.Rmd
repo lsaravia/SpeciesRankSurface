@@ -433,7 +433,9 @@ require(dplyr)
 #comp_ADq10 <- comp_ADq10 %>% filter(MrtR1==0.2 & DspD1==0.04 & ClnR1==0.001) %>% 
 #  left_join(unique(pow_ADq10[,1:3]),by=c("Side","NumSp"))
 
+
 p1 <- plotPow_MeanSp_difR(comp_ADq10)
+#p1 <- plotPow_MeanSp_RplR(comp_ADq10)
 ggsave("powADq10_DifR_256.png", width=6,height=6,units="in",dpi=600)
 
 p2 <- plotPow_MeanSp_difR(comp_ADq10,512)

@@ -32,9 +32,14 @@ More specific comments and suggestions:
 
 #2. In the description of SRS details of the algorithm of assigning ranks to equally abundant species must be specified. I think that various options (random assignment of consecutive ranks or assignment of the same  average rank) will have a strong impact on the shape of DqSRS spectrum, especially for negative q. This aspect needs special consideration.
 
-3. In the description of dynamic model (at least in Appendix) the following details must be specified: the boundary conditions, the type of lattice update (synchronous / asynchronous), the algorithm of assignment of competitive ranks in metacommunity. It is also necessary to raise the issue of the model dynamics stationarity, I propose to provide some figures of dynamics of several structural indicators (at least in the appendix).
-4. D_0^SRS is not a fractal dimension of SRS (p. 9, l. 20). SRS is a rugged surface and its dimension is more than 2 but less than 3. What is really analyzed is some measure distributed over two-dimensional support. D_0^SRS is a dimension of this support.
-5. The degree of difference between Dq spectra is not a direct function of Delta rho. It is not correct to analyze relation of power to Delta rho. For example, the great drop in power of DqSAD in Fig. 8 is associated exclusively with the fact that the point Delta rho = 0.9 corresponds to the comparison of simulations rho = 1 vs rho = 0.9, which has very similar spectra.
+#3. In the description of dynamic model (at least in Appendix) the following details must be specified: the boundary conditions, the type of lattice update (synchronous / asynchronous), the algorithm of assignment of competitive ranks in metacommunity. It is also necessary to raise the issue of the model dynamics stationarity, I propose to provide some figures of dynamics of several structural indicators (at least in the appendix).
+
+#4. D_0^SRS is not a fractal dimension of SRS (p. 9, l. 20). SRS is a rugged surface and its dimension is more than 2 but less than 3. What is really analyzed is some measure distributed over two-dimensional support. D_0^SRS is a dimension of this support.
+
+#5. The degree of difference between Dq spectra is not a direct function of Delta rho. It is not correct to analyze relation of power to Delta rho. For example, the great drop in power of DqSAD in Fig. 8 is associated exclusively with the fact that the point Delta rho = 0.9 corresponds to the comparison of simulations rho = 1 vs rho = 0.9, which has very similar spectra.
+- This a very compact way to show the power in function of the factors, and to visualize the diferences between DqSAD DqSRS and SAD-
+
+
 6. The power of methods based on spectra of indices is compared with power of methods based on single components of spectra. It is obvious that the latter will be less powerful. But those methods use different statistical procedures so its direct comparison is not fully correct.
 7. Figures 1 and 5 lacks color scheme, making them difficult to read.
 8. Figure 3 has different scales for DqSAD и DqSRS, making it difficult to compare. As A = epsilon^2 I recommend to use A in both cases.

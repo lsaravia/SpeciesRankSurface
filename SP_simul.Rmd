@@ -26,7 +26,7 @@ options("scipen"=100, "digits"=4)
 
 First generate a pattern with  SAR z=1 using simply bands of species z=0.5 because I am using area as Borda-de-Agua instead of side.
 
-```{r simul_z1, eval=T,echo=F,message=F,warning=F}
+```{r simul_z1, eval=F,echo=F,message=F,warning=F}
 setwd("Simul")
 
 DqF <- compMethods_UniformSAD(8,256)$Dq
@@ -129,24 +129,55 @@ save.image()
 
 # Test if at time 500 the model is at steady state
 
-```{r test_neutralTime, eval=F,echo=F,message=F,warning=F}
+```{r test_neutralTime, eval=T,echo=F,message=F,warning=F}
 setwd("Simul")
 
-simul_NeutralPlotTime(8,256,T,500,"L")
-simul_NeutralPlotTime(64,256,T,500,"L")
-simul_NeutralPlotTime(256,256,T,500,"L")
+sml <- T
+simul <- data.frame()
+require(doParallel)
+cn <-detectCores()
+cl <- makeCluster(cn)
+registerDoParallel(cl)
 
 
-simul_NeutralPlotTime(8,512,T,500,"L")
-simul_NeutralPlotTime(64,512,T,500,"L")
-simul_NeutralPlotTime(256,512,T,500,"L")
+parms <-expand.grid(nsp=c(8,64,256),side=c(256,512),disp=0.04,migr=0.001,repl=c(0,0.001,0.01,0.1,1)) 
 
 
-simul_NeutralPlotTime(8,512,T,500,"U")
-simul_NeutralPlotTime(64,512,T,500,"U")
-simul_NeutralPlotTime(256,512,T,500,"U")
+simul <- foreach(i=1:nrow(parms),.combine='rbind') %dopar%
+{
+simul_NeutralPlotTime(parms$nsp[i],parms$side[i],parms$disp[i],
+                                           parms$migr[i],parms$repl[i],sml,500,3,"N","L")
+}
+
+#cbPal <- c("#edf8fb","#b3cde3","#8c96c6","#8856a7","#810f7c")
+cbPal <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+require(ggplot2)
+
+g <- ggplot(simul,aes(x=Time,y=H,colour=as.factor(nsp),shape=as.factor(Rep))) + 
+    geom_line() + geom_point(size=1)+
+    facet_grid(ReplacementRate ~ side ) +
+    ylab(bquote("Shannon index"))+ 
+    scale_colour_manual(values=cbPal,name="Metacomm sp")+
+    scale_shape_discrete(guide=F)
+
+print(g+theme_bw())
 
 setwd(oldcd)
+
+ggsave("neuTime_side_sp_H.png", width=8,height=6,units="in",dpi=600)
+
+
+g <- ggplot(simul,aes(x=Time,y=Richness,colour=as.factor(nsp),shape=as.factor(Rep))) + 
+    geom_line() + geom_point(size=1)+
+    facet_grid(ReplacementRate ~ side ) +
+    ylab(bquote("Richness"))+ 
+    scale_colour_manual(values=cbPal,name="Metacomm sp")+
+    scale_shape_discrete(guide=F)
+print(g+theme_bw())
+ggsave("neuTime_side_sp_Rich.png", width=8,height=6,units="in",dpi=600)
+
+save.image()
 
 ```
 
@@ -251,7 +282,7 @@ save.image()
 
 Now check if all simulations are done a make power calculations
 
-```{r power_adtest, eval=F,echo=F,message=F,warning=F}
+```{r power_adtest1, eval=F,echo=F,message=F,warning=F}
 # Check all simulations are present
 require(plyr)
 ddply(SadT,3:6,summarize, max(rep))
@@ -304,7 +335,7 @@ plot_DqPowerTypeI(p1,"Neutral")
 
 ## Plots for publication uniform/Logseries SAD 
 
-```{r plots_spDq, eval=T,echo=F,message=F,warning=F}
+```{r plots_spDq, eval=F,echo=F,message=F,warning=F}
 setwd("Simul")
 
 # Plot of the Regular and Randomized spatial pattern for a uniform & Logseries SAD with 64 species and side=256
@@ -381,7 +412,7 @@ ggsave("DqFit_Unif_256_256.png", width=8,height=6,units="in",dpi=600)
 
 ## Plots for publication Logseries SAD 
 
-```{r plots_logser_spDq, eval=T,echo=F,message=F,warning=F}
+```{r plots_logser_spDq, eval=F,echo=F,message=F,warning=F}
 
 
 g <- plotDq_Side_Sp(DqT,256,0,"Logseries")

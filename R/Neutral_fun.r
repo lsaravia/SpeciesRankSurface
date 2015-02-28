@@ -321,8 +321,14 @@ meltDensityOut_NT <- function(fname,num_sp){
 # Read simulation output and set variable names in wide format 
 #
 readWideDensityOut <- function(fname,num_sp){
+  if(!grepl("Density.txt",fname)) fname <- paste0(fname,"Density.txt")
   den <- read.delim(fname)
   names(den)[1:5]<-c("GrowthRate","MortalityRate","DispersalDistance","ColonizationRate","ReplacementRate")
+  names(den)[7] <- unlist(strsplit(names(den)[7],".",fixed=T))[1]
+  eTime <- (max(den$Time)/(den$Time[3]-den$Time[2]))+1
+  if(  eTime < nrow(den) ){
+    den$Rep <- rep( 1:(nrow(den)/eTime),each=eTime)
+  }
   return(den)
 }
 
@@ -1338,37 +1344,41 @@ comp_NeutralUniform <- function(nsp,side,simul=10) {
   }
 
 
-simul_NeutralPlotTime <- function(nsp,side,simul=T,time=1000,meta="L") {
+# Simulate a time series of the neutral/hierarchical model
+#
+# disp: dispersal parameter
+# migr: migration rate
+# repl: replacement rate
+# mortality fixed to 0.2
+#
+# simul: T=make simulations F=make plots
+# sims:  Number of repetitions
+# mf: calculate multifractal spectrum
+# meta: U= uniform metacommunity
+#       L= logseries metacommunity
+#
+simul_NeutralPlotTime <- function(nsp,side,disp,migr,repl,simul=T,time=1000,sims=10,mf="N",meta="U") {
   if(!exists("neuBin")) stop("Variable neuBin not set (neutral binary)")
-  if(!require(untb))  stop("Untb package not installed")
+
+  if(toupper(meta)=="L") {
+    prob <- genFisherSAD(nsp,side)
+    neuParm <- paste0("fishP",nsp,"_",side,"R", repl)
+    bname <- paste0("neuFish",nsp,"_",side,"R", repl)
+  } else {
+    prob <- rep(1/nsp,nsp)  
+    neuParm <- paste0("unifP",nsp,"_",side,"R", repl)
+    bname <- paste0("neuUnif",nsp,"_",side,"R", repl)
+  }
+  pname <- paste0("pomacR",repl,".lin")
 
   if(simul){
 
-    #N <- side*side   # The metacommunity have 100 times more individuals
-    #alpha <-  fishers.alpha(N, nsp)
-    #x <- N/(N + alpha)
-    #j <- 1:(nsp)
-    #prob <-  alpha * x^j/j  
-    # Normalize
-    #prob <- prob/sum(prob)
-    if(toupper(meta)=="L") {
-      prob <- genFisherSAD(nsp,side)
-      neuParm <- "fishE"
-      bname <- paste0("neuFish",nsp)
-    } else {
-      prob <- rep(1/nsp,nsp)  
-      neuParm <- "unifE"
-      bname <- paste0("neuUnif",nsp)
-    }
-
-    genNeutralParms(neuParm,side,prob,1,0.2,0.4,0.0001)
-
+    genNeutralParms(neuParm,side,prob,1,0.2,disp,migr,repl)
 
     # Delete old simulations
     system(paste0("rm ",bname,"*.txt"))
 
     par <- read.table("sim.par",quote="",stringsAsFactors=F)
-    # Change base name
 
     par[par$V1=="nEvals",]$V2 <- time
     par[par$V1=="inter",]$V2 <- 10 # interval to measure Density and Diversity
@@ -1376,24 +1386,50 @@ simul_NeutralPlotTime <- function(nsp,side,simul=T,time=1000,meta="L") {
     par[par$V1=="modType",]$V2 <- 4 # Hierarchical saturated
     par[par$V1=="sa",]$V2 <- "N" # Save a snapshot of the model
     par[par$V1=="baseName",]$V2 <- bname# Time = 100 
+    par[par$V1=="mfDim",]$V2 <- mf
     par[par$V1=="minBox",]$V2 <- 2
-    par[par$V1=="pomac",]$V2 <- 0 # 0:one set of parms 
+    par[par$V1=="pomac",]$V2 <- 1 # 0:one set of parms 
                                   # 1:several simulations with pomac.lin parameters 
+    par[par$V1=="pomacFile",]$V2 <- pname # 0:one set of parms 
+    par[par$V1=="minProp",]$V2 <- 0
+    
+    parfname <- paste0("sim",nsp,"_",side,"R", repl,".par")
+    write.table(par, parfname, sep="\t",row.names=F,col.names=F,quote=F)
 
-    write.table(par, "sim.par",sep="\t",row.names=F,col.names=F,quote=F)
-
-    system(paste(neuBin,"sim.par",paste0(neuParm,".inp")))
+    genPomacParms(pname,1,c(0.2),disp,migr,repl,sims)
+  
+    # copy pomExp.lin to pomac.lin
+    #system("cp pomExp.lin pomac.lin")
+    s <- system("uname -a",intern=T)
+    if(grepl("i686",s)) {
+      system(paste(neuBin,parfname,paste0(neuParm,".inp")))
+    } else {
+      system(paste(neuBin64,parfname,paste0(neuParm,".inp")))
     }
-    fname <- paste0(bname,"Density.txt")
-    den <- read.delim(fname)
-    names(den)[1:5]<-c("GrowthRate","MortalityRate","DispersalDistance","ColonizationRate","ReplacementRate")
+  }
+  den <-readWideDensityOut(bname)
+  
+  require(plyr)
+  require(dplyr)
+  
+  if(!simul) {
     require(ggplot2)
+    if(sims>10)  
+      den1 <- filter(den,Rep %in%  sample(1:sims,10)) 
+    
+    print(ggplot(den1, aes(x=Time, y=H,color=factor(Rep))) +
+        geom_line() + theme_bw() +  ggtitle(paste(side,repl)))
 
-    print(gp <- ggplot(den, aes(x=Time, y=H)) +
-        geom_line() + theme_bw() )
+    print(ggplot(den1, aes(x=Time, y=Richness,color=factor(Rep))) +
+        geom_line() + theme_bw() + ggtitle(paste(side,repl))) 
+  }
 
-    print(gp <- ggplot(den, aes(x=Time, y=Richness)) +
-        geom_line() + theme_bw()) 
+  den$nsp <- nsp
+  den$side <- side
+  den$meta <- meta
+  
+  den <- den[,c("nsp","side","meta","Rep","GrowthRate","MortalityRate","DispersalDistance","ColonizationRate","ReplacementRate","Time","Richness","H")]
+  return(den)
 }
 
 calcPower_AD <- function(Dqq,Sad,nsp,side){
@@ -2090,8 +2126,9 @@ plotPow_MeanSp_difR <- function(comp,side=256)
     scale_shape_manual(values=c(21,24,4,25,3,8),guide=guide_legend(title="")) 
 #    scale_size_continuous(name="Type I error") +
 #    scale_colour_discrete(name="") 
-  require(RColorBrewer)
-  mc <- brewer.pal(6, "Set1")
+#  require(RColorBrewer)
+#  mc <- brewer.pal(6, "Set1")
+  mc <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
   g <- g + scale_colour_manual(values=mc,guide=guide_legend(title="")) 
 
 
@@ -2102,6 +2139,53 @@ plotPow_MeanSp_difR <- function(comp,side=256)
 #  pandoc.table(c2,style="grid")
   return(c2)
 }
+
+
+plotPow_MeanSp_RplR <- function(comp,side=256)
+{
+  require(ggplot2)
+  # Recalculate power from comp_AD
+  #
+  require(plyr)
+  hh <-function(x) {
+    t <- nrow(x)
+    s <- nrow(x[x$p.value<0.05,])
+    mean_sp <- round(mean(x$MeanSp),1)
+    data.frame(power=s/t,n=t,mean_sp)
+  }
+
+  # Calculate power in fuction of replacement rate difference
+  #comp$spMeta <- ceiling(as.numeric(comp$NumSp)*1.33)
+
+  c1 <- with(comp,comp[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2!=RplR1 & Side==side,])
+  c1$DifR <- with(c1,abs(RplR2-RplR1))
+
+  c2 <- ddply(c1,.(Side,NumSp,Type,RplR1,DifR),hh)
+  c2$spMeta <- ceiling(as.numeric(c2$NumSp)*1.33)
+
+  g <- ggplot(c2,aes(x=RplR1,y=power)) + 
+#    geom_point(shape=19,position = position_jitter(height = .01),aes(colour=as.factor(Type))) + 
+    geom_point(aes(shape=as.factor(Type),colour=factor(Type))) + 
+    facet_grid( RplR1~spMeta) +
+    ylab(bquote("Rejection Rate of"~H[0]~"(" ~alpha~"= 0.05)")) +
+    xlab(bquote(Delta ~"Replacement")) +
+    scale_shape_manual(values=c(21,24,4,25,3,8),guide=guide_legend(title="")) 
+#    scale_size_continuous(name="Type I error") +
+#    scale_colour_discrete(name="") 
+#  require(RColorBrewer)
+#  mc <- brewer.pal(6, "Set1")
+  mc <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+  g <- g + scale_colour_manual(values=mc,guide=guide_legend(title="")) 
+
+
+  #print(g+ scale_x_log10(breaks=c(0.001,0.01,0.09,1))+theme_bw())
+  print(g+ theme_bw())
+
+#  require(pander)
+#  pandoc.table(c2,style="grid")
+  return(c2)
+}
+
 
 # Plot of multiespecies spatial pattern generated with diffent SAD
 # type: U=uniform SAD L=Logseries SAD

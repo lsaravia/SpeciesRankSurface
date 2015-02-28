@@ -2,21 +2,25 @@
 
 ## Online Appendix A: Model Description 
 
-This model represent a continuum between hierarchical and neutral model in the same spirit as [@a2]. The model is a stochastic cellular automata (CA) or also called interactive particle system [@a1]. In these kind of models space is discretized into a grid and only one individual can occupy a particular position. Each position represents an area fixed by the investigator to represent the real system. 
+This model represent a continuum between hierarchical and neutral model in the same spirit as in \[@a2\]. The model is a stochastic cellular automata (CA) or also called interactive particle system \[@a1\]. In these kind of models space is discretized into a grid and only one individual can occupy a particular position. Each position represents an area fixed by the investigator to mimic the real system. Time is continuous so the update of the model is asynchronous. I update one randomly chosen site at a time and to perform one complete time interval $c J$ sites have to be updated, where $c$ is a constant that describes the overall rate at which transitions are occurring and $J$ is the size of the grid \[@a1\].   
 
-In this model all individuals have almost the same parameters, besides they should belong to different species [@a3], and each species is assigned with a number. There are only two possible differences between species: 
+The model use periodic boundary conditions, which makes the landscape a torus. It means that sites on the top edge of the grid are neighbors of those on the bottom edge, and sites on the right edge are neighbors of those on the left. With this choice I can avoid edge effects and is equivalent to thinking that the grid is embedded in a large community.
 
-* They have a different frequency in the metacommunity and also can have different abundances in the local community.
+The size of the community is given by *J = dimX* x *dimY*, where *dimX* and *dimY* are the dimension of the grid. Thus *J* is the maximum number of individuals in the simulated area. 
 
-* Hierarchical competition:  species with lower numbers have a probability to replace species with higher numbers as in [@a5]. 
+In this model all individuals have almost the same parameters, besides they should belong to different species \[@a3\], and each species is assigned with a number. There are only two possible differences between species: 
 
-The size of the community is given by *J = dimX* x *dimY*, where *dimX* and *dimY* are the dimension of the grid. Thus *J* is the maximum number of individuals in a given area. 
+* They may have a different frequency in the metacommunity and also different abundances in the local community.
+
+* Hierarchical competition: species with lower numbers have a probability to replace species with higher numbers as in \[@a5\]. Thus a species with number 1 have a probability to replace species with number 2 and greater. The species with number 2 can replace species starting from 3. The probability of replacement is a parameter, when it is 0 replacement occurs only when a species dies.  
+
+The colonization-competition and other trade-off are not explicitly included in the model. But a colonization-competition trade-off can be established if species numbering is arranged in inverse order as it's abundance $X_i$ in the metacommunity, the most competitive species (with number 1) will have the lowest migration rate and the less competitive will have the highest migration rate.  
 
 There are four processes included in the model: death, local dispersal, and migration, starting with an empty site the following events can happen:
 
 (1) With probability *m* an individual of a species *i* can migrate from the metacommunity at a rate proportional to its frequency $X_i$ in the metacommunity.
 
-(2) When the grid is not full, individuals give birth with rate 1 to a new individual that disperse to the neighborhood with a dispersal kernel. Here I use an exponential kernel but an inverse power kernel [@a4] is also implemented in the software.
+(2) When the grid is not full, individuals give birth with rate 1 to a new individual that disperse to the neighborhood with a dispersal kernel. Here I use an exponential kernel but an inverse power kernel \[@a4\] is also implemented in the software.
 
 (2) Individuals die a rate $\mu$
 
@@ -28,19 +32,19 @@ The possible dispersal kernels are:
 
 1. Exponential $p(x) = \lambda e^{-\lambda x}$ with $mean=1/\lambda$ where $x\ge 0$.
 
-2. Power law as defined in [@a4], $p(x) =  \frac{\alpha -1}{x_{min}} \left(\frac{x}{x_{min}} \right)^{-\alpha}$ with $mean =\frac{\alpha-1}{\alpha-2}x_{min}$ where $\alpha > 1$ and $x \ge x_{min}$. In all cases I used $x_{min} = 1$.
+2. Power law as defined in \[@a4\], $p(x) =  \frac{\alpha -1}{x_{min}} \left(\frac{x}{x_{min}} \right)^{-\alpha}$ with $mean =\frac{\alpha-1}{\alpha-2}x_{min}$ where $\alpha > 1$ and $x \ge x_{min}$. In all cases I used $x_{min} = 1$.
    
-The C++ source code of the model is available at <https://github.com/lsaravia/neutral> including some additional features like non-saturated and biomass simulation of individuals.
 
+Simulations started with an empty grid that is colonized by migrants. They run until T=500, at this time the grid is completely occupied and steady state in richness was reached (Appendix Figure 1). Analyzing the Shannon Index $H$, some stochastic oscillations with differing periods appear (Appendix Figure 2). This adds some variability to repeated simulations for each parameter combination, and make the comparison of these communities more realistic, because natural communities generally suffer from disturbances that keeps them far from a steady state.
 
+The C++ source code of the model is available at <https://github.com/lsaravia/neutral>.
 
 
 ## Appendix A References
 
+@a2. Gravel D, Canham CD, Beaudet M, Messier C (2006) Reconciling niche and neutrality: the continuum hypothesis. Ecol Lett 9: 399–409. doi:10.1111/j.1461-0248.2006.00884.x.
 
 @a1. Durrett R, Levin SA (1994) Stochastic spatial models: a user’s guide to ecological aplications. Philosophical transactions of the Royal Society of London Series B 343: 329–350.
-
-@a2. Gravel D, Canham CD, Beaudet M, Messier C (2006) Reconciling niche and neutrality: the continuum hypothesis. Ecol Lett 9: 399–409. doi:10.1111/j.1461-0248.2006.00884.x.
 
 @a3. Hubbell SP (2001) The unified neutral theory of biodiversity and biogeography. Princeton University Press. 375p.
 
@@ -283,7 +287,7 @@ Table: Proportion of $R^2$ that are greater than 0.6 and 0.9. The $R^2$ are from
 |            |      |               |    36.7 |  1.000 |    1.00 |    1.00 |
 +------------+------+---------------+---------+--------+---------+---------+
 
-Table: Proportion of $R^2$ that are greater than 0.6 and 0.9. The $R^2$ are from linear regressions used to estimate generalized dimensions $D_q$ in simulated neutral spatial patterns. $D_q$ was estimated using two approaches: *DqSRS* and *DqSAD* (See main text) for communities with different degree of neutrality given by the parameter *Replacement*.  I used a Logseries metacommunity with 11, 86 and 341 species and *Side* is the side of the simulation grid.
+Table: Proportion of $R^2$ that are greater than 0.6 and 0.9. The $R^2$ are from linear regressions used to estimate generalized dimensions $D_q$ in simulated neutral spatial patterns. $D_q$ was estimated using two approaches: *DqSRS* and *DqSAD* (See main text) for communities with different degree of neutrality given by the parameter $\rho$.  I used a Logseries metacommunity with 11, 86 and 341 species and *Side* is the side of the simulation grid.
 
 \newpage
    
@@ -406,6 +410,19 @@ q={-24,-22,-20,-18,-16,-14,-12,-10,-8,-6,-4,-3,-2.5,-2,-1.5,-1,-0.5,0,0.5,1,1.5,
 \newpage         
 
 ## Appendix figures
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=6.5in]{neuTime_side_sp_Rich.png}
+\caption{Time series of richness of the neutral/hierarchical model for all parameters used in power calculations (see Table 1 in the main text). Three simulations for each parameter combination are showed . The columns represent different sizes of the model grid (size) and rows different values of the parameter $\rho$ }
+\end{figure}
+
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=6.5in]{neuTime_side_sp_H.png}
+\caption{Time series of Shannon diversity index (H) of the neutral/hierarchical model for all parameters used in power calculations (see Table 1 in the main text). Three simulations for each parameter combination are showed . The columns represent different sizes of the model grid (size) and rows different values of the parameter $\rho$ }
+\end{figure}
 
 
 \begin{figure}[H]
