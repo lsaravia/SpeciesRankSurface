@@ -472,6 +472,6 @@ q={-24,-22,-20,-18,-16,-14,-12,-10,-8,-6,-4,-3,-2.5,-2,-1.5,-1,-0.5,0,0.5,1,1.5,
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=6.5in]{powADq10_DifR_512.png}
-\caption{Power of the Anderson-Darling to test the hipothesis that $D_q$ curves and SAD of simulated neutral/hierarchical model are different. The parameter $Replacement$ determines the degree of neutrality. When this parameter is 0 the model is completely neutral and there is no competitive replacement of species. When \textit{Replacement} is 1 competitive superior species always replaces inferior ones and the model is completely hierarchical. $\Delta Replacement$ is the difference in the parameter, when is lower the communities are more similar. Simulations use a metacommunity with a logseries abundance distribution with 11,86 and 341 species. The simulation grid side is 512, and the other parameters are given in the main text.}
+\includegraphics[width=6.5in]{powADq10_RplR_512.png}
+\caption{Power of the Anderson-Darling test for the hypothesis of differences between simulated neutral/hierarchical communities. The test uses generalized dimensions curves calculated from SAD ($D_q^{SAD}$), generalized dimensions calculated from the species rank surfaces ($D_q^{SRS}$) and the species abundance distributions (SAD). The compared communities differ only in parameter $\rho$ (across panels) that determines the degree of neutrality/hierarchy. The number of comparisons to calculate the frequency is 2500 in all cases. Simulations use a metacommunity with a logseries abundance distribution with 11,86 and 341 species; a grid side of 512 sites, the other parameters are given in the main text.}
 \end{figure}

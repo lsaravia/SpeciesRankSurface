@@ -664,20 +664,24 @@ plotDqFitG <- function(zq0,fac=3)
   
   zq1 <- subset(zq0, q==1 | q==2 | q==3 | q==4 | q==5 | q==0 | q==-1 | q==-2 | q==-3 | q==-4 | q==-5 )
   zq1$logTr <- zq1$logTr+zq1$q/fac
-  zq1 <- mutate(zq1,DqType=ifelse(grepl("SRS",Type),"DqSRS","DqSAD"), Type=ifelse(grepl("rnz",Type),"b) Randomized","a) Regular"))
-  
+  zq1 <- mutate(zq1,DqType=ifelse(grepl("SRS",Type),"DqSRS","DqSAD"), Type=ifelse(grepl("rnz",Type),"b) Randomized","a) Regular"),
+                LogBox=ifelse(grepl("SRS",Type),LogBox,sqrt(LogBox)))  
 #  g <- ggplot(zq1,aes(LogBox,logTr,colour=factor(q))) + geom_point(aes(shape=factor(q))) + 
 #    scale_color_discrete(name="q") + 
 #    
   
 #  g <- ggplot(zq1,aes(LogBox,logTr,shape=factor(q))) + geom_point(aes(shape=factor(q)),size=1) + 
+  mc <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7","#666666")
+
   g <- ggplot(zq1,aes(LogBox,logTr,colour=factor(q))) + geom_point(aes(shape=factor(q)),size=1) + 
       geom_smooth(method="lm",se=F)  
   g <- g + scale_shape_manual(values=c(0,1,2,3,4,5,6,8,15,16,17,21:24),name="q") 
-  g <- g + scale_colour_brewer(palette="Set1",name="q")
+#  g <- g + scale_colour_brewer(palette="Set1",name="q")
+  g <- g + scale_colour_manual(values=mc,name="q")
   g <- g + ylab(expression(italic(paste("log ",  Z[q](epsilon) )))) + theme_bw() +
-      xlab(expression(italic(paste("log ",epsilon))))+
+    xlab(expression(italic(paste("log ",epsilon))))+ 
     facet_wrap(Type ~ DqType, scales="free")
+  print(g)
 }
 
 
@@ -699,6 +703,7 @@ plotDqFitGQ <- function(zq0,qq,fac=3)
     ylab(expression(italic(paste("log ",  Z[q](epsilon) )))) + theme_bw() +
     xlab(expression(italic(paste("log ",epsilon))))+
     facet_wrap(Type ~ DqType, scales="free")
+  print(g)
 }
 
 # Calculates theoretic Dq from pmodel
@@ -2147,39 +2152,43 @@ plotPow_MeanSp_RplR <- function(comp,side=256)
   # Recalculate power from comp_AD
   #
   require(plyr)
+  require(dplyr)
   hh <-function(x) {
     t <- nrow(x)
     s <- nrow(x[x$p.value<0.05,])
     mean_sp <- round(mean(x$MeanSp),1)
-    data.frame(power=s/t,n=t,mean_sp)
+    data.frame(power=s,n=t,mean_sp)
   }
 
   # Calculate power in fuction of replacement rate difference
   #comp$spMeta <- ceiling(as.numeric(comp$NumSp)*1.33)
 
-  c1 <- with(comp,comp[MrtR1==MrtR2 & DspD1==DspD2 & ClnR1==ClnR2 & RplR2!=RplR1 & Side==side,])
+  c1 <- filter(comp,MrtR1==MrtR2,DspD1==DspD2,ClnR1==ClnR2,RplR2!=RplR1,Side==side)
   c1$DifR <- with(c1,abs(RplR2-RplR1))
 
-  c2 <- ddply(c1,.(Side,NumSp,Type,RplR1,DifR),hh)
-  c2$spMeta <- ceiling(as.numeric(c2$NumSp)*1.33)
-
-  g <- ggplot(c2,aes(x=RplR1,y=power)) + 
-#    geom_point(shape=19,position = position_jitter(height = .01),aes(colour=as.factor(Type))) + 
-    geom_point(aes(shape=as.factor(Type),colour=factor(Type))) + 
-    facet_grid( RplR1~spMeta) +
-    ylab(bquote("Rejection Rate of"~H[0]~"(" ~alpha~"= 0.05)")) +
-    xlab(bquote(Delta ~"Replacement")) +
-    scale_shape_manual(values=c(21,24,4,25,3,8),guide=guide_legend(title="")) 
-#    scale_size_continuous(name="Type I error") +
-#    scale_colour_discrete(name="") 
-#  require(RColorBrewer)
-#  mc <- brewer.pal(6, "Set1")
+  c2 <- ddply(c1,.(Side,NumSp,Type,DifR,RplR1,RplR2),hh)
+  c2 <- group_by(c2, Side,NumSp,Type,DifR) %>% 
+    summarise(n=sum(n),power=sum(power)/n,RplR1=max(RplR1),RplR2=min(RplR2)) 
+  
+  c2$spMeta <- as.factor(ceiling(as.numeric(c2$NumSp)*1.33))
+  #c2 <-with(c2,c2[spMeta==11,])            
+  
   mc <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-  g <- g + scale_colour_manual(values=mc,guide=guide_legend(title="")) 
+  
+  
+g <- ggplot(c2,aes(x = spMeta, y = power,group=Type,colour=Type)) + geom_point(size=3) + geom_line() +
+#  g <- ggplot(c2,aes(x = Type, y = power,group=spMeta,colour=spMeta)) + geom_point(size=3) + geom_line() +
+    facet_grid( RplR1~RplR2) + 
+    ylab(bquote("Rejection Rate of"~H[0]~"(" ~alpha~"= 0.05)")) +
+    xlab("Metacommunity species") +
+    scale_colour_manual(values=mc,labels=list(bquote(D[q]^SAD),bquote(D[q]^SRS),bquote("SAD")))  
+#    scale_x_discrete(labels=c(expression(D[q]^SAD),expression(D[q]^SRS),"SAD")) +
+#    theme(axis.title.x = "Metacommunity species")
 
-
+ 
+   
   #print(g+ scale_x_log10(breaks=c(0.001,0.01,0.09,1))+theme_bw())
-  print(g+ theme_bw())
+  print(g+theme_bw())
 
 #  require(pander)
 #  pandoc.table(c2,style="grid")
@@ -2237,8 +2246,9 @@ plotSAD_SpatPat<-function(nsp,side,type="U")
   # g <- g + scale_fill_grey(guide=F) +
   g <- ggplot(spa, aes(x, y, fill = v)) + geom_raster(hjust = 0, vjust = 0) + 
     theme_bw() + coord_equal() 
+  mc <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
   
-  g <- g + scale_fill_gradient(low="red", high="green", guide=F) +
+  g <- g + scale_fill_gradientn(colours=mc[1:4],guide="colourbar",name="Species no.") + #guide=F
     scale_x_continuous(expand=c(.01,.01)) + 
     scale_y_continuous(expand=c(.01,.01)) +  
     labs(x=NULL, y=NULL) 
@@ -2252,6 +2262,7 @@ plotSAD_SpatPat<-function(nsp,side,type="U")
   #g <- ggplot(spa, aes(x, y, fill = v)) + geom_raster(hjust = 0, vjust = 0) + theme_bw() + coord_equal() + facet_grid(. ~ Type)
   #g <- g + scale_fill_gradient(low="red", high="green", guide=F) +
   #    labs(x=NULL, y=NULL) 
+  print(g)
 }
 
 
@@ -2304,7 +2315,9 @@ plotDq_Side_Sp <- function(Dqq,side,nsp,sad="Uniform"){
               breaks=c("DqSRS Uniform","rnzDqSRS Uniform","DqSRS Logseries","rnzDqSRS Logseries"),labels=mylabs)
 
     library(RColorBrewer)
-    mc <- brewer.pal(5, "Set1")
+#    mc <- brewer.pal(5, "Set1")
+    mc <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
     g <- g + scale_colour_manual(values=c(mc[1],mc[2],mc[1],mc[2],mc[3],mc[4],mc[3],mc[4]),
         guide=guide_legend(title=NULL),
         breaks=c("DqSRS Uniform","rnzDqSRS Uniform","DqSRS Logseries","rnzDqSRS Logseries"),labels=mylabs) 
@@ -2326,8 +2339,9 @@ plotR2Dq_Side_Sp <- function(Dqq,side,nsp,sad="Uniform")
     
     Dq1 <- mutate(Dq1,DqType=ifelse(grepl("SRS",Type),"DqSRS","DqSAD"), Type=ifelse(grepl("rnz",Type),"b) Randomized","a) Regular"))
 
-    library(RColorBrewer)
-    mc <- brewer.pal(3, "Set1")
+#    library(RColorBrewer)
+#    mc <- brewer.pal(3, "Set1")
+    mc <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
     if(sad=="B"){
       bin <- range(Dq1$R.Dq)
@@ -2411,30 +2425,32 @@ plotNeutral_SpatPat<-function(nsp,side,time,meta="L",ReplRate=c(0,0.001,0.01,0.1
     fname <- paste0(bname,"-",formatC(time,width=4,flag=0),".sed")
     
     sp1 <-read_sed2xy(fname)
-    sp1$Type <- paste("Replacement:", ReplRate[i])
+    sp1$Type <- paste("Rho:", ReplRate[i])
     sp1$Species <- paste("Species:",length(unique(sp1$v)))
+    # sp1$spMeta <- as.factor(ceiling(nsp*1.33))
+    
 
     spa <-  rbind(spa,sp1)
   }
   #lvl <- unique(spa$Type)
   #spa$Type <- factor(spa$Type, levels = lvl)
+  mc <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
   
 #  g <- ggplot(spa, aes(x, y, fill = factor(v))) + geom_raster(hjust = 0, vjust = 0) + 
   g <- ggplot(spa, aes(x, y, fill = v)) + geom_raster(hjust = 0, vjust = 0) + 
     theme_bw() + coord_equal() 
   
-  g <- g + scale_fill_gradient(low="red", high="green", guide=F) +
-#  g <- g + scale_fill_grey(guide=F) +
+  g <- g + scale_fill_gradientn(colours=mc[1:4],name="Species no.") + #guide=F
+  #  g <- g + scale_fill_grey(guide=F) +
     scale_x_continuous(expand=c(.01,.01)) + 
     scale_y_continuous(expand=c(.01,.01)) +  
     labs(x=NULL, y=NULL) 
   
   g <- g + facet_wrap( ~ Type +Species,ncol=2) 
+  #g <- g + facet_grid(Species ~ Type)
+
   print(g)
   
-  #g <- ggplot(spa, aes(x, y, fill = v)) + geom_raster(hjust = 0, vjust = 0) + theme_bw() + coord_equal() + facet_grid(. ~ Type)
-  #g <- g + scale_fill_gradient(low="red", high="green", guide=F) +
-  #    labs(x=NULL, y=NULL) 
 }
 
 
@@ -2543,8 +2559,8 @@ plotNeutral_Dq<-function(nsp,side,time,meta="L",ReplRate=c(0,0.001,0.01,0.1,1))
             geom_errorbar(aes(ymin=Dq-SD.Dq, ymax=Dq+SD.Dq), width=.1,colour="gray") +
             geom_point(size=1.3) + theme_bw() + ylab(expression(D[q]))
 
-  library(RColorBrewer)
-  mc <- brewer.pal(6, "Set1")
+  mc <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
   g <- g + scale_colour_manual(values=mc,guide=guide_legend(title="Replacement")) 
   g <- g + scale_shape_manual(values=c(21,24,4,25,3,8),guide=guide_legend(title="Replacement")) 
   
@@ -2662,8 +2678,10 @@ plotNeutral_SAD<-function(nsp,side,time=500,meta="L")
     ml <- unique(den$metaLbl)
     den$metaLbl <- factor(den$metaLbl,levels=c(ml[1],ml[2], ml[3]))
     g <- ggplot(den,aes(x=Rank,y=log(Freq),shape=factor(ReplacementRate),colour=factor(ReplacementRate))) +  theme_bw() + geom_point(size=1)
-    library(RColorBrewer)
-    mc <- brewer.pal(6, "Set1")
+#    library(RColorBrewer)
+#    mc <- brewer.pal(6, "Set1")
+    mc <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
     g <- g + scale_colour_manual(values=mc,guide=guide_legend(title="Replacement")) 
 
     g <- g + scale_shape_manual(values=c(21,24,4,25,3,8),guide=guide_legend(title="Replacement")) +

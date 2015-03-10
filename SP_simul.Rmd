@@ -129,6 +129,8 @@ save.image()
 
 # Test if at time 500 the model is at steady state
 
+Here I generate figures 1 and 2 for the appendix
+
 ```{r test_neutralTime, eval=T,echo=F,message=F,warning=F}
 setwd("Simul")
 
@@ -341,10 +343,8 @@ setwd("Simul")
 # Plot of the Regular and Randomized spatial pattern for a uniform & Logseries SAD with 64 species and side=256
 #
 g <- plotSAD_SpatPat(64,256,"B")
-g
 
-#g <- plotSAD_SpatPat(64,256,"U")
-#g 
+
 setwd("..")
 ggsave("spat_UniLog64_256.png", width=8,height=6,units="in",dpi=600)
 setwd("Simul")
@@ -384,25 +384,26 @@ ggsave("R2Dq_Unif_NumSp_Side.png", width=8,height=6,units="in",dpi=600)
 setwd("Simul")
 
 zq <- readDq_fit(256,64,"Uniform")
+
 g <- plotDqFitG(zq)
-g
+
 setwd(oldcd)
 ggsave("DqFit_Unif_64_256.png", width=8,height=6,units="in",dpi=600) 
 
 g <- plotDqFitGQ(zq,c(-10,-4,-1,0,1,4,10))
-g
+
 
 setwd("Simul")
 zq <- readDq_fit(256,8,"Uniform")
 g <- plotDqFitG(zq)
-g
+
 setwd(oldcd)
 ggsave("DqFit_Unif_8_256.png", width=8,height=6,units="in",dpi=600) 
 
 setwd("Simul")
 zq <- readDq_fit(256,256,"Uniform")
 g <- plotDqFitG(zq)
-g
+
 setwd(oldcd)
 ggsave("DqFit_Unif_256_256.png", width=8,height=6,units="in",dpi=600) 
 

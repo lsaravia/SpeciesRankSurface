@@ -434,12 +434,14 @@ require(dplyr)
 #  left_join(unique(pow_ADq10[,1:3]),by=c("Side","NumSp"))
 
 
-p1 <- plotPow_MeanSp_difR(comp_ADq10)
-#p1 <- plotPow_MeanSp_RplR(comp_ADq10)
-ggsave("powADq10_DifR_256.png", width=6,height=6,units="in",dpi=600)
+#p1 <- plotPow_MeanSp_difR(comp_ADq10)
+#ggsave("powADq10_DifR_256.png", width=6,height=6,units="in",dpi=600)
 
-p2 <- plotPow_MeanSp_difR(comp_ADq10,512)
-ggsave("powADq10_DifR_512.png", width=6,height=6,units="in",dpi=600)
+p1 <- plotPow_MeanSp_RplR(comp_ADq10)
+ggsave("powADq10_RplR_256.png", width=8,height=8,units="in",dpi=600)
+  
+p2 <- plotPow_MeanSp_RplR(comp_ADq10,512)
+ggsave("powADq10_RplR_512.png", width=6,height=6,units="in",dpi=600)
 
 p1 <- rbind(p1,p2)
 p1 <- select(p1,Side,spMeta,Type:n) %>% arrange(Side,spMeta,Type,DifR) 
@@ -465,30 +467,11 @@ sad64 <- simul_NeutralSAD(64,256,500)
 #
 #g <- plotNeutral_SpatPat(64,256,500,"L",c(0.1,1))
 g <- plotNeutral_SpatPat(64,256,500,"L",c(0,0.01,0.1,1))
-g
 
 
 setwd("..")
 ggsave("spat_NeuLog64_256.png", width=8,height=6,units="in",dpi=600)
 
-
-# Plot Dq for simulations in txt files (NULL)
-#
-
-setwd("Simul")
-plotNeutral_Dq(64,256,500,"L",NULL) # Null use previous simulations 
-setwd("..")
-ggsave("Dq_NeuLog64_256.png", width=8,height=4,units="in",dpi=600)
-
-setwd("Simul")
-plotNeutral_Dq(8,256,500,"L",NULL) # Null use previous simulations 
-setwd("..")
-ggsave("Dq_NeuLog8_256.png", width=8,height=4,units="in",dpi=600)
-
-setwd("Simul")
-plotNeutral_Dq(256,256,500,"L",NULL) # Null use previous simulations 
-setwd("..")
-ggsave("Dq_NeuLog256_256.png", width=8,height=4,units="in",dpi=600)
 
 # Plot simulations for all metacommunities 
 #

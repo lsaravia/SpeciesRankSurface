@@ -114,7 +114,7 @@ Table: Power and Type I error rate of Anderson-Darling statistic to test hypothe
 \begin{figure}[H]
 \centering
 \includegraphics[width=6.5in]{DqFit_Unif_64_256.png}
-\caption{Linear fit from generalized dimension ($D_q$) estimation showing a range of $q$ from -4 to 4. The spatial grid has a side=256 occupied with 64 species with a uniform abundance distribution. Two different spatial patterns were used: a) Regular, a regular spatial pattern with species distributed in vertical bands of equal width. b) Randomized, the positions of species in the grid are randomized. Two kinds of generalized dimension were estimated: DqSRS corresponds the fit of $D_q^{SRS}$ (see text) and DqSAD is the fit from the estimation of $D_q^{SAD}$ (see text). $Z_q(\epsilon)$ corresponds to the partition function calculated for a box with side $\epsilon$ in the SRS case, in SAD case, $\epsilon$ represent the area of the box used.}
+\caption{Linear fit from generalized dimension ($D_q$) estimation showing a range of $q$ from -4 to 4. The spatial grid has a side=256 occupied with 64 species with a uniform abundance distribution. Two different spatial patterns were used: a) Regular, a regular spatial pattern with species distributed in vertical bands of equal width. b) Randomized, the positions of species in the grid are randomized. Two kinds of generalized dimension were estimated: DqSRS corresponds the fit of $D_q^{SRS}$ (see text) and DqSAD is the fit from the estimation of $D_q^{SAD}$ (see text). $Z_q(\epsilon)$ corresponds to the partition function calculated for a box with side $\epsilon$.}
 \end{figure}. 
 
 
@@ -128,7 +128,7 @@ Table: Power and Type I error rate of Anderson-Darling statistic to test hypothe
 \begin{figure}[H]
 \centering
 \includegraphics[width=6.5in]{spat_NeuLog64_256.png}
-\caption{Spatial patterns generated with a spatial neutral/hierarchical model. \textit{Replacement} is the parameter $\rho$ that determines the degree of neutrality. When this parameter is 0 the model is completely neutral and there is no competitive replacement of species. When $\rho$ is 1 competitive superior species always replaces inferior ones and the model is completely hierarchical. The simulations use a metacommunity with a logseries abundance distribution with 86 species and a simulation grid side=256.}
+\caption{Spatial patterns generated with a spatial neutral/hierarchical model. \textit{Rho} is the parameter $\rho$ that determines the degree of neutrality. When this parameter is 0 the model is completely neutral and there is no competitive replacement of species. When $\rho$ is 1 competitive superior species always replaces inferior ones and the model is completely hierarchical. \textit{Species} is the number of species actually present plot. The simulations use a metacommunity with a logseries abundance distribution with 86 species and a simulation grid side=256.}
 \end{figure}
 
 \begin{figure}[H]
@@ -145,6 +145,6 @@ Table: Power and Type I error rate of Anderson-Darling statistic to test hypothe
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=6.5in]{powADq10_DifR_256.png}
-\caption{Power of the Anderson-Darling test for the hypothesis that generalized dimensions ($D_q$) curves and species abundance distributions (SAD) of simulated neutral/hierarchical communities are different. The compared communities differ only in parameter $\rho$ that determines the degree of neutrality/hierarchy.  $\Delta \rho$ is the difference in the parameter, when is lower the communities are more similar. DqSAD is the generalized dimension calculated using SAD, and DqSRS is the one calculated using the species rank surface (SRS). The number of comparisons to calculate the frequency is 2500 in all cases. Simulations use a metacommunity with a logseries abundance distribution with 11,86 and 341 species; a grid side of 256 sites, the other parameters are given in the main text.}
+\includegraphics[width=6.5in]{powADq10_RplR_256.png}
+\caption{Power of the Anderson-Darling test for the hypothesis of differences between simulated neutral/hierarchical communities. The test uses generalized dimensions curves calculated from SAD ($D_q^{SAD}$), generalized dimensions calculated from the species rank surfaces ($D_q^{SRS}$) and the species abundance distributions (SAD). The compared communities differ only in parameter $\rho$ (across panels) that determines the degree of neutrality/hierarchy. The number of comparisons to calculate the frequency is 2500 in all cases. Simulations use a metacommunity with a logseries abundance distribution with 11,86 and 341 species; a grid side of 256 sites, the other parameters are given in the main text.}
 \end{figure}

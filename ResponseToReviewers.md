@@ -24,6 +24,8 @@ I highly appreciate the new method of analysis and consider it as having high po
 4. The spectrum of generalized dimensions reflects the spatial scaling of some measure. The use of multifractal analysis implies self-similarity of the studied object, which manifests itself in the power-law form of dependence of partition function Zq on scale. Analysis of the relationship Zq (A) must precede any further analysis. If there is no power-law scaling, the object is not self-similar and its fractal analysis makes no sense. The power law looks like a linear function on a logarithmic scale. The author uses the coefficient of determination R^2 for the analysis of linearity. 
 # R^2 is not a measure of linearity, it reflects only the scatter of points around the regression line. The proposed rule of thumb was not justified. 
 The author shows figure with Zq(A) scaling only for toy models but not for dynamical models, whereas it is well-studied for neutral models that their species-area relations is triphasic with power law in a narrow range of scales. It is not clear whether there is power-law scaling for dynamical model in studied range of scales.
+- Eliminate figure 4 with R2 add figure with fit for neutral model
+
 I believe that the current version of manuscript requires serious improvement and at this stage must be rejected and resubmitted.
 
 More specific comments and suggestions:
@@ -37,12 +39,16 @@ More specific comments and suggestions:
 #4. D_0^SRS is not a fractal dimension of SRS (p. 9, l. 20). SRS is a rugged surface and its dimension is more than 2 but less than 3. What is really analyzed is some measure distributed over two-dimensional support. D_0^SRS is a dimension of this support.
 
 #5. The degree of difference between Dq spectra is not a direct function of Delta rho. It is not correct to analyze relation of power to Delta rho. For example, the great drop in power of DqSAD in Fig. 8 is associated exclusively with the fact that the point Delta rho = 0.9 corresponds to the comparison of simulations rho = 1 vs rho = 0.9, which has very similar spectra.
-- This a very compact way to show the power in function of the factors, and to visualize the diferences between DqSAD DqSRS and SAD-
-
+- Changed to a matrix of plots.
 
 6. The power of methods based on spectra of indices is compared with power of methods based on single components of spectra. It is obvious that the latter will be less powerful. But those methods use different statistical procedures so its direct comparison is not fully correct.
-7. Figures 1 and 5 lacks color scheme, making them difficult to read.
-8. Figure 3 has different scales for DqSAD и DqSRS, making it difficult to compare. As A = epsilon^2 I recommend to use A in both cases.
+
+#7. Figures 1 and 5 lacks color scheme, making them difficult to read.
+- I added the label   
+
+#8. Figure 3 has different scales for DqSAD и DqSRS, making it difficult to compare. As A = epsilon^2 I recommend to use A in both cases.
+- I changed x axis.  
+
 9. RAD is a strictly nonincreasing sequence, but many curves at figure 6 lack this property.
 
 Reviewer: 2
