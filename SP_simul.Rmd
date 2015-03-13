@@ -344,7 +344,6 @@ setwd("Simul")
 #
 g <- plotSAD_SpatPat(64,256,"B")
 
-
 setwd("..")
 ggsave("spat_UniLog64_256.png", width=8,height=6,units="in",dpi=600)
 setwd("Simul")
@@ -516,5 +515,3 @@ write.table(format(Dq1,digits=2), file = "Dq1.dat", sep = "  ", row.names = F,qu
 
 rm(Dq1,Sad1,pow)
 ```
-
-

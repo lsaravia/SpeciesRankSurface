@@ -128,13 +128,13 @@ Table: Power and Type I error rate of Anderson-Darling statistic to test hypothe
 \begin{figure}[H]
 \centering
 \includegraphics[width=6.5in]{spat_NeuLog64_256.png}
-\caption{Spatial patterns generated with a spatial neutral/hierarchical model. \textit{Rho} is the parameter $\rho$ that determines the degree of neutrality. When this parameter is 0 the model is completely neutral and there is no competitive replacement of species. When $\rho$ is 1 competitive superior species always replaces inferior ones and the model is completely hierarchical. \textit{Species} is the number of species actually present plot. The simulations use a metacommunity with a logseries abundance distribution with 86 species and a simulation grid side=256.}
+\caption{Spatial patterns generated with a spatial neutral/hierarchical model. \textit{Rho} is the parameter that determines the degree of neutrality. When this parameter is 0 the model is completely neutral and there is no competitive replacement of species. When $\rho$ is 1 competitive superior species always replaces inferior ones and the model is completely hierarchical. \textit{Species} is the number of species actually present plot. The simulations use a metacommunity with a logseries abundance distribution with 86 species and a simulation grid side=256.}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=6.5in]{RAD_NeuLog_spMeta_256.png}
-\caption{Rank abundace diagrams of comunities patterns generated with a spatial neutral/hierarchical model with different number of species in the metacommunity (labelled in each subfigure). \textit{Replacement} is the parameter $\rho$ that determines the degree of neutrality. When this parameter is 0 the model is completely neutral and there is no competitive replacement of species. When $\rho$ is 1 competitive superior species always replaces inferior ones and the model is completely hierarchical. The simulations use a metacommunity with a logseries abundance distribution with 11, 86 and 341 species and a simulation grid side=256, the other parameters used were MortalityRate=0.2, DispersalDistance=0.4 (2.5 grid units), ColonizationRate=0.001.}
+\caption{Rank abundance diagrams of communities patterns generated with a spatial neutral/hierarchical model with different number of species in the metacommunity (labeled in each subfigure). \textit{$\rho$} is the parameter that determines the degree of neutrality. When this parameter is 0 the model is completely neutral and there is no competitive replacement of species. When $\rho$ is 1 competitive superior species always replaces inferior ones and the model is completely hierarchical. The simulations use a metacommunity with a logseries abundance distribution with 11, 86 and 341 species and a simulation grid side=256, the other parameters used were MortalityRate=0.2, DispersalDistance=0.4 (2.5 grid units), ColonizationRate=0.001. The ranks were calculated with averages of species densities over 50 simulations.}
 \end{figure}
 
 \begin{figure}[H]

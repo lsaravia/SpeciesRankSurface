@@ -356,7 +356,7 @@ Table: Proportion of $R^2$ that are greater than 0.6 and 0.9. The $R^2$ are from
 |  512 |           341 |       1.000 |     36.7 |
 +------+---------------+-------------+----------+
 
-Table: Mean number of species for simulated communities with different degree of neutrality given by the parameter *Replacement*.  I used a Logseries metacommunity with 11, 86 and 341 species and *Side* is the side of the simulation grid.
+Table: Mean number of species for simulated communities with different degree of neutrality given by the parameter $\rho$.  I used a Logseries metacommunity with 11, 86 and 341 species and *Side* is the side of the simulation grid.
 
 \newpage         
 

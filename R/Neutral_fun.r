@@ -92,7 +92,7 @@ calcRankSAD_by  <- function(den,vv,cols)
   hh <- function(x) { 
   x1 <- x[x[[vv]]>0,]
   x1$parms <- paste(unique(x[,cols]),collapse="_")
-  x1$Rank <- nrow(x1) - rank(x1[[vv]],ties.method="min") +1
+  x1$Rank <- nrow(x1) - rank(x1[[vv]],ties.method="first") +1
   return(x1)
   }
   ddply(den, cols,hh )
@@ -708,10 +708,12 @@ plotDqFitGQ <- function(zq0,qq,fac=3)
 
 # Calculates theoretic Dq from pmodel
 #
-calcDqTeor <- function(q,p1) {
+calcDqTeor <- function(q,p1,p2=0,p3=0,p4=0) {
   if( q==1)
     q <- q+1e-10
-  p2 <- p3 <- p4 <- (1-p1)/3
+  if(p2==0 & p3==0 & p4==0 ) {
+      p2 <- p3 <- p4 <- (1-p1)/3
+  }
   f1 <- p1/(p1+p2+p3+p4)
   f2 <- p2/(p1+p2+p3+p4)
   f3 <- p3/(p1+p2+p3+p4)
@@ -2241,14 +2243,11 @@ plotSAD_SpatPat<-function(nsp,side,type="U")
     spa <- rbind(spa,sp1)
   }
 
-  #g <- ggplot(spa, aes(x, y, fill = factor(v))) + geom_raster(hjust = 0, vjust = 0) + 
-  #  theme_bw() + coord_equal() 
-  # g <- g + scale_fill_grey(guide=F) +
   g <- ggplot(spa, aes(x, y, fill = v)) + geom_raster(hjust = 0, vjust = 0) + 
     theme_bw() + coord_equal() 
-  mc <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+  mc <- c("#b35806","#e08214","#fdb863","#fee0b6","#f7f7f7","#d8daeb","#b2abd2","#8073ac","#542788")
   
-  g <- g + scale_fill_gradientn(colours=mc[1:4],guide="colourbar",name="Species no.") + #guide=F
+  g <- g + scale_fill_gradientn(colours=mc,guide="colourbar",name="Species no.") + #guide=F
     scale_x_continuous(expand=c(.01,.01)) + 
     scale_y_continuous(expand=c(.01,.01)) +  
     labs(x=NULL, y=NULL) 
@@ -2314,7 +2313,7 @@ plotDq_Side_Sp <- function(Dqq,side,nsp,sad="Uniform"){
     g <- g  + scale_shape_manual(values=c(21,24,21,24,3,4,3,4),guide=guide_legend(title=NULL),
               breaks=c("DqSRS Uniform","rnzDqSRS Uniform","DqSRS Logseries","rnzDqSRS Logseries"),labels=mylabs)
 
-    library(RColorBrewer)
+#    library(RColorBrewer)
 #    mc <- brewer.pal(5, "Set1")
     mc <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
@@ -2432,15 +2431,11 @@ plotNeutral_SpatPat<-function(nsp,side,time,meta="L",ReplRate=c(0,0.001,0.01,0.1
 
     spa <-  rbind(spa,sp1)
   }
-  #lvl <- unique(spa$Type)
-  #spa$Type <- factor(spa$Type, levels = lvl)
-  mc <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-  
-#  g <- ggplot(spa, aes(x, y, fill = factor(v))) + geom_raster(hjust = 0, vjust = 0) + 
+  mc <- c("#b35806","#e08214","#fdb863","#fee0b6","#f7f7f7","#d8daeb","#b2abd2","#8073ac","#542788")
   g <- ggplot(spa, aes(x, y, fill = v)) + geom_raster(hjust = 0, vjust = 0) + 
     theme_bw() + coord_equal() 
   
-  g <- g + scale_fill_gradientn(colours=mc[1:4],name="Species no.") + #guide=F
+  g <- g + scale_fill_gradientn(colours=mc,name="Species no.") + #guide=F
   #  g <- g + scale_fill_grey(guide=F) +
     scale_x_continuous(expand=c(.01,.01)) + 
     scale_y_continuous(expand=c(.01,.01)) +  
@@ -2650,6 +2645,8 @@ plotNeutral_SAD<-function(nsp,side,time=500,meta="L")
   require(ggplot2)
   require(plyr)
   require(dplyr)
+  require(mgcv)
+  
   den<- data.frame()
   if(nsp!=0){
     if(toupper(meta)=="L") {
@@ -2682,10 +2679,11 @@ plotNeutral_SAD<-function(nsp,side,time=500,meta="L")
 #    mc <- brewer.pal(6, "Set1")
     mc <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
-    g <- g + scale_colour_manual(values=mc,guide=guide_legend(title="Replacement")) 
+    g <- g + scale_colour_manual(values=mc,name=bquote("  "~rho)) 
 
-    g <- g + scale_shape_manual(values=c(21,24,4,25,3,8),guide=guide_legend(title="Replacement")) +
-      geom_smooth(se=F,span = 0.70) 
+    g <- g + scale_shape_manual(values=c(21,24,4,25,3,8),name=bquote("  "~rho)) + 
+#      geom_smooth(se=F,span = 0.70) 
+      geom_line()
     g <- g + facet_wrap(~ metaLbl, scales="free",ncol=2)
     
   }
@@ -2706,11 +2704,163 @@ plotNeutral_SAD_aux<-function(nsp,side,time=500,meta="L")
 
   den1 <- meltDensityOut_NT(fname,spMeta)
 
-  den3 <- filter(den1,MortalityRate==.2,DispersalDistance==0.4,ColonizationRate==0.001) 
-  den3 <- calcRankSAD_by(den3,"value",1:5)
+  den3 <- filter(den1,MortalityRate==.2,DispersalDistance==0.4,ColonizationRate==0.001) %>% 
+          rename(Freq=value) # ,rep==sample(unique(rep),1)
+  #den3 <- calcRankSAD_by(den3,"Freq",1:5)
   
   
-  den3 <- group_by(den3,ReplacementRate,Rank) %>% summarize(Freq=mean(value),count=n()) 
+  den3 <- group_by(den3,ReplacementRate,Species) %>% summarize(Freq=mean(Freq),count=n()) 
+  den3 <- calcRankSAD_by(den3,"Freq",1:1)
+  
   den3$spMeta <- spMeta
   return(den3)  
+}
+
+# test the permutation with Anderson-Darling statistic for Dq
+# using the global variable DqT
+#
+test_ADPerm <-function(type="DqSRS",nsp=8,nsp1=64,maxq=24){
+
+  require(ggplot2)
+  require(kSamples)
+  require(plyr)
+  require(dplyr)
+
+  # select 1 set for comparison
+  # 
+  Dq1<- filter(DqT,Side==256,NumSp==nsp,SAD=="Logseries",Type==type,abs(q)<=maxq) %>%
+        group_by(SAD,Type,q) %>% summarize(SD.Dq=sd(Dq),Dq=mean(Dq),count=n(),Curve=paste(type,nsp))%>%
+        select(Curve,Dq,SD.Dq,q)
+        
+  # Change location add a constant
+
+  Dq2 <- mutate(Dq1,Dq=Dq+mean(Dq)*0.01,Curve=paste(type,nsp,"+ 0.1"))
+
+
+  g <- ggplot(rbind(Dq1,Dq2),aes(x=q,y=Dq,colour=Curve)) + theme_bw()+ geom_point() +  ggtitle("Add a constant")
+  print(g)  
+  g <- ggplot(rbind(Dq1,Dq2),aes(x=Dq,colour=Curve))+theme_bw()+stat_ecdf()
+  print(g)
+
+
+  ad <- ad.test(Dq1$Dq,Dq2$Dq,method="simul")
+  print(ad)
+
+
+  # Delete rows with uneven q
+
+  Dq2 <- filter(Dq1,(q%%2)==0) %>% mutate(Curve=paste(type,nsp," even"))
+
+  g <- ggplot(rbind(Dq1,Dq2),aes(x=q,y=Dq,colour=Curve)) + theme_bw()+ geom_point() + ggtitle("Only even q")
+  print(g)
+  g <- ggplot(rbind(Dq1,Dq2),aes(x=Dq,colour=Curve))+theme_bw()+stat_ecdf()
+  print(g)
+
+  ad <- ad.test(Dq1$Dq,Dq2$Dq,method="simul")
+  print(ad)
+
+
+
+  ## small differences in shape but same endings
+  #
+  # first stretch
+
+  p1 <- 3
+  p2 <- nrow(Dq1)-2
+  q1 <- Dq1$q[p1]
+  q2 <- Dq1$q[p2]
+  Dq2 <- filter(Dq1,(q<q1 | q>q2) | q==0)
+
+  sp <-splinefun(Dq2$q,Dq2$Dq)
+  Dq2 <- mutate(Dq1,Dq=sp(q),Curve=paste(type,nsp," spline")) #%>% filter(abs
+  g <- ggplot(rbind(Dq1,Dq2),aes(x=q,y=Dq,colour=Curve)) + theme_bw()+ geom_point() + ggtitle("Spline with similar endings")
+  print(g)
+  g <- ggplot(rbind(Dq1,Dq2),aes(x=Dq,colour=Curve))+theme_bw()+stat_ecdf()
+  print(g)
+
+  ad <- ad.test(Dq1$Dq,Dq2$Dq,method="simul")
+  print(ad)
+
+  ## linear shape with same ending
+  #
+  p1 <- 4
+  p2 <- nrow(Dq1)-3
+  q1 <- Dq1$q[p1]
+  q2 <- Dq1$q[p2]
+  D1 <- Dq1$Dq[p1]
+  D2 <- Dq1$Dq[p2]
+
+  y <- c(Dq1$Dq[1:(p1-1)],D1 + (D2-D1)/(q2-q1)*(Dq1$q[p1:p2]-q1),Dq1$Dq[(p2+1):nrow(Dq1)])
+
+  Dq2 <- mutate(Dq1,Dq=y,Curve=paste(type,nsp,"linear"))
+
+  g <- ggplot(rbind(Dq1,Dq2),aes(x=q,y=Dq,colour=Curve)) + theme_bw()+ geom_point() + ggtitle("Linear with similar endings")
+  print(g)
+  g <- ggplot(rbind(Dq1,Dq2),aes(x=Dq,colour=Curve))+theme_bw()+stat_ecdf()
+  print(g)
+
+  ad <- ad.test(Dq1$Dq,Dq2$Dq,method="simul")
+  print(ad)
+
+
+  ## Diffferent no. species
+  #
+
+  Dq2<- filter(DqT,Side==256,NumSp==nsp1,SAD=="Logseries",Type==type,abs(q)<=maxq) %>%
+        group_by(SAD,Type,q) %>% summarize(SD.Dq=sd(Dq),Dq=mean(Dq),count=n(),Curve=paste(type,nsp1))%>%
+        select(Curve,Dq,SD.Dq,q)
+        
+  g <- ggplot(rbind(Dq1,Dq2),aes(x=q,y=Dq,colour=Curve)) + theme_bw()+ geom_point() + ggtitle("Diffferent no. species")
+  print(g)
+  g <- ggplot(rbind(Dq1,Dq2),aes(x=Dq,colour=Curve))+theme_bw()+stat_ecdf()
+  print(g)
+
+  ad <- ad.test(Dq1$Dq,Dq2$Dq,method="simul")
+  print(ad)
+
+  #
+  #
+  type1 <- paste0("rnz",type)
+  Dq2<- filter(DqT,Side==256,NumSp==nsp,SAD=="Logseries",Type==type1,abs(q)<=maxq) %>%
+        group_by(SAD,Type,q) %>% summarize(SD.Dq=sd(Dq),Dq=mean(Dq),count=n(),Curve=paste(type,nsp," rnz")) %>%
+        select(Curve,Dq,SD.Dq,q)
+  g <- ggplot(rbind(Dq1,Dq2),aes(x=q,y=Dq,colour=Curve)) + theme_bw()+ geom_point() + ggtitle("Randomized spatial pattern")
+  print(g)
+  g <- ggplot(rbind(Dq1,Dq2),aes(x=Dq,colour=Curve))+theme_bw()+stat_ecdf()
+  print(g)
+
+  ad <- ad.test(Dq1$Dq,Dq2$Dq,method="simul")
+  print(ad)
+
+
+  #
+  #
+
+  Dq2<- filter(DqT,Side==256,NumSp==nsp,SAD=="Logseries",Type==type1,abs(q)<=maxq) %>%
+        group_by(SAD,Type,q) %>% summarize(SD.Dq=sd(Dq),Dq=mean(Dq),count=n(),Curve=paste(unique(Type),unique(NumSp)," sample"))%>%
+        select(Curve,Dq,SD.Dq,q)
+
+  Dq2 <- mutate(Dq2,Dq=rnorm(nrow(Dq2),mean=Dq,sd=SD.Dq))
+
+  g <- ggplot(rbind(Dq1,Dq2),aes(x=q,y=Dq,colour=Curve)) + theme_bw()+ geom_point() + ggtitle("Sample from different Dq")
+  print(g)
+  g <- ggplot(rbind(Dq1,Dq2),aes(x=Dq,colour=Curve))+theme_bw()+stat_ecdf()
+  print(g)
+
+  ad <- ad.test(Dq1$Dq,Dq2$Dq,method="simul")
+  print(ad)
+
+  #
+  #
+
+  Dq2 <- mutate(Dq1,Dq=rnorm(nrow(Dq1),mean=Dq,sd=SD.Dq),Curve=paste(type,nsp," sample"))
+
+  g <- ggplot(rbind(Dq1,Dq2),aes(x=q,y=Dq,colour=Curve)) + theme_bw()+ geom_point() + ggtitle("Sample from the same Dq")
+  print(g)
+  g <- ggplot(rbind(Dq1,Dq2),aes(x=Dq,colour=Curve))+theme_bw()+stat_ecdf()
+  print(g)
+
+  ad <- ad.test(Dq1$Dq,Dq2$Dq,method="simul")
+  print(ad)
+
 }

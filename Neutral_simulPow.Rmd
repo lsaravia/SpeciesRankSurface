@@ -490,7 +490,6 @@ ggsave("Dq_NeuLog_NumSp_512.png", width=8,height=8,units="in",dpi=600)
 setwd("Simul")
 detach("package:dplyr", unload=TRUE)
 den <- plotNeutral_SAD(0,256)
-
 setwd("..")
 ggsave("RAD_NeuLog_spMeta_256.png", width=8,height=6,units="in",dpi=600)
 
