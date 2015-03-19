@@ -24,6 +24,61 @@ require(pander)
 panderOptions('table.split.table',Inf)
 options("scipen"=100, "digits"=4)
 ```
+# Test if at time 500 the model is at steady state
+
+Here I generate figures 1 and 2 for the appendix
+
+```{r test_neutralTime, eval=T,echo=F,message=F,warning=F}
+setwd("Simul")
+
+sml <- T
+simul <- data.frame()
+require(doParallel)
+cn <-detectCores()
+cl <- makeCluster(cn)
+registerDoParallel(cl)
+require(foreach)
+
+parms <-expand.grid(nsp=c(8,64,256),side=c(256,512),disp=0.04,migr=0.001,repl=c(0,0.001,0.01,0.1,1)) 
+
+
+simul <- foreach(i=1:nrow(parms),.combine='rbind') %dopar%
+{
+simul_NeutralPlotTime(parms$nsp[i],parms$side[i],parms$disp[i],
+                                           parms$migr[i],parms$repl[i],sml,500,3,"N","L")
+}
+
+#cbPal <- c("#edf8fb","#b3cde3","#8c96c6","#8856a7","#810f7c")
+cbPal <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+require(ggplot2)
+
+g <- ggplot(simul,aes(x=Time,y=H,colour=as.factor(nsp),shape=as.factor(Rep))) + 
+    geom_line() + geom_point(size=1)+
+    facet_grid(ReplacementRate ~ side ) +
+    ylab(bquote("Shannon index"))+ 
+    scale_colour_manual(values=cbPal,name="Metacomm sp")+
+    scale_shape_discrete(guide=F)
+
+print(g+theme_bw())
+
+setwd(oldcd)
+
+ggsave("neuTime_side_sp_H.png", width=8,height=6,units="in",dpi=600)
+
+
+g <- ggplot(simul,aes(x=Time,y=Richness,colour=as.factor(nsp),shape=as.factor(Rep))) + 
+    geom_line() + geom_point(size=1)+
+    facet_grid(ReplacementRate ~ side ) +
+    ylab(bquote("Richness"))+ 
+    scale_colour_manual(values=cbPal,name="Metacomm sp")+
+    scale_shape_discrete(guide=F)
+print(g+theme_bw())
+ggsave("neuTime_side_sp_Rich.png", width=8,height=6,units="in",dpi=600)
+
+save.image()
+
+```
 
 ## Neutral Simulations 
 
@@ -238,7 +293,7 @@ save.image()
 
 Compare using the GC with q<=10
 
-```{r power_GCq10test, eval=T,echo=F,message=T,warning=T}
+```{r power_GCq10test, eval=F,echo=F,message=T,warning=T}
 setwd("Simul")
 
 require(doParallel)
@@ -456,12 +511,27 @@ pandoc.table( mutate(pow_ADq10 ,spMeta=ceiling(as.numeric(NumSp)*1.33),power=as.
 
 ## Simulations to plot spatial patterns with different replacement Rate
 
-```{r neutral_SpSimPlot256, eval=F,echo=F,message=T,warning=T}
+```{r neutral_SpSimPlot256, eval=T,echo=F,message=T,warning=T}
+
 setwd("Simul")
 
+ps <- data.frame(nsp=c(8,64,256),si=rep(c(256,512),each=3))
+require(doParallel)
+cn <-detectCores()
+cl <- makeCluster(cn)
+registerDoParallel(cl)
 
-# meta = 64, side=250, time=500
-sad64 <- simul_NeutralSAD(64,256,500)
+sad64 <- foreach(i=1:nrow(ps),.combine='rbind') %dopar%
+{
+  simul_NeutralSAD(ps$nsp[i],ps$si[i],500)
+}
+setwd(oldcd)
+
+```
+
+## Plots for publication
+
+```{r neutral_pubPlots, eval=F,echo=F,message=T,warning=T}
 
 # Plot of the spatial pattern for Neutral model with Logseries SAD with 8,64,256 species and side=512/256
 #
@@ -493,6 +563,43 @@ den <- plotNeutral_SAD(0,256)
 setwd("..")
 ggsave("RAD_NeuLog_spMeta_256.png", width=8,height=6,units="in",dpi=600)
 
+### Plot Neutral Dq Fit
+#
+setwd("Simul")
+zq <-readNeutral_Dq_fit(64,256,500,"L")
+plotDqFitG(zq)
+setwd(oldcd)
+ggsave("DqFit_NeuLog64_256.png", width=8,height=8,units="in",dpi=600)
+
+setwd("Simul")
+zq <-readNeutral_Dq_fit(8,256,500,"L")
+plotDqFitG(zq)
+setwd(oldcd)
+ggsave("DqFit_NeuLog8_256.png", width=8,height=8,units="in",dpi=600)
+
+setwd("Simul")
+zq <-readNeutral_Dq_fit(256,256,500,"L")
+plotDqFitG(zq)
+setwd(oldcd)
+ggsave("DqFit_NeuLog256_256.png", width=8,height=8,units="in",dpi=600)
+
+setwd("Simul")
+zq <-readNeutral_Dq_fit(8,512,500,"L")
+plotDqFitG(zq)
+setwd(oldcd)
+ggsave("DqFit_NeuLog8_512.png", width=8,height=8,units="in",dpi=600)
+
+setwd("Simul")
+zq <-readNeutral_Dq_fit(64,512,500,"L")
+plotDqFitG(zq)
+setwd(oldcd)
+ggsave("DqFit_NeuLog64_512.png", width=8,height=8,units="in",dpi=600)
+
+setwd("Simul")
+zq <-readNeutral_Dq_fit(256,512,500,"L")
+plotDqFitG(zq)
+setwd(oldcd)
+ggsave("DqFit_NeuLog256_512.png", width=8,height=8,units="in",dpi=600)
 
 # Create table with R2 of neutral models Dq
 #

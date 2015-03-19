@@ -16,3 +16,10 @@
 
 * which is more powerfull for detecting patterns.
 
+Multifractals could be usefull to detect break in scaling because with higher q the breaks can be detected with higher sensitivity.
+
+D1 and D0 should not be used because high type I error and low power.
+
+SAD cannot detect patterns in low species communities, but DqSRS can, DqSAD should not be used because of a high Type I error.
+
+The AD test combined with SAD is quite capable of detect different communities around 64 species or more. 

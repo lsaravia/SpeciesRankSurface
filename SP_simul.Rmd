@@ -1,4 +1,4 @@
-# Multifractal analysis of multispecies spatial distributions - Spatial patterns simulations
+# Multifractal analysis of multispecies spatial distributions - Simple spatial patterns simulations
 
 I use mfSBA for multifractal estimation: <https://github.com/lsaravia/mfsba>
 
@@ -26,6 +26,7 @@ options("scipen"=100, "digits"=4)
 
 First generate a pattern with  SAR z=1 using simply bands of species z=0.5 because I am using area as Borda-de-Agua instead of side.
 
+
 ```{r simul_z1, eval=F,echo=F,message=F,warning=F}
 setwd("Simul")
 
@@ -45,15 +46,34 @@ DqF <- rbind(DqF,compMethods_UniformSAD(256,256)$Dq)
 #Dq2$Type <- "rnzDqSAD2-16"
 #Dq3<- rbind(Dq3,Dq2)
 #plotDq(Dq3,"Type")
-require(pander)
-pandoc.table(DqF[DqF$R.Dq<0.8,],caption="R2<0.8")
+#require(pander)
+#pandoc.table(DqF[DqF$R.Dq<0.8,],caption="R2<0.8")
+
+simul <- 9
+require(doParallel)
+cn <-detectCores()
+cl <- makeCluster(cn)
+registerDoParallel(cl)
+require(foreach)
+
+ps <- expand.grid(nsp=c(8,64,256),side=c(256),simul=1:9)
+
+cc <- foreach(i=1:nrow(ps),.combine='rbind') %dopar%
+{
+  compMethods_UniformSAD(ps$nsp[i],256,F)
+}
+
+for(i in 1:nrow(ps)) {
+  DqF <- rbind(DqF, cc[[i]]$Dq)
+  }
+
 setwd(oldcd)
 ```
 
 * For SRS the positive part seems to reflect the equal SAD and the negative the spatial pattern
 
 
-# Banded pattern 64 species 512 side
+# Banded pattern uniform SAD 8,64,256 species 512 side
 
 To see if there is any efect of side 
 
@@ -75,20 +95,31 @@ Thus DqSAD works in the range 2-8 2-16 2-32 depending on the number of species
 For different number of species and different sides the same cualitative patterns are observed.
 
 
-# Now simulate an image with logseries SAD with 8, 64 & 256 species
-
-# Test logseries SAD side = 256 
+# Now simulate 10 times simple spatial pattern with logseries SAD with 8, 64 & 256 species,side = 256 
 
 ```{r simul_ls_256, eval=F,echo=F,message=F,warning=F}
 setwd("Simul")
 
-DqF <- rbind(DqF,compMethods_FisherSAD(8,256))
 
-DqF <- rbind(DqF,compMethods_FisherSAD(64,256))
+require(doParallel)
+cn <-detectCores()
+cl <- makeCluster(cn)
+registerDoParallel(cl)
+require(foreach)
 
-DqF <- rbind(DqF,compMethods_FisherSAD(256,256))
+ps <- expand.grid(nsp=c(8,64,256),side=c(256),simul=1:10)
+
+cc <- foreach(i=1:nrow(ps),.combine='rbind') %dopar%
+{
+  compMethods_FisherSAD(ps$nsp[i],256,F)
+}
+
+for(i in 1:nrow(ps)) {
+  DqF <- rbind(DqF, cc[[i]]$Dq)
+  }
 
 setwd(oldcd)
+save.image()
 
 ```
 
@@ -105,233 +136,6 @@ DqF <- rbind(DqF,compMethods_FisherSAD(256,512))
 
 setwd(oldcd)
 save.image()
-
-```
-
-# Simulate with logseries and the neutral model
-
-```{r simul_neu_256, eval=F,echo=F,message=F,warning=F}
-setwd("Simul")
-
-
-DqF <- rbind(DqF,compMethods_NeutralSAD(8,256,T)$Dq)
-
-
-DqF <- rbind(DqF,compMethods_NeutralSAD(64,256,T)$Dq)
-
-
-DqF <- rbind(DqF,compMethods_NeutralSAD(256,256,T)$Dq)
-setwd(oldcd)
-rm(nsp,side,spa)
-
-save.image()
-```
-
-# Test if at time 500 the model is at steady state
-
-Here I generate figures 1 and 2 for the appendix
-
-```{r test_neutralTime, eval=T,echo=F,message=F,warning=F}
-setwd("Simul")
-
-sml <- T
-simul <- data.frame()
-require(doParallel)
-cn <-detectCores()
-cl <- makeCluster(cn)
-registerDoParallel(cl)
-
-
-parms <-expand.grid(nsp=c(8,64,256),side=c(256,512),disp=0.04,migr=0.001,repl=c(0,0.001,0.01,0.1,1)) 
-
-
-simul <- foreach(i=1:nrow(parms),.combine='rbind') %dopar%
-{
-simul_NeutralPlotTime(parms$nsp[i],parms$side[i],parms$disp[i],
-                                           parms$migr[i],parms$repl[i],sml,500,3,"N","L")
-}
-
-#cbPal <- c("#edf8fb","#b3cde3","#8c96c6","#8856a7","#810f7c")
-cbPal <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-
-require(ggplot2)
-
-g <- ggplot(simul,aes(x=Time,y=H,colour=as.factor(nsp),shape=as.factor(Rep))) + 
-    geom_line() + geom_point(size=1)+
-    facet_grid(ReplacementRate ~ side ) +
-    ylab(bquote("Shannon index"))+ 
-    scale_colour_manual(values=cbPal,name="Metacomm sp")+
-    scale_shape_discrete(guide=F)
-
-print(g+theme_bw())
-
-setwd(oldcd)
-
-ggsave("neuTime_side_sp_H.png", width=8,height=6,units="in",dpi=600)
-
-
-g <- ggplot(simul,aes(x=Time,y=Richness,colour=as.factor(nsp),shape=as.factor(Rep))) + 
-    geom_line() + geom_point(size=1)+
-    facet_grid(ReplacementRate ~ side ) +
-    ylab(bquote("Richness"))+ 
-    scale_colour_manual(values=cbPal,name="Metacomm sp")+
-    scale_shape_discrete(guide=F)
-print(g+theme_bw())
-ggsave("neuTime_side_sp_Rich.png", width=8,height=6,units="in",dpi=600)
-
-save.image()
-
-```
-
-
-Perform Neutral with metaccomunity uniform and Uniform, 10 simulations with side 256 and 512
-
-
-```{r test_SAD256U, eval=F,echo=F,message=F,warning=F}
-setwd("Simul")
-
-cc <- comp_NeutralUniform(8,256)
-DqUN   <-cc$Dq
-SadUN  <-cc$SAD
-
-cc <- comp_NeutralUniform(64,256)
-DqUN   <-rbind(DqUN  ,cc$Dq)
-SadUN  <-rbind(SadUN ,cc$SAD)
-
-cc <- comp_NeutralUniform(256,256)
-DqUN   <-rbind(DqUN  ,cc$Dq)
-SadUN  <-rbind(SadUN ,cc$SAD)
-
-
-cc <- comp_NeutralUniform(8,512)
-DqUN   <-rbind(DqUN  ,cc$Dq)
-SadUN  <-rbind(SadUN ,cc$SAD)
-
-cc <- comp_NeutralUniform(64,512)
-DqUN   <-rbind(DqUN  ,cc$Dq)
-SadUN  <-rbind(SadUN ,cc$SAD)
-
-cc <- comp_NeutralUniform(256,512)
-DqUN   <-rbind(DqUN  ,cc$Dq)
-SadUN  <-rbind(SadUN ,cc$SAD)
-
-rm(cc)
-
-
-
-# merge SAD
-SadT <- rbind(SadGC,SadUN)
-rm(SadGC,SadUN)
-
-# merge Dq
-
-DqT <- rbind(DqGC,DqUN)
-rm(DqGC,DqUN)
-
-setwd(oldcd)
-save.image()
-
-
-#compT <- rbind(compT,compUN)
-#SadT <- rbind(SadT,SadUN)
-#DqT  <- rbind(DqT,DqUN)
-
-```
-
-
-Perform Neutral with metacommunity logseries and Logseries, 10 simulations with side =256/512
-
-
-```{r test_SAD256, eval=F,echo=F,message=F,warning=F}
-setwd("Simul")
-
-cc <- comp_NeutralLogseries(8,256)
-DqT   <-rbind(DqT,cc$Dq)
-SadT  <-rbind(SadT ,cc$SAD)
-
-cc <- comp_NeutralLogseries(64,256)
-DqT   <-rbind(DqT  ,cc$Dq)
-SadT  <-rbind(SadT ,cc$SAD)
-
-cc <- comp_NeutralLogseries(256,256)
-DqT   <-rbind(DqT  ,cc$Dq)
-SadT  <-rbind(SadT ,cc$SAD)
-
-cc <- comp_NeutralLogseries(8,512)
-DqT   <-rbind(DqT  ,cc$Dq)
-SadT  <-rbind(SadT ,cc$SAD)
-
-cc <- comp_NeutralLogseries(64,512)
-DqT   <-rbind(DqT  ,cc$Dq)
-SadT  <-rbind(SadT ,cc$SAD)
-
-cc <- comp_NeutralLogseries(256,512)
-DqT   <-rbind(DqT  ,cc$Dq)
-SadT  <-rbind(SadT ,cc$SAD)
-
-
-# Simulations with side=512 not done
-#
-#compSP <- rbind(compSP,compKS_NeutralLogseries(8,512))
-#compSP <- rbind(compSP,compKS_NeutralLogseries(64,512))
-#compSP <- rbind(compSP,compKS_NeutralLogseries(256,512))
-rm(cc)
-
-
-setwd(oldcd)
-save.image()
-```
-
-Now check if all simulations are done a make power calculations
-
-```{r power_adtest1, eval=F,echo=F,message=F,warning=F}
-# Check all simulations are present
-require(plyr)
-ddply(SadT,3:6,summarize, max(rep))
-ddply(DqT,5:8,summarize, max(rep),min(rep))
-powad <- data.frame()
-
-powad <- rbind(powad,calcPower_AD(DqT,SadT,8,256))
-powad <- rbind(powad,calcPower_AD(DqT,SadT,64,256))
-powad <- rbind(powad,calcPower_AD(DqT,SadT,256,256))
-
-powad <- rbind(powad,calcPower_AD(DqT,SadT,8,512))
-powad <- rbind(powad,calcPower_AD(DqT,SadT,64,512))
-powad <- rbind(powad,calcPower_AD(DqT,SadT,256,512))
-
-save.image()
-```
-
-Make plots of power and type I error 
-
-```{r power_adtest, eval=F,echo=F,message=F,warning=F}
-
-plot_DqPowerTypeI <- function(pp,tit){
-  require(ggplot2)
-  pp$Type2[pp$Type2=="SRS"] <- "DqSRS" 
-  pp$Type2[grepl("rnz",pp$Type2)] <- "Power"
-  pp$Type2[grepl("Dq",pp$Type2)] <- "Type I"
-
-  g <-ggplot(pp, aes(factor(NumSp), power, colour = as.factor(Side))) +
-    geom_point(aes(shape=as.factor(Side)),size=4) + ggtitle(tit) + theme_bw() +
-    facet_grid(Type1~Type2) + scale_colour_discrete(name="Size") +
-    scale_shape_discrete(name="Size") + scale_x_discrete(name="Number of Species")
-  print(g)
-}
-#powad <- power
-p1 <- with(powad, powad[grepl("^DqSAD|^SRS",Type1) & SAD1==SAD2 & SAD1=="Uniform" ,])
-plot_DqPowerTypeI(p1,"Uniform")
-
-
-p1 <- with(powad, powad[grepl("^DqSAD|^SRS",Type1) & SAD1==SAD2 & SAD1=="NeuUnif" ,])
-plot_DqPowerTypeI(p1,"NeuUnif")
-
-p1 <- with(powad, powad[grepl("^DqSAD|^SRS",Type1) & SAD1==SAD2 & SAD1=="Logseries" ,])
-plot_DqPowerTypeI(p1,"Logseries")
-
-p1 <- with(powad, powad[grepl("^DqSAD|^SRS",Type1) & SAD1==SAD2 & SAD1=="Neutral" ,])
-plot_DqPowerTypeI(p1,"Neutral")
-
 
 ```
 
@@ -383,25 +187,25 @@ ggsave("R2Dq_Unif_NumSp_Side.png", width=8,height=6,units="in",dpi=600)
 setwd("Simul")
 
 zq <- readDq_fit(256,64,"Uniform")
-
-g <- plotDqFitG(zq)
+plotDqFitG(zq)
 
 setwd(oldcd)
 ggsave("DqFit_Unif_64_256.png", width=8,height=6,units="in",dpi=600) 
 
-g <- plotDqFitGQ(zq,c(-10,-4,-1,0,1,4,10))
+## another version of the plot
+#g <- plotDqFitGQ(zq,c(-10,-4,-1,0,1,4,10))
 
 
 setwd("Simul")
 zq <- readDq_fit(256,8,"Uniform")
-g <- plotDqFitG(zq)
+plotDqFitG(zq)
 
 setwd(oldcd)
 ggsave("DqFit_Unif_8_256.png", width=8,height=6,units="in",dpi=600) 
 
 setwd("Simul")
 zq <- readDq_fit(256,256,"Uniform")
-g <- plotDqFitG(zq)
+plotDqFitG(zq)
 
 setwd(oldcd)
 ggsave("DqFit_Unif_256_256.png", width=8,height=6,units="in",dpi=600) 
@@ -427,9 +231,6 @@ ggsave("Dq_Logser_NumSp_512.png", width=8,height=6,units="in",dpi=600)
 #
 # Plot R2 for dqSAD dqSRS
 #
-#g <- plotR2Dq_Side_Sp(DqT,256,64,"Logseries")
-#g
-#ggsave("R2Dq_Logser_64_256.png", width=8,height=6,units="in",dpi=600) 
 
 g <- plotR2Dq_Side_Sp(DqT,0,0,"Logseries")
 g
@@ -444,23 +245,22 @@ g
 setwd("Simul")
 
 zq <- readDq_fit(256,64,"Logseries")
-g <-plotDqFitG(zq)
-g
+plotDqFitG(zq)
+
 setwd(oldcd)
 ggsave("DqFit_Logser_64_256.png", width=8,height=6,units="in",dpi=600) 
 
 setwd("Simul")
 
 zq <- readDq_fit(256,8,"Logseries")
-g <-plotDqFitG(zq)
-g
+plotDqFitG(zq)
+
 setwd(oldcd)
 ggsave("DqFit_Logser_8_256.png", width=8,height=6,units="in",dpi=600) 
 
 setwd("Simul")
 zq <- readDq_fit(256,256,"Logseries")
-g <-plotDqFitG(zq)
-g
+plotDqFitG(zq)
 setwd(oldcd)
 ggsave("DqFit_Logser_256_256.png", width=8,height=6,units="in",dpi=600) 
 
