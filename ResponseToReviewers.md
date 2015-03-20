@@ -12,7 +12,7 @@ After reading the manuscript and the comments of the two reviewers I think that 
  
 
 # -It should be stated early on in which situations and for which questions this method can be used and it should be highlighted somewhere what assumptions need to be tested to apply it
-- The assumptions are stated in methods and I am testing here the power of the test to compare communities, but another possible applications are suggested for Dq to characterize rare species. 
+- The assumptions are stated in methods and I am testing here the power of the test to compare communities, but other possible applications are suggested for Dq to characterize rare species. 
 
 #- Finally, please make sure that color-blind (e.g. red-green) people can understand your figures.
 
