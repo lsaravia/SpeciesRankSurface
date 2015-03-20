@@ -79,8 +79,9 @@ Comments to the Corresponding Author
 Any description of biodiversity that does not explicitly include species abundance distributions (SADs) is  likely to miss important relationships on how species interact with the environment. This is one of the rarest publications in the area of SAD modelling in which author(s) performed an elegant study investigating the scaling of SAD.
 The author introduces and innovative framework,  “the species rank surfaces (SRS)”, as a new way to study the scaling of SAD.
 Some comments for improvement:
-1)      In the Discussion the author should also highlight the limitations of their modelling process, in particular the fact that it not takes into account: a) asymmetry of the dispersal ability of species; b) the fact that trophic structure and species interactions in communities  may lead to more idiosyncratic processes of community assembly; c) the fact  that the truncated log-normal SAD was not tested.
+#1)      In the Discussion the author should also highlight the limitations of their modelling process, in particular the fact that it not takes into account: a) asymmetry of the dispersal ability of species; b) the fact that trophic structure and species interactions in communities  may lead to more idiosyncratic processes of community assembly; c) the fact  that the truncated log-normal SAD was not tested.
 
+- This paper is about a methodology to compare communities the models was choosen to generate a gradient with similar and different communities, but not to study the models or the limitation of the models, that would be another paper...
 
 #2)      The following paper could be cited in line 7 of page 1: Triantis, K.A., Guilhaumon, F. & Whittaker, R.J. (2012). The island species–area relationship: biology and statistics. Journal of Biogeography, 39: 215-23.
 #3)      In line 24 of page 1 it seems that one additional reference is missing afer Yakimove et al., 2008)
@@ -88,12 +89,12 @@ Some comments for improvement:
 #5)      The author also should revise the English of the text.
 #The bibliographic references are a Chaos! The same reference appears in the text in different formats (e.g. Borda-de-Água (2012) and the same correctly as Borda-de-Água et al. (2012). All the bibliographic references should be revised for consistency both in main text and List of Bibliography.
 #6)      In the reference list for some strange reason all appear with "et al." in the end. I think that the author should learn to use the tools in Latex (see http://jabref.sourceforge.net/; http://en.wikibooks.org/wiki/LaTeX/Bibliography_Management
-For instance the reference below is a book Chapter:
-Borda-de-Água, L., Hubbell, S.P. & He, F.et al. (2007). Scaling biodiversity under neutrality. Scaling 3 biodiversity, 347–375
-and should be more correctly:
-Borda-de-Água, L., Hubbell, S. P., & He, F. (2007). Scaling biodiversity under neutrality. In: Storch, D., Marquet, P. A., & Brown. J. H. (eds), Scaling biodiversity. Cambridge University Press, Cambridge, 347-375
+#For instance the reference below is a book Chapter:
+#Borda-de-Água, L., Hubbell, S.P. & He, F.et al. (2007). Scaling biodiversity under neutrality. Scaling 3 biodiversity, 347–375
+#and should be more correctly:
+#Borda-de-Água, L., Hubbell, S. P., & He, F. (2007). Scaling biodiversity under neutrality. #In: Storch, D., Marquet, P. A., & Brown. J. H. (eds), Scaling biodiversity. Cambridge University Press, Cambridge, 347-375
 
-- the references were corrected and the english 
+- the references were corrected and the ms was read by a native  
 
 
  My best regards to the author,
