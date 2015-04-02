@@ -22,6 +22,8 @@ $D_1^{SRS}$     Information dimension of SRS. This is part of $D_q^{SRS}$ and ch
 
 Table: Methods used to calculate the power to compare simulated communities with different degree of neutrality.
 
+\newpage
+
 
 ------------------------------------------------------
   Side   No. Species   $\mu$   $d$    $m$     $\rho$  
