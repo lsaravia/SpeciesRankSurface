@@ -140,7 +140,7 @@ Table: Power and Type I error rate of Anderson-Darling statistic to test hypothe
 \begin{figure}[H]
 \centering
 \includegraphics[width=6.5in]{DqFit_Unif_64_256.png}
-\caption{Linear fit of generalized dimension ($D_q$) estimation from simple species spatial patterns with 64 species and a uniform abundance distribution. The spatial grid has a side=256 sites and two different spatial patterns: Regular, a regular spatial pattern with species distributed in vertical bands of equal width. Randomized, the positions of species in the grid are randomized. Two kinds of generalized dimension were estimated: DqSRS corresponds the fit of $D_q^{SRS}$ (see text) and DqSAD is the fit from the estimation of $D_q^{SAD}$ (see text). $Z_q(\epsilon)$ corresponds to the partition function calculated for a box with side $\epsilon$, $q$ is the moment order.} 
+\caption{Linear fit of $Z_q(\epsilon)$ to estimate generalized dimensions ($D_q$) from simple species spatial patterns with 64 species and a uniform abundance distribution. The spatial grid has a side=256 sites and two different spatial patterns: Regular, a regular spatial pattern with species distributed in vertical bands of equal width. Randomized, the positions of species in the grid are randomized. Two kinds of generalized dimension were estimated: DqSRS corresponds the fit of $D_q^{SRS}$ (see text) and DqSAD is the fit from the estimation of $D_q^{SAD}$ (see text). $Z_q(\epsilon)$ corresponds to the partition function calculated for a box with side $\epsilon$, $q$ is the moment order.} 
 \end{figure}. 
 
 
@@ -160,7 +160,7 @@ Table: Power and Type I error rate of Anderson-Darling statistic to test hypothe
 \begin{figure}[H]
 \centering
 \includegraphics[width=6.5in]{DqFit_NeuLog64_256.png}
-\caption{Linear fit of generalized dimension ($D_q$) estimation from spatial patterns generated with a spatial neutral/hierarchical model. \textit{Rho} is the parameter that determines the degree of neutrality. When this parameter is 0 the model is completely neutral and there is no competitive replacement of species. When $\rho$ is 1 competitive superior species always replaces inferior ones and the model is completely hierarchical. \textit{Species} is the number of species actually present plot. The simulations use a metacommunity with a logseries abundance distribution with 86 species and a simulation grid side=256 sites.}
+\caption{Linear fit of $Z_q(\epsilon)$ to estimate generalized dimensions ($D_q$) from spatial patterns generated with a neutral/hierarchical model. \textit{Rho} is the parameter that determines the degree of neutrality. When this parameter is 0 the model is completely neutral and there is no competitive replacement of species. When $\rho$ is 1 competitive superior species always replaces inferior ones and the model is completely hierarchical. \textit{Species} is the number of species actually present plot. The simulations use a metacommunity with a logseries abundance distribution with 86 species and a simulation grid side=256 sites.}
 \end{figure}
 
 

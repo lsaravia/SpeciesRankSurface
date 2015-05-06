@@ -810,7 +810,8 @@ genFisherSAD_image <- function(nsp,side)
 
 
 # Generate Logseries SAD with nsp*f species and side = side
-#  The factor f is to compensate losses for use as a metacommunity
+#  The factor f is to compensate losses for use as a metacommunity 
+#  previously set to f=1.33 now set to 1
 # Requires untb package
 #
 #
