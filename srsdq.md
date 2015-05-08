@@ -16,15 +16,15 @@ Buenos Aires, Argentina.
 
 ## Abstract
 
-* Species-area relationships (SAR) and species abundance distributions (SAD) are among the most studied patterns in ecology, due to their application in both theoretical and conservation issues. One problem with these general patterns is that different theories can generate the same predictions, and for this reason they can not be used to detect different mechanisms.
+* Species-area relationships (SAR) and species abundance distributions (SAD) are among the most studied patterns in ecology, due to their application to both theoretical and conservation issues. One problem with these general patterns is that different theories can generate the same predictions, and for this reason they cannot be used to detect different mechanisms. [BBL: what kind of mechanisms? Clarify.]
 
-* A solution for this is to search for more sensitive patterns. One possibility is to extend the SAR to the whole species abundance distribution. A generalized dimension ($D_q$) approach has been proposed to study the scaling of SAD, but there has been no evaluation of the ability of this pattern to detect different mechanisms.
+* A solution is to search for more sensitive patterns, [BBL:sensitive? To what? Clarify.] for example by extending the SAR to the whole species abundance distribution. A generalized dimension ($D_q$) approach has been proposed to study the scaling of SAD, but to date there has been no evaluation of the ability of this pattern to detect different mechanisms.
 
-* An equivalent way to express SAD is the rank abundance distribution (RAD). Here I introduce a new way to study scaling of SAD using a spatial version of RAD: the species-rank surface (SRS), which can be analyzed using $D_q$. Thus there is an old $D_q$ based on SAR ($D_q^{SAD}$), and a new one based on SRS ($D_q^{SRS}$). I perform spatial simulations to relate both $D_q$ with SAD, spatial patterns and number of species. Finally I compare the power of both $D_q$, SAD, SAR exponent, and the fractal information dimension to detect different community patterns using a continuum of hierarchical and neutral spatially explicit models.
+* An equivalent way to express SAD is the rank abundance distribution (RAD). Here I introduce a new way to study SAD scaling using a spatial version of RAD: the species-rank surface [BBL:pattern?] (SRS), which can be analyzed using $D_q$. Thus there is an old $D_q$ based on SAR ($D_q^{SAD}$), and a new one based on SRS ($D_q^{SRS}$). I perform spatial simulations to relate [BBL:examine the relationship of?]  $D_q$ with SAD, spatial patterns and number of species. Finally I compare the power of both $D_q$, SAD, SAR exponent, and the fractal information dimension to detect different community patterns using a continuum of hierarchical and neutral spatially explicit models.
 
-* The SAD, $D_q^{SAD}$ and $D_q^{SRS}$ all had good performance in detecting models with contrasting mechanisms. $D_q^{SRS}$ had a better fit to data and a strong ability to compare between hierarchical communities where the other methods failed. The SAR exponent and information dimension had low power and should not be used.
+* The SAD, $D_q^{SAD}$ and $D_q^{SRS}$ all had good performance in detecting models with contrasting mechanisms. $D_q^{SRS}$, however, had a better fit to data and allowed comparisons between hierarchical communities where the other methods failed. The SAR exponent and information dimension had low power and should not be used.
 
-* SRS and $D_q^{SRS}$ could be an interesting addition to study community or macroecological patterns.
+* SRS and $D_q^{SRS}$ could be an interesting method to study community or macroecological patterns.
 
 
 Keywords: multifractals, species-rank surface, species-area relationship, multi-species spatial pattern.
