@@ -34,19 +34,9 @@ The author has improved the manuscript substantially from the previous version. 
 
 # I think the work now is very close to be accepted but I found several places to be corrected. The most important are plots with scaling of log Zq vs log epsilon in the case of DqSAD (Fig. 3  and 6, left panels). Zq for q < 1 must increase wi th scale and Zq for q > 1 must decrease. Specifically Z0 is just a species richness and so the plot of its scaling is a usual SAR. But on the figures this pattern is reversed. I suspect there was some technical error. Otherwise description of algorithms must be reconsidered.
 
-* For DqSAD equations 4 & 5, we have Zq(A) = Zq(e*e) is the sum of densities of species raised to q in a subplot with side e if q>0 when the area is bigger A'>A the sum Zq(A')>=Zq(A), for q<0 we have Zq(A')<=Zq(A) and this is what we can observe for DqSAD (and also DqSRS) in figures 3 and 6. 
-For example if we take only the upper left square to calculate Zq(A):
+* I corrected this. The error was produced because I calculated DqSAD=-Tau/(q-1) which is equivalent to DqSAD=Tau/(1-q), thus the slopes were inverted. 
 
-1 1 2 1
-2 1 2 3
-2 1 2 3   
-1 2 2 1
 
-q=2 e=2  Zq(e*e)= 3*3 + 1
-q=2 e=3  Zq(e*e)= 4*4 + 5*5
-q=2 e=4  Zq(e*e)= 7*7 + 7*7 + 2*2
-
-Thus Zq is increasing (the exact term is non-decreasing) when q>0
 
 
 Other minor corrections:
@@ -92,16 +82,6 @@ Paulo A. V. Borges
 
 Azorean Biodiversity Group
 
-cE3c - Centre for Ecology, Evolution and Environmental Changes
-University of Azores
 
-Associate Editor Comments to Author:
-
-Associate Editor
-Comments to the Author:
-After reading the manuscript and the comments of the two reviewers I think that this approach has high potential but that the work needs some considerable improvements as well. in addition to the comments by the reviewers I suggest to take care of the following:
-#- In the beginning, I had some difficulties to follow which different metrics were actually tested against each other in the end and what different information they give us about the patterns and how we could interpret them in ecological terms. There is some text abut this in the beginning of the result section but this is much too late (and to me also an odd place to put this info). I would suggest that this is made clearer early on and maybe it would be good to add a table that lists the indices together with their ecological meaning.
-
-* I moved the paragraph about interpretation to the methods section, and added more explanations, but as I didn't know in advance how Dq will be, I present most interpretations as a discussion. I added a table with the methods used.
  
 

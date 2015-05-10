@@ -187,7 +187,7 @@ ggsave("R2Dq_Unif_NumSp_Side.png", width=8,height=6,units="in",dpi=600)
 setwd("Simul")
 
 zq <- readDq_fit(256,64,"Uniform")
-plotDqFitG(zq)
+plotDqFitG(zq,0)
 
 setwd(oldcd)
 ggsave("DqFit_Unif_64_256.png", width=8,height=6,units="in",dpi=600) 
@@ -198,7 +198,7 @@ ggsave("DqFit_Unif_64_256.png", width=8,height=6,units="in",dpi=600)
 
 setwd("Simul")
 zq <- readDq_fit(256,8,"Uniform")
-plotDqFitG(zq)
+plotDqFitG(zq,0)
 
 setwd(oldcd)
 ggsave("DqFit_Unif_8_256.png", width=8,height=6,units="in",dpi=600) 

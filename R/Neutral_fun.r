@@ -625,13 +625,13 @@ readZq <- function(fname,qname)
 # zq0: data.frame with Zq, logTr 
 # fac: factor to separate the lines 
 # repRate: replacement to plot (rho)
-plotDqFitG <- function(zq0,fac=3,replRate=c(0,0.01,1))
+plotDqFitG <- function(zq0,fac=1/3,replRate=c(0,0.01,1))
 {
   require(ggplot2)
   require(dplyr)
   
   zq1 <- subset(zq0, q==1 | q==2 | q==3 | q==4 | q==5 | q==0 | q==-1 | q==-2 | q==-3 | q==-4 | q==-5 )
-  zq1$logTr <- zq1$logTr+zq1$q/fac
+  zq1$logTr <- zq1$logTr+zq1$q*fac
   if( "RplRt" %in% names(zq1))
   {
     zq1 <- filter(zq1,RplRt %in% replRate) %>% mutate(DqType=ifelse(grepl("SRS",Type),"DqSRS","DqSAD"), Type=paste("Rho:",RplRt),
@@ -2252,7 +2252,7 @@ plotR2Dq_Side_Sp <- function(Dqq,side,nsp,sad="Uniform")
 # Read sed files generated with simple spatial models and calculate Dq and return Fit of Dq 
 #
 readDq_fit <- function(side,nsp,sad="Uniform") {
-  
+  require(dplyr)
   if(sad=="Uniform") {                                  # SAD Uniform
     fname <- paste0("unif",nsp,"_",side,".sed")
     fname1 <- paste0("unif",nsp,"_",side,"rnz.sed") 
@@ -2272,11 +2272,13 @@ readDq_fit <- function(side,nsp,sad="Uniform") {
   Dq1<- calcDq_multiSBA(fname,"q.sed 2 1024 20 E",mfBin,T)
   zq1 <- readZq(paste0("t.", fname),"q.sed")
   zq1$Type <- "DqSAD"
+  zq1 <- mutate(zq1,logTr=-logTr)
   zq<- rbind(zq,zq1)
 
   Dq1<- calcDq_multiSBA(fname1,"q.sed 2 1024 20 E",mfBin,T)
   zq1 <- readZq(paste0("t.", fname1),"q.sed")
   zq1$Type <- "rnzDqSAD"
+  zq1 <- mutate(zq1,logTr=-logTr)
   zq<- rbind(zq,zq1)
   return(zq)
 }
@@ -2285,6 +2287,7 @@ readDq_fit <- function(side,nsp,sad="Uniform") {
 # Read sed files generated with simple spatial models and calculate Dq and return Fit of Dq 
 #
 readNeutral_Dq_fit <- function(nsp,side,time,meta="L",ReplRate=c(0,0.001,0.01,0.1,1)) {
+  require(dplyr)
   zq <-data.frame()
   for(i in 1:length(ReplRate)) {
     if(toupper(meta)=="L") {
@@ -2304,6 +2307,7 @@ readNeutral_Dq_fit <- function(nsp,side,time,meta="L",ReplRate=c(0,0.001,0.01,0.
     Dq1<- calcDq_multiSBA(fname,"q.sed 2 1024 20 E",mfBin,T)
     zq1 <- readZq(paste0("t.", fname),"q.sed")
     zq1$Type <- "DqSAD"
+    zq1 <- mutate(zq1,logTr=-logTr)
     zq1$RplRt <- ReplRate[i]
     zq<- rbind(zq,zq1)
   }
