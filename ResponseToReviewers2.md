@@ -6,8 +6,8 @@ Associate Editor Comments to Author:
 Associate Editor  
 Comments to the Author:
 I agree with the two reviewers that the manuscript has greatly improved. Please look at their responses for the few remaining issues concerning the content.
-In addition, there are still many language issues and careless mistakes in the manuscript. This needs to be improved and I suggest to find (again) a native speaker for careful proofreading. I mention a few but did not check in detail.
-p.4, l.2-3: check grammar
+#In addition, there are still many language issues and careless mistakes in the manuscript. This needs to be improved and I suggest to find (again) a native speaker for careful proofreading. I mention a few but did not check in detail.
+# p.4, l.2-3: check grammar
 # 4, 26: change to 'first'
 # 5, 13: 'graph'
 # 6, 29: missing free space
@@ -16,12 +16,14 @@ p.4, l.2-3: check grammar
 # 11, 13: double 'with'
 # 15, 21: did not 'make'
 # 16, 1: What means: 'low species communities'? 
-* communities with low richness
+* I corrected as: communities with low richness
 
 # 16, 2: What means: 'when species are around 100'?
-* the number of species is around 100
+* I corrected as: the number of species is around 100
 
 # 16, 7: 'sizes'
+
+Following the review of a native speaker I reworded the paragraph at page 6 line 29. Additionally I deleted a paragraph in the disccussion (page 16 between lines 14-15) because it is a repetition of the same ideas and seems to be out of place.  
 
 
 Reviewer(s)' Comments to Author:
@@ -34,12 +36,12 @@ The author has improved the manuscript substantially from the previous version. 
 
 # I think the work now is very close to be accepted but I found several places to be corrected. The most important are plots with scaling of log Zq vs log epsilon in the case of DqSAD (Fig. 3  and 6, left panels). Zq for q < 1 must increase wi th scale and Zq for q > 1 must decrease. Specifically Z0 is just a species richness and so the plot of its scaling is a usual SAR. But on the figures this pattern is reversed. I suspect there was some technical error. Otherwise description of algorithms must be reconsidered.
 
-* I corrected this. The error was produced because I calculated DqSAD=-Tau/(q-1) which is equivalent to DqSAD=Tau/(1-q), thus the slopes were inverted. 
+* I corrected this. The error was produced because I use the following to calculate DqSAD: DqSAD=-Tau/(q-1) which is equivalent to DqSAD=Tau/(1-q) that is equation 5, as Tau=log(Zq)/log(e) the slopes were inverted. I updated figures 3, 6, and the appendix.
 
 
 
 
-Other minor corrections:
+# Other minor corrections:
 
 # p. 3, l. 12: change “scaling of Renyi entropies” to “scaling exponents of Renyi entropies”
 # p. 3, l. 25: Yakimov et al., 2014 and change reference accordingly
