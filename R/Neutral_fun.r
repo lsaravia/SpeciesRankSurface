@@ -2465,8 +2465,8 @@ plotNeutral_Dq<-function(nsp,side,time,meta="L",ReplRate=c(0,0.001,0.01,0.1,1))
 
   mc <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
-  g <- g + scale_colour_manual(values=mc,guide=guide_legend(title="Replacement")) 
-  g <- g + scale_shape_manual(values=c(21,24,4,25,3,8),guide=guide_legend(title="Replacement")) 
+  g <- g + scale_colour_manual(values=mc,name=bquote("  "~rho)) 
+  g <- g + scale_shape_manual(values=c(21,24,4,25,3,8),name=bquote("  "~rho)) 
   
   if(nsp==0){
     g <- g + facet_wrap(spMeta ~ DqType, scales="free",ncol=2)

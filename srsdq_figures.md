@@ -167,7 +167,7 @@ Table: Power and Type I error rate of Anderson-Darling statistic to test hypothe
 \begin{figure}[H]
 \centering
 \includegraphics[width=6.5in]{Dq_NeuLog_NumSp_256.png}
-\caption{Generalized dimension spectra $D_q$ of spatial patterns generated with a spatial neutral/hierarchical model. \textit{Replacement} is the parameter $\rho$, that determines the degree of neutrality. When this parameter is 0 the model is completely neutral and there is no competitive replacement of species. When $\rho$ is 1 competitive superior species always replaces inferior ones and the model is completely hierarchical. The points are means and vertical lines are standard deviation of 50 simulated patterns. Simulations use a metacommunity with a logseries abundance distribution with 11,86 and 341 species. The simulation grid side is 256, and the other parameters are given in the main text.}
+\caption{Generalized dimension spectra $D_q$ of spatial patterns generated with a spatial neutral/hierarchical model. $\rho$ is the parameter that determines the degree of neutrality. When this parameter is 0 the model is completely neutral and there is no competitive replacement of species. When $\rho$ is 1 competitive superior species always replaces inferior ones and the model is completely hierarchical. The points are means and vertical lines are standard deviation of 50 simulated patterns. Simulations use a metacommunity with a logseries abundance distribution with 11,86 and 341 species. The simulation grid side is 256, and the other parameters are given in the main text.}
 \end{figure}
 
 \begin{figure}[H]

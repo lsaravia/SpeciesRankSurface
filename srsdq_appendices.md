@@ -468,13 +468,13 @@ q={-24,-22,-20,-18,-16,-14,-12,-10,-8,-6,-4,-3,-2.5,-2,-1.5,-1,-0.5,0,0.5,1,1.5,
 \begin{figure}[H]
 \centering
 \includegraphics[width=6.5in]{DqFit_NeuLog8_256.png}
-\caption{Linear fit of generalized dimension ($D_q$) estimation from spatial patterns generated with a spatial neutral/hierarchical model with a 11 species logseries metacommunity and a simulation grid side=256 sites. \textit{Rho} is the parameter that determines the degree of neutrality. When this parameter is 0 the model is completely neutral and there is no competitive replacement of species. When $\rho$ is 1 competitive superior species always replaces inferior ones and the model is completely hierarchical. \textit{Species} is the number of species actually present plot. }
+\caption{Linear fit of generalized dimension ($D_q$) estimation from spatial patterns generated with a spatial neutral/hierarchical model with a 11 species logseries metacommunity and a simulation grid side=256 sites. \textit{Rho} ($\rho$) is the parameter that determines the degree of neutrality. When this parameter is 0 the model is completely neutral and there is no competitive replacement of species. When $\rho$ is 1 competitive superior species always replaces inferior ones and the model is completely hierarchical. \textit{Species} is the number of species actually present plot. }
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=6.5in]{DqFit_NeuLog256_256.png}
-\caption{Linear fit of generalized dimension ($D_q$) estimation from spatial patterns generated with a spatial neutral/hierarchical model with a 341 species logseries metacommunity and a simulation grid side=256 sites. \textit{Rho} is the parameter that determines the degree of neutrality. When this parameter is 0 the model is completely neutral and there is no competitive replacement of species. When $\rho$ is 1 competitive superior species always replaces inferior ones and the model is completely hierarchical. \textit{Species} is the number of species actually present plot.}
+\caption{Linear fit of generalized dimension ($D_q$) estimation from spatial patterns generated with a spatial neutral/hierarchical model with a 341 species logseries metacommunity and a simulation grid side=256 sites. \textit{Rho} ($\rho$) is the parameter that determines the degree of neutrality. When this parameter is 0 the model is completely neutral and there is no competitive replacement of species. When $\rho$ is 1 competitive superior species always replaces inferior ones and the model is completely hierarchical. \textit{Species} is the number of species actually present plot.}
 \end{figure}
 
 \begin{figure}[H]
@@ -499,7 +499,7 @@ q={-24,-22,-20,-18,-16,-14,-12,-10,-8,-6,-4,-3,-2.5,-2,-1.5,-1,-0.5,0,0.5,1,1.5,
 \begin{figure}[H]
 \centering
 \includegraphics[width=6.5in]{Dq_NeuLog_NumSp_512.png}
-\caption{Generalized dimension spectra $D_q$ of spatial patterns generated with a spatial neutral/hierarchical model. \textit{Replacement} is the parameter that determines the degree of neutrality. When this parameter is 0 the model is completely neutral and there is no competitive replacement of species. When \textit{Replacement} is 1 competitive superior species always replaces inferior ones and the model is completely hierarchical. The simulations use a metacommunity with a logseries abundance distribution with 11,86 and 341 species. The simulation grid side is 512, and the other parameters are: MortalityRate=0.2, DispersalDistance=0.4 (2.5 grid units), ColonizationRate=0.001.}
+\caption{Generalized dimension spectra $D_q$ of spatial patterns generated with a spatial neutral/hierarchical model. $\rho$ is the parameter that determines the degree of neutrality. When this parameter is 0 the model is completely neutral and there is no competitive replacement of species. When $\rho$ is 1 competitive superior species always replaces inferior ones and the model is completely hierarchical. The simulations use a metacommunity with a logseries abundance distribution with 11,86 and 341 species. The simulation grid side is 512, and the other parameters are: MortalityRate=0.2, DispersalDistance=0.4 (2.5 grid units), ColonizationRate=0.001.}
 \end{figure}
 
 \begin{figure}[H]

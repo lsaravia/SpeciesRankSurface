@@ -193,4 +193,8 @@ In summary, $D_q^{SRS}$ always had better fits than $D_q^{SAD}$ and can be appli
 
 I am grateful to the National University of General Sarmiento for financial support, to Graeme Ruxton and Ben Bond-Lamberty for their English revisions. 
 
+# Data Accessibility
+
+All data and R scripts used in this manuscript are available at figshare <http://dx.doi.org/10.6084/m9.figshare.1276105>.
+
 # References  
